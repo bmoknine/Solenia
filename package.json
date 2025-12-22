@@ -1,0 +1,21 @@
+{
+  "name": "solenia2.0",
+  "version": "1.0.0",
+  "description": "Monorepo carte interactive (React/TS + Fastify/Prisma).",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "dev": "npm run -ws dev",
+    "lint": "npm run -ws lint",
+    "format": "npm run -ws format",
+    "test": "npm run -ws test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
