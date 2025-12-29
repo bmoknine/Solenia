@@ -13,6 +13,65 @@ enum UserType {
   viewer
 }
 
+enum Breed {
+  ELFE
+  HALFELIN
+  HUMAIN
+  NAIN
+  DEMI_ELFE
+  DEMI_ORC
+  DRAKEIDE
+  GNOME
+  TIEFFELIN
+  AASIMAR
+  GENASIAIR
+  GENASITERRE
+  GENASIFEUR
+  GENASIEAU
+  GOLIATH
+  OTHER
+}
+
+enum Sex {
+  MAN
+  WOMAN
+  OTHER
+}
+
+enum Membership {
+  POLITIC
+  RELIGEUX
+  MARCHAND
+  CCCH
+  CRIMINALITE
+  OTHER
+}
+
+enum Language {
+  COMMUN
+  NAIN
+  ELFIQUE
+  GNOME
+  HALFELIN
+  ORC
+  GOBELIN
+  GEANT
+  DRACONIQUE
+  SYLVESTRE
+  INFERNAL
+  ABYSSAL
+  CELESTE
+  PRIMORDIAL
+  AQUAN
+  AURAN
+  IGNAN
+  TERRAN
+  PROFOND
+  SLAADI
+  TELEPATHIQUE
+  ARGOT_VOLEUR
+}
+
 model User {
   id           String   @id @default(uuid())
   username     String
@@ -40,6 +99,7 @@ model City {
   id          String    @id @default(uuid())
   name        String
   description String?
+  iconUrl     String?
   kingdomId   String?
 
   kingdom  Kingdom? @relation(fields: [kingdomId], references: [id])
@@ -53,6 +113,7 @@ model Place {
   id          String    @id @default(uuid())
   name        String
   description String?
+  iconUrl     String?
   kingdomId   String?
   cityId      String?
 
@@ -64,12 +125,14 @@ model Place {
 }
 
 model PersonOfInterest {
-  id          String    @id @default(uuid())
+  id          String      @id @default(uuid())
   name        String
   description String?
   imageUrl    String?
-  membership  String?
-  languages   String[]
+  breed       Breed?
+  sex         Sex?
+  membership  Membership?
+  languages   Language[]
   STR         Int
   DEX         Int
   CON         Int

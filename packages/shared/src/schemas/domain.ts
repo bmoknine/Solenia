@@ -12,12 +12,14 @@ export const kingdomInputSchema = z.object({
 export const cityInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  iconUrl: z.string().nullable().optional(),
   kingdomId: idSchema.optional(),
 });
 
 export const placeInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  iconUrl: z.string().nullable().optional(),
   kingdomId: idSchema.optional(),
   cityId: idSchema.optional(),
 });
@@ -31,16 +33,66 @@ export const statsSchema = z.object({
   CHA: z.number().int(),
 });
 
+const breedEnum = z.enum([
+  'ELFE',
+  'HALFELIN',
+  'HUMAIN',
+  'NAIN',
+  'DEMI_ELFE',
+  'DEMI_ORC',
+  'DRAKEIDE',
+  'GNOME',
+  'TIEFFELIN',
+  'AASIMAR',
+  'GENASIAIR',
+  'GENASITERRE',
+  'GENASIFEUR',
+  'GENASIEAU',
+  'GOLIATH',
+  'OTHER',
+]);
+
+const sexEnum = z.enum(['MAN', 'WOMAN', 'OTHER']);
+
+const membershipEnum = z.enum(['POLITIC', 'RELIGEUX', 'MARCHAND', 'CCCH', 'CRIMINALITE', 'OTHER']);
+
+const languageEnum = z.enum([
+  'COMMUN',
+  'NAIN',
+  'ELFIQUE',
+  'GNOME',
+  'HALFELIN',
+  'ORC',
+  'GOBELIN',
+  'GEANT',
+  'DRACONIQUE',
+  'SYLVESTRE',
+  'INFERNAL',
+  'ABYSSAL',
+  'CELESTE',
+  'PRIMORDIAL',
+  'AQUAN',
+  'AURAN',
+  'IGNAN',
+  'TERRAN',
+  'PROFOND',
+  'SLAADI',
+  'TELEPATHIQUE',
+  'ARGOT_VOLEUR',
+]);
+
 export const personInputSchema = z
   .object({
     name: z.string().min(1),
     description: z.string().optional(),
     imageUrl: z.string().url().optional(),
-    membership: z.string().optional(),
-    languages: z.array(z.string()).default([]),
-    kingdomId: idSchema.optional(),
-    cityId: idSchema.optional(),
-    placeId: idSchema.optional(),
+    breed: breedEnum.nullish(),
+    sex: sexEnum.nullish(),
+    membership: membershipEnum.nullish(),
+    languages: z.array(languageEnum).default([]),
+    kingdomId: idSchema.nullish(),
+    cityId: idSchema.nullish(),
+    placeId: idSchema.nullish(),
   })
   .merge(statsSchema);
 

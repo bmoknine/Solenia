@@ -50,6 +50,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [token]);
 
+  // Écouter l'événement de token expiré
+  useEffect(() => {
+    const handleTokenExpired = () => {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem(STORAGE_KEY);
+    };
+    
+    window.addEventListener('auth:token-expired', handleTokenExpired);
+    return () => {
+      window.removeEventListener('auth:token-expired', handleTokenExpired);
+    };
+  }, []);
+
   const handleLogin = useCallback(async (email: string, password: string) => {
     const res = await apiLogin(email, password);
     setToken(res.accessToken);

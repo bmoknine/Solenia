@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import './Panel.css';
 
 type Kind = 'kingdom' | 'city' | 'place' | 'person' | 'unknown';
@@ -17,20 +17,33 @@ const labels: Record<Kind, string> = {
 };
 
 export function FilterPanel({ active, onToggle }: Props) {
+  const [open, setOpen] = useState(false);
   const items = useMemo(() => Object.keys(labels) as Kind[], []);
+
+  if (!open) {
+    return (
+      <div className="filter-inline">
+        <button className="ghost" onClick={() => setOpen(true)}>Filtres</button>
+      </div>
+    );
+  }
+
   return (
-    <div className="panel glass">
-      <h3>Filtres</h3>
-      {items.map((k) => (
-        <label key={k} className="row">
-          <input
-            type="checkbox"
-            checked={active.has(k)}
-            onChange={() => onToggle(k)}
-          />
-          {labels[k]}
-        </label>
-      ))}
+    <div className="filter-inline">
+      <button className="ghost" onClick={() => setOpen(false)}>Fermer</button>
+      <div className="filter-inline-box">
+        <h3>Filtres</h3>
+        {items.map((k) => (
+          <label key={k} className="row">
+            <input
+              type="checkbox"
+              checked={active.has(k)}
+              onChange={() => onToggle(k)}
+            />
+            {labels[k]}
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,36 +1,37 @@
 import './App.css';
+import 'leaflet/dist/leaflet.css';
 import { MapView } from './components/MapView';
 import { useMapPoints } from './hooks/useMapPoints';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
-import { ChangePasswordPanel } from './components/ChangePasswordPanel';
 import { deleteTarget } from './api/map';
-import { CreatePanel } from './components/CreatePanel';
+import type { MapPoint } from './api/map';
 import { updatePosition } from './api/entities';
 import { EditDrawer } from './components/EditDrawer';
-import { FilterPanel } from './components/FilterPanel';
 import { ToastProvider, useToast } from './toast/ToastProvider';
-import { SearchBox } from './components/SearchBox';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { PointsList } from './components/PointsList';
 import { LoginPanel } from './components/LoginPanel';
-import { useEffect, useMemo, useState } from 'react';
+import DetailModal from './components/DetailModal';
+import { Sidebar } from './components/Sidebar';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 function Content() {
-  const { user, token, logout } = useAuth();
+  const { user, token } = useAuth();
   const { points, loading, error, reload } = useMapPoints(token);
   const [actionError, setActionError] = useState<string | null>(null);
   const canEdit = !!user && user.type !== 'viewer';
   const [editing, setEditing] = useState<ReturnType<typeof useMapPoints>['points'][number] | null>(null);
-  const [filters, setFilters] = useState(new Set(['kingdom', 'city', 'place', 'person', 'unknown']));
+  const [filters, setFilters] = useState<Set<'kingdom' | 'city' | 'place' | 'person' | 'unknown'>>(new Set(['kingdom', 'city', 'place', 'person', 'unknown']));
   const [search, setSearch] = useState('');
   const { push } = useToast();
   const [confirm, setConfirm] = useState<{ open: boolean; pointId?: string }>({ open: false });
   const [showSearch, setShowSearch] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [showActions, setShowActions] = useState(false);
   const [hideError, setHideError] = useState(false);
   const [hideActionError, setHideActionError] = useState(false);
+  const [detailPoint, setDetailPoint] = useState<MapPoint | null>(null);
+  const [creatingMode, setCreatingMode] = useState(false);
+  const [createPosition, setCreatePosition] = useState<{ x: number; y: number } | null>(null);
+  const [createKind, setCreateKind] = useState<'kingdom' | 'city' | 'place' | 'person'>('kingdom');
   useEffect(() => {
     if (error) push(error, 'error');
     setHideError(false);
@@ -79,6 +80,12 @@ function Content() {
     });
   };
 
+  const handleMapClickForCreation = useCallback((x: number, y: number) => {
+    console.log('onMapClick appelé avec:', { x, y });
+    setCreatePosition({ x, y });
+    setCreatingMode(false);
+  }, []);
+
   return (
     <div className="app-shell">
       {!user ? (
@@ -105,63 +112,29 @@ function Content() {
               </div>
             )}
 
-            <div className="toggle-panel glass">
-              <button className="ghost" onClick={() => setShowFilters((v) => !v)}>Filtres</button>
-              <button className="ghost" onClick={() => setShowCreate((v) => !v)}>Créer</button>
-              <button className="ghost" onClick={() => setShowActions((v) => !v)}>Actions</button>
-            </div>
-
-            {showSearch ? (
-              <div className="search-panel glass">
-                <SearchBox
-                  value={search}
-                  onChange={setSearch}
-                  onSearch={setSearch}
-                  onClose={() => setShowSearch(false)}
-                />
-              </div>
-            ) : (
-              <button className="ghost search-toggle" onClick={() => setShowSearch(true)}>Recherche</button>
-            )}
-
-            {showFilters && (
-              <div className="filters-panel glass">
-                <FilterPanel active={filters} onToggle={toggleFilter} />
-              </div>
-            )}
-
-            {search.trim() !== '' && filteredPoints.length > 0 && (
-              <div className="results-panel glass">
-                <PointsList
-                  points={filteredPoints}
-                  onSelect={(p) => {
-                    setEditing(p);
-                  }}
-                />
-              </div>
-            )}
-
-            {showActions && (
-              <div className="actions-panel glass">
-                <ChangePasswordPanel />
-                <button className="ghost" onClick={logout} disabled={!user}>Déconnexion</button>
-              </div>
-            )}
-
-            {showCreate && (
-              <div className="create-panel glass">
-                <CreatePanel onCreated={reload} />
-              </div>
-            )}
+            <Sidebar
+              search={search}
+              setSearch={setSearch}
+              showSearch={showSearch}
+              setShowSearch={setShowSearch}
+              filters={filters}
+              toggleFilter={toggleFilter}
+              creatingMode={creatingMode}
+              setCreatingMode={setCreatingMode}
+              createKind={createKind}
+              setCreateKind={setCreateKind}
+              onCancelCreate={() => setCreatePosition(null)}
+              searchResults={filteredPoints}
+              onSelectResult={(p) => {
+                setDetailPoint(p);
+              }}
+            />
 
             <MapView
               points={filteredPoints}
               canEdit={canEdit}
-              onDelete={async (point) => {
-                if (!token) throw new Error('Authentification requise');
-                if (!point.targetId) throw new Error('Cible introuvable');
-                setConfirm({ open: true, pointId: point.id });
-              }}
+              creatingMode={creatingMode}
+              onMapClick={creatingMode ? handleMapClickForCreation : undefined}
               onMove={async (point, x, y) => {
                 if (!token) throw new Error('Authentification requise');
                 if (!point.targetId) throw new Error('Cible introuvable');
@@ -177,10 +150,29 @@ function Content() {
                 await reload();
                 push('Position mise à jour', 'success');
               }}
-              onEdit={(p) => setEditing(p)}
+              onDetail={(p) => setDetailPoint(p)}
             />
           </div>
           <EditDrawer point={editing} onClose={() => setEditing(null)} onSaved={async () => { await reload(); push('Enregistré', 'success'); }} />
+          {createPosition && (
+            <DetailModal
+              point={null}
+              createMode={{
+                kind: createKind,
+                initialPosition: createPosition,
+              }}
+              token={token}
+              onClose={() => {
+                setCreatePosition(null);
+                setCreateKind('kingdom'); // Reset to default
+              }}
+              onUpdated={async () => {
+                await reload();
+                setCreatePosition(null);
+                setCreateKind('kingdom'); // Reset to default
+              }}
+            />
+          )}
           <ConfirmDialog
             open={confirm.open}
             title="Confirmer la suppression"
@@ -194,13 +186,29 @@ function Content() {
                 await deleteTarget(point.kind, point.targetId, token);
                 await reload();
                 push('Supprimé', 'success');
+                // Fermer le modal de détail si l'entité supprimée est celle affichée
+                if (detailPoint && detailPoint.id === point.id) {
+                  setDetailPoint(null);
+                }
               } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erreur';
                 setActionError(msg);
+                push(msg, 'error');
               } finally {
                 setConfirm({ open: false });
               }
             }}
+          />
+          <DetailModal
+            point={detailPoint}
+            token={token}
+            onClose={() => setDetailPoint(null)}
+            onUpdated={reload}
+            onDelete={canEdit && detailPoint ? (p) => {
+              if (!p.targetId) return;
+              setConfirm({ open: true, pointId: p.id });
+            } : undefined}
+            onNavigate={(p) => setDetailPoint(p)}
           />
         </>
       )}

@@ -1,15 +1,118 @@
-import { useMemo, useState } from 'react';
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { ImageOverlay, MapContainer, Marker } from 'react-leaflet';
+import L from 'leaflet';
 import type { MapPoint } from '../api/map';
 import './MapView.css';
+
+// Composant wrapper pour animer les changements de position
+function AnimatedMarker({
+  position,
+  icon,
+  zIndexOffset,
+  draggable,
+  eventHandlers,
+  interactive,
+}: {
+  position: [number, number];
+  icon: L.DivIcon;
+  zIndexOffset?: number;
+  draggable: boolean;
+  eventHandlers: L.LeafletEventHandlerFnMap;
+  interactive: boolean;
+}) {
+  const markerRef = useRef<L.Marker | null>(null);
+  const previousPositionRef = useRef<[number, number] | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!markerRef.current) return;
+    
+    const newPos = L.latLng(position[0], position[1]);
+    
+    // Vérifie si la position a changé par rapport à la précédente
+    if (
+      previousPositionRef.current &&
+      (Math.abs(previousPositionRef.current[0] - position[0]) > 0.0001 || 
+       Math.abs(previousPositionRef.current[1] - position[1]) > 0.0001)
+    ) {
+      // Annule l'animation précédente si elle existe
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
+      // Animation manuelle avec interpolation
+      const startPos = markerRef.current.getLatLng();
+      const endPos = newPos;
+      const duration = 400; // ms
+      const startTime = Date.now();
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Fonction d'easing (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        const currentLat = startPos.lat + (endPos.lat - startPos.lat) * easeOut;
+        const currentLng = startPos.lng + (endPos.lng - startPos.lng) * easeOut;
+        
+        markerRef.current?.setLatLng([currentLat, currentLng], { animate: false });
+        
+        if (progress < 1) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          animationFrameRef.current = null;
+        }
+      };
+      
+      animationFrameRef.current = requestAnimationFrame(animate);
+    } else if (!previousPositionRef.current) {
+      // Première position, pas d'animation
+      markerRef.current.setLatLng(newPos, { animate: false });
+    }
+    
+    previousPositionRef.current = position;
+    
+    // Nettoyage
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [position]);
+
+  // Mise à jour de l'icône quand elle change
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setIcon(icon);
+    }
+  }, [icon]);
+
+  return (
+    <Marker
+      ref={(ref) => {
+        if (ref) {
+          markerRef.current = ref;
+        }
+      }}
+      position={position}
+      icon={icon}
+      zIndexOffset={zIndexOffset}
+      draggable={draggable}
+      eventHandlers={eventHandlers}
+      interactive={interactive}
+    />
+  );
+}
 
 type Props = {
   points: MapPoint[];
   backgroundUrl?: string;
   canEdit?: boolean;
-  onDelete?: (point: MapPoint) => Promise<void>;
+  creatingMode?: boolean;
+  onMapClick?: (x: number, y: number) => void;
   onMove?: (point: MapPoint, x: number, y: number) => Promise<void>;
-  onEdit?: (point: MapPoint) => void;
+  onDetail?: (point: MapPoint) => void;
 };
 
 const kindColor: Record<MapPoint['kind'], string> = {
@@ -24,151 +127,519 @@ export function MapView({
   points,
   backgroundUrl = '/map.jpg',
   canEdit = false,
-  onDelete,
+  creatingMode = false,
+  onMapClick,
   onMove,
-  onEdit,
+  onDetail,
 }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [imgSize, setImgSize] = useState<{ width: number; height: number }>({
+    width: 2000,
+    height: 1200,
+  });
+  const [mapRef, setMapRef] = useState<L.Map | null>(null);
+  const mapRefRef = useRef<L.Map | null>(null);
+  const [initialZoom, setInitialZoom] = useState(-2);
+  const [separatedPins, setSeparatedPins] = useState<Map<string, [number, number]>>(new Map());
+  const separationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const creatingModeRef = useRef(creatingMode);
+  const onMapClickRef = useRef(onMapClick);
 
-  const selected = useMemo(
-    () => points.find((p) => p.id === selectedId) ?? null,
-    [points, selectedId],
+  // Synchronise mapRef avec mapRefRef pour accès dans les closures
+  useEffect(() => {
+    mapRefRef.current = mapRef;
+  }, [mapRef]);
+
+  // Synchronise les refs pour creatingMode et onMapClick
+  useEffect(() => {
+    creatingModeRef.current = creatingMode;
+    onMapClickRef.current = onMapClick;
+    console.log('Refs mises à jour, creatingMode:', creatingMode, 'onMapClick:', !!onMapClick);
+  }, [creatingMode, onMapClick]);
+
+  // Mémorise les eventHandlers pour l'ImageOverlay
+  const imageOverlayHandlers = useMemo(() => ({
+    load: (e: L.LeafletEvent) => {
+      const imgEl = e.target as HTMLImageElement;
+      if (imgEl?.naturalWidth && imgEl?.naturalHeight) {
+        setImgSize({ width: imgEl.naturalWidth, height: imgEl.naturalHeight });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'leaflet-load',
+            hypothesisId: 'H-img',
+            location: 'MapView:ImageOverlay:load',
+            message: 'image natural size',
+            data: { w: imgEl.naturalWidth, h: imgEl.naturalHeight },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+      }
+    },
+    click: (e: L.LeafletMouseEvent) => {
+      // Si on est en mode création, gérer le clic directement sur l'ImageOverlay
+      // Utiliser les refs pour avoir les valeurs les plus récentes
+      const currentCreatingMode = creatingModeRef.current;
+      const currentOnMapClick = onMapClickRef.current;
+      
+      // Obtenir la carte depuis l'événement ou la ref
+      const currentMapRef = (e.target as any)?._map || mapRefRef.current;
+      
+      console.log('Clic sur ImageOverlay détecté, creatingMode:', currentCreatingMode, 'onMapClick:', !!currentOnMapClick, 'mapRef:', !!currentMapRef);
+      if (currentCreatingMode && currentOnMapClick && currentMapRef) {
+        console.log('Clic sur ImageOverlay en mode création - traitement');
+        const latlng = e.latlng;
+        const bounds = currentMapRef.getBounds();
+        
+        // Convertir les coordonnées lat/lng en coordonnées relatives (0-1)
+        const x = (latlng.lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest());
+        const y = 1 - (latlng.lat - bounds.getSouth()) / (bounds.getNorth() - bounds.getSouth());
+        
+        console.log('Coordonnées calculées depuis ImageOverlay:', { x, y, latlng: { lat: latlng.lat, lng: latlng.lng } });
+        currentOnMapClick(x, y);
+        e.originalEvent.stopPropagation();
+        e.originalEvent.preventDefault();
+      } else {
+        console.log('Conditions non remplies pour traitement:', {
+          creatingMode: currentCreatingMode,
+          hasOnMapClick: !!currentOnMapClick,
+          hasMapRef: !!currentMapRef,
+          eventTarget: e.target,
+          eventTargetMap: (e.target as any)?._map
+        });
+      }
+    },
+  }), []); // Dépendances vides car on utilise les refs
+
+  const bounds: [[number, number], [number, number]] = useMemo(
+    () => [
+      [0, 0],
+      [imgSize.height, imgSize.width],
+    ],
+    [imgSize.height, imgSize.width],
   );
 
+  const center = useMemo(
+    () => [imgSize.height / 2, imgSize.width / 2] as [number, number],
+    [imgSize.height, imgSize.width],
+  );
+
+  const toLatLng = (p: MapPoint) => {
+    const isRatio = p.x <= 1 && p.y <= 1;
+    const x = isRatio ? p.x * imgSize.width : p.x;
+    const y = isRatio ? p.y * imgSize.height : p.y;
+    return [y, x] as [number, number]; // [lat, lng]
+  };
+
+  const getIcon = (kind: MapPoint['kind'], iconUrl?: string | null) => {
+    // Si c'est une ville et qu'une icône est fournie, utiliser l'icône (55x55)
+    if (kind === 'city' && iconUrl) {
+      return L.divIcon({
+        className: 'map-pin-icon',
+        html: `<img src="${iconUrl}" alt="City icon" style="width: 55px; height: 55px; object-fit: contain;" />`,
+        iconSize: [55, 55],
+        iconAnchor: [27.5, 27.5],
+      });
+    }
+    // Si c'est un lieu et qu'une icône est fournie, utiliser l'icône (32x32)
+    if (kind === 'place' && iconUrl) {
+      return L.divIcon({
+        className: 'map-pin-icon',
+        html: `<img src="${iconUrl}" alt="Place icon" style="width: 32px; height: 32px; object-fit: contain;" />`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+    }
+    // Si c'est un personnage, utiliser l'icône Person.png (24x24)
+    if (kind === 'person') {
+      return L.divIcon({
+        className: 'map-pin-icon',
+        html: `<img src="/Icon/person.png" alt="Person icon" style="width: 24px; height: 24px; object-fit: contain;" />`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+    }
+    // Sinon, utiliser le pin par défaut
+    return L.divIcon({
+      className: 'map-pin-icon',
+      html: `<span class="map-pin-dot" style="background:${kindColor[kind]}"></span>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    });
+  };
+
+  const getZIndexOffset = (kind: MapPoint['kind']): number => {
+    // Ordre : Kingdom > City > Place > Person
+    switch (kind) {
+      case 'kingdom':
+        return 400;
+      case 'city':
+        return 300;
+      case 'place':
+        return 200;
+      case 'person':
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
+  // Les fonctions findNearbyPins et calculateCirclePositions sont maintenant définies
+  // directement dans le handler de clic pour avoir accès à la map depuis le marker
+
+  // Remet les pins en place quand on clique sur la carte (mais pas sur un marker)
+  useEffect(() => {
+    if (!mapRef) {
+      console.log('useEffect handleMapClick: mapRef non disponible');
+      return;
+    }
+
+    console.log('useEffect handleMapClick: création du handler, creatingMode:', creatingMode, 'onMapClick:', !!onMapClick);
+
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      console.log('handleMapClick appelé, creatingMode:', creatingMode, 'onMapClick:', !!onMapClick);
+      const target = e.originalEvent.target as HTMLElement;
+      
+      // Si on est en mode création et qu'on clique sur la carte (pas sur un marker)
+      if (creatingMode && onMapClick) {
+        // Vérifier qu'on ne clique pas sur un marker ou un popup
+        const isMarker = target.closest('.leaflet-marker-icon') || target.closest('.leaflet-popup');
+        if (!isMarker) {
+          console.log('Mode création actif, clic sur la carte détecté');
+          const latlng = e.latlng;
+          const bounds = mapRef.getBounds();
+          
+          // Convertir les coordonnées lat/lng en coordonnées relatives (0-1)
+          const x = (latlng.lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest());
+          const y = 1 - (latlng.lat - bounds.getSouth()) / (bounds.getNorth() - bounds.getSouth());
+          
+          console.log('Coordonnées calculées:', { x, y, latlng: { lat: latlng.lat, lng: latlng.lng } });
+          onMapClick(x, y);
+          return;
+        } else {
+          console.log('Clic sur marker/popup, ignoré');
+        }
+      }
+      
+      // Ne réinitialise que si le clic est directement sur la carte, pas sur un marker
+      if (target && !target.closest('.leaflet-marker-icon') && !target.closest('.leaflet-popup')) {
+        setSeparatedPins(new Map());
+        if (separationTimeoutRef.current) {
+          clearTimeout(separationTimeoutRef.current);
+        }
+      }
+    };
+
+    mapRef.on('click', handleMapClick);
+    return () => {
+      mapRef.off('click', handleMapClick);
+    };
+  }, [mapRef, creatingMode, onMapClick]);
+
+  // Précharge l'image pour récupérer la taille naturelle
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setImgSize({ width: img.naturalWidth, height: img.naturalHeight });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'debug-session',
+          runId: 'leaflet-preload',
+          hypothesisId: 'H-img-preload',
+          location: 'MapView:useEffect:preload',
+          message: 'image preload size',
+          data: { w: img.naturalWidth, h: img.naturalHeight },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+    };
+    img.src = backgroundUrl;
+  }, [backgroundUrl]);
+
+  useEffect(() => {
+    if (!mapRef) return;
+    const size = mapRef.getSize();
+    const rect = mapRef.getContainer().getBoundingClientRect();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'debug-session',
+        runId: 'leaflet-size',
+        hypothesisId: 'H-size',
+        location: 'MapView:useEffect:size',
+        message: 'map size vs image',
+        data: {
+          mapW: size.x,
+          mapH: size.y,
+          rectW: rect.width,
+          rectH: rect.height,
+          imgW: imgSize.width,
+          imgH: imgSize.height,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [mapRef, imgSize.width, imgSize.height]);
+
+  useEffect(() => {
+    if (!mapRef) return;
+    const handler = () => {
+      const center = mapRef.getCenter();
+      const zoom = mapRef.getZoom();
+      const size = mapRef.getSize();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'debug-session',
+          runId: 'leaflet-move',
+          hypothesisId: 'H-move',
+          location: 'MapView:useEffect:moveend',
+          message: 'move end',
+          data: {
+            lat: center.lat,
+            lng: center.lng,
+            zoom,
+            w: size.x,
+            h: size.y,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+    };
+    mapRef.on('moveend', handler);
+    return () => {
+      mapRef.off('moveend', handler);
+    };
+  }, [mapRef]);
+
+  // Calcule un zoom initial en fonction des bounds
+  useEffect(() => {
+    if (!mapRef) return;
+    const latLngBounds = L.latLngBounds(bounds);
+    const targetZoom = mapRef.getBoundsZoom(latLngBounds, true) - 3;
+    setTimeout(() => {
+      setInitialZoom(targetZoom);
+    }, 0);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'debug-session',
+        runId: 'leaflet-zoom',
+        hypothesisId: 'H-zoom',
+        location: 'MapView:useEffect:initZoom',
+        message: 'compute initial zoom',
+        data: {
+          targetZoom,
+          imgW: imgSize.width,
+          imgH: imgSize.height,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [mapRef, bounds, imgSize.width, imgSize.height]);
+
   return (
-    <div className="map-shell">
-      <TransformWrapper
-        initialScale={1}
-        minScale={0.5}
-        maxScale={2.5}
-        wheel={{ step: 0.1 }}
-        doubleClick={{ disabled: true }}
+    <div className="map-shell" style={{ cursor: creatingMode ? 'crosshair' : 'default' }}>
+      <MapContainer
+        className="leaflet-map"
+        crs={L.CRS.Simple}
+        bounds={bounds}
+        center={center}
+        zoom={initialZoom}
+        minZoom={Math.min(initialZoom - 2, -6)}
+        maxZoom={8}
+        style={{ width: '100%', height: `${imgSize.height}px`, minHeight: '800px' }}
+        scrollWheelZoom
+        zoomControl={false}
+        doubleClickZoom={false}
+        attributionControl={false}
+        whenCreated={(map) => {
+          setMapRef(map);
+          mapRefRef.current = map; // Synchronise immédiatement
+          console.log('Map créée, mapRef défini:', !!map);
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: 'debug-session',
+              runId: 'leaflet-map',
+              hypothesisId: 'H-map-created',
+              location: 'MapView:MapContainer:whenCreated',
+              message: 'map created',
+              data: {},
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+          // #endregion
+        }}
       >
-        {({ zoomIn, zoomOut, resetTransform }) => (
-          <>
-            <div className="map-toolbar">
-              <button onClick={() => zoomIn()}>+</button>
-              <button onClick={() => zoomOut()}>-</button>
-              <button onClick={() => resetTransform()}>Reset</button>
-            </div>
-            <TransformComponent wrapperClass="map-wrapper" contentClass="map-content">
-              <div
-                className="map-canvas"
-              >
-                <img src={backgroundUrl} alt="Carte" className="map-image" />
-                {points.map((p) => (
-                  <button
-                    key={p.id}
-                    className="map-pin"
-                    style={{
-                      left: `${p.x * 100}%`,
-                      top: `${p.y * 100}%`,
-                      background: kindColor[p.kind],
-                    }}
-                    title={`${p.name} (${p.kind})`}
-                    onClick={() => setSelectedId(p.id)}
-                    draggable={canEdit && Boolean(onMove)}
-                    onDragStart={(e) => {
-                      if (!canEdit || !onMove) return;
-                      setDraggingId(p.id);
-                      e.dataTransfer.setData('text/plain', p.id);
-                    }}
-                    onDragEnd={() => {
-                      if (!canEdit || !onMove) return;
-                      setDraggingId(null);
-                    }}
-                  />
-                ))}
-                {canEdit && onMove && draggingId && (
-                  <div
-                    className="map-dropzone"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={async (e) => {
-                      e.preventDefault();
-                      const id = draggingId;
-                      if (!id) return;
-                      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                      const x = (e.clientX - rect.left) / rect.width;
-                      const y = (e.clientY - rect.top) / rect.height;
-                      const point = points.find((pt) => pt.id === id);
-                      if (!point) return;
-                      setBusy(true);
-                      setError(null);
-                      try {
-                        await onMove(point, x, y);
-                        setSelectedId(point.id);
-                      } catch (err) {
-                        const message = err instanceof Error ? err.message : 'Erreur';
-                        setError(message);
-                      } finally {
-                        setBusy(false);
-                        setDraggingId(null);
-                      }
-                    }}
-                  />
-                )}
-                {selected && (
-                  <div
-                    className="map-popover glass"
-                    style={{ left: `${selected.x * 100}%`, top: `${selected.y * 100}%` }}
-                  >
-                    <div className="popover-header">
-                      <div className="popover-kind">{selected.kind}</div>
-                      <button className="popover-close" onClick={() => setSelectedId(null)}>
-                        ×
-                      </button>
-                    </div>
-                    <div className="popover-title">{selected.name}</div>
-                    {selected.description && (
-                      <div className="popover-desc">{selected.description}</div>
-                    )}
-                    {error && <div className="popover-error">{error}</div>}
-                    {canEdit && onDelete && (
-                      <div className="popover-actions">
-                        {onEdit && (
-                          <button
-                            className="ghost"
-                            disabled={busy}
-                            onClick={() => {
-                              if (selected) onEdit(selected);
-                            }}
-                          >
-                            Éditer
-                          </button>
-                        )}
-                        <button
-                          className="danger"
-                          disabled={busy}
-                          onClick={async () => {
-                            if (!selected) return;
-                            setBusy(true);
-                            setError(null);
-                            try {
-                              await onDelete(selected);
-                              setSelectedId(null);
-                            } catch (err) {
-                              const message = err instanceof Error ? err.message : 'Erreur';
-                              setError(message);
-                            } finally {
-                              setBusy(false);
-                            }
-                          }}
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </TransformComponent>
-          </>
-        )}
-      </TransformWrapper>
+        <ImageOverlay
+          url={backgroundUrl}
+          bounds={bounds}
+          interactive={true}
+          eventHandlers={imageOverlayHandlers}
+        />
+        
+        {points.map((p) => {
+          // Utilise la position séparée si disponible, sinon la position originale
+          const position = separatedPins.has(p.id) ? separatedPins.get(p.id)! : toLatLng(p);
+          const isSeparated = separatedPins.has(p.id);
+          
+          // Log pour vérifier que les markers sont créés
+          if (points.indexOf(p) === 0) {
+            console.log(`Création de ${points.length} markers, premier: ${p.name}`);
+          }
+
+          const handlers: L.LeafletEventHandlerFnMap = {
+            click: (e) => {
+              // Obtient la référence de la map depuis le marker
+              const marker = e.target as L.Marker;
+              const currentMapRef = marker._map || mapRefRef.current;
+              console.log(`Handler de clic appelé pour pin: ${p.name}, isSeparated: ${isSeparated}, mapRef: ${!!currentMapRef}`);
+              // Empêche la propagation vers la carte
+              e.originalEvent.stopPropagation();
+              
+              if (isSeparated) {
+                console.log(`Pin séparé détecté, ouverture directe des détails`);
+                // Si le pin est séparé, on ouvre directement les détails
+                if (onDetail) {
+                  setSeparatedPins(new Map());
+                  if (separationTimeoutRef.current) {
+                    clearTimeout(separationTimeoutRef.current);
+                  }
+                  onDetail(p);
+                }
+              } else {
+                console.log(`Pin non séparé, vérification des pins proches...`);
+                // Sinon, on vérifie s'il y a des pins proches à séparer
+                if (!currentMapRef) {
+                  console.log(`mapRef non disponible, ouverture directe`);
+                  // Si pas de mapRef, on ouvre directement
+                  if (onDetail) onDetail(p);
+                  return;
+                }
+                
+                // Fonction temporaire pour trouver les pins proches avec la map actuelle
+                const findNearbyPinsNow = (clickPoint: MapPoint, threshold: number = 25): MapPoint[] => {
+                  return points.filter((otherPoint) => {
+                    const pos1 = toLatLng(clickPoint);
+                    const pos2 = toLatLng(otherPoint);
+                    const containerPoint1 = currentMapRef.latLngToContainerPoint(pos1);
+                    const containerPoint2 = currentMapRef.latLngToContainerPoint(pos2);
+                    const distance = Math.sqrt(
+                      Math.pow(containerPoint1.x - containerPoint2.x, 2) + Math.pow(containerPoint1.y - containerPoint2.y, 2)
+                    );
+                    return distance < threshold && otherPoint.id !== clickPoint.id;
+                  });
+                };
+                
+                // Fonction temporaire pour calculer les positions en cercle
+                const calculateCirclePositionsNow = (
+                  center: MapPoint,
+                  nearbyPins: MapPoint[],
+                  radius: number = 50
+                ): Map<string, [number, number]> => {
+                  const centerLatLng = toLatLng(center);
+                  const centerContainer = currentMapRef.latLngToContainerPoint(centerLatLng);
+                  const positions = new Map<string, [number, number]>();
+                  const allPins = [center, ...nearbyPins];
+
+                  allPins.forEach((pin, index) => {
+                    if (index === 0) {
+                      positions.set(pin.id, toLatLng(pin));
+                    } else {
+                      const angle = ((index - 1) * 2 * Math.PI) / nearbyPins.length;
+                      const offsetX = Math.cos(angle) * radius;
+                      const offsetY = Math.sin(angle) * radius;
+                      const newContainerPoint = L.point(
+                        centerContainer.x + offsetX,
+                        centerContainer.y + offsetY
+                      );
+                      const newLatLng = currentMapRef.containerPointToLatLng(newContainerPoint);
+                      positions.set(pin.id, [newLatLng.lat, newLatLng.lng]);
+                    }
+                  });
+
+                  return positions;
+                };
+                
+                console.log(`Clic sur pin: ${p.name}, vérification des pins proches...`);
+                const nearbyPins = findNearbyPinsNow(p, 25);
+                console.log(`Résultat: ${nearbyPins.length} pins proches trouvés`);
+                
+                if (nearbyPins.length > 0) {
+                  // Il y a des pins proches, on les sépare
+                  console.log(`Séparation de ${nearbyPins.length + 1} pins (${p.name} + ${nearbyPins.map(n => n.name).join(', ')})`);
+                  const separatedPositions = calculateCirclePositionsNow(p, nearbyPins);
+                  setSeparatedPins(separatedPositions);
+                  
+                  // Remet les pins en place après 5 secondes
+                  if (separationTimeoutRef.current) {
+                    clearTimeout(separationTimeoutRef.current);
+                  }
+                  separationTimeoutRef.current = setTimeout(() => {
+                    setSeparatedPins(new Map());
+                  }, 5000);
+                } else {
+                  // Pas de pins proches, on ouvre directement les détails
+                  if (onDetail) {
+                    setSeparatedPins(new Map());
+                    if (separationTimeoutRef.current) {
+                      clearTimeout(separationTimeoutRef.current);
+                    }
+                    onDetail(p);
+                  }
+                }
+              }
+            },
+          };
+          if (canEdit && onMove) {
+            handlers.dragend = async (e) => {
+              const { lat, lng } = e.target.getLatLng();
+              const x = lng / imgSize.width;
+              const y = lat / imgSize.height;
+              try {
+                await onMove(p, x, y);
+                // Remet les pins en place après déplacement
+                setSeparatedPins(new Map());
+              } catch (err) {
+                // Erreur silencieuse, l'utilisateur sera notifié via les toasts
+                console.error('Erreur lors du déplacement:', err);
+              }
+            };
+          }
+          return (
+            <AnimatedMarker
+              key={`${p.id}-${p.iconUrl || 'default'}`}
+              position={position}
+              icon={getIcon(p.kind, p.iconUrl)}
+              zIndexOffset={getZIndexOffset(p.kind)}
+              draggable={canEdit && Boolean(onMove)}
+              eventHandlers={handlers}
+              interactive={true}
+            />
+          );
+        })}
+      </MapContainer>
     </div>
   );
 }
 
+export default MapView;

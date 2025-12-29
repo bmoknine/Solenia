@@ -14,7 +14,13 @@ export async function kingdomRoutes(app: FastifyInstance) {
     const id = idSchema.parse((request.params as any).id);
     const kingdom = await app.prisma.kingdom.findUnique({
       where: { id },
-      include: { position: true },
+      include: {
+        position: true,
+        cities: { select: { id: true, name: true } },
+        places: { select: { id: true, name: true } },
+        persons: { select: { id: true, name: true } },
+        comments: { select: { id: true, description: true, dateInGame: true } },
+      },
     });
     if (!kingdom) return reply.notFound();
     return kingdom;
@@ -99,6 +105,8 @@ export async function kingdomRoutes(app: FastifyInstance) {
     }
 
     try {
+      // Supprimer la position associée si elle existe
+      await app.prisma.position.deleteMany({ where: { kingdomId: id } });
       await app.prisma.kingdom.delete({ where: { id } });
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
