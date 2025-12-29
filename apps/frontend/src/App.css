@@ -47,8 +47,8 @@
 .search-panel {
   position: absolute;
   top: 12px;
-  left: 16px;
-  width: min(520px, 80vw);
+  left: 80px;
+  width: min(520px, 70vw);
   z-index: 21;
   padding: 0;
   background: transparent;
@@ -56,9 +56,24 @@
   box-shadow: none;
 }
 
-.search-toggle {
+.search-bar-container {
   position: absolute;
   top: 12px;
+  left: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 21;
+}
+
+.search-toggle {
+  position: relative;
+  z-index: 21;
+}
+
+.filter-toggle {
+  position: absolute;
+  top: 60px;
   left: 16px;
   z-index: 21;
 }
@@ -69,19 +84,73 @@
   padding: 6px 8px 0 8px;
 }
 
+.panel-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .filters-panel {
   position: absolute;
-  top: 110px;
-  left: 12px;
-  width: 220px;
+  top: 98px;
+  left: 16px;
+  width: min(520px, 80vw);
   z-index: 21;
+}
+
+.filters-expanded {
+  width: min(90vw, 1200px);
+}
+
+/* .filter-inline styles moved to Sidebar.css - only apply when not in sidebar */
+.filter-inline:not(.sidebar .filter-inline) {
+  position: absolute;
+  top: 98px;
+  left: 16px;
+  z-index: 21;
+}
+
+.create-button-container {
+  position: absolute;
+  top: 184px;
+  left: 16px;
+  z-index: 21;
+}
+
+.create-panel-container {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 21;
+  max-width: min(400px, 40vw);
+}
+
+/* .filter-inline-box styles - only apply when not in sidebar */
+.filter-inline-box:not(.sidebar .filter-inline-box) {
+  position: absolute;
+  top: 12px;
+  left: 120px;
+  z-index: 21;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(8px);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 220px;
+  max-width: 320px;
 }
 
 .results-panel {
   position: absolute;
-  top: 60px;
-  left: 16px;
-  width: min(520px, 80vw);
+  top: 52px;
+  left: 80px;
+  width: min(520px, 70vw);
   max-height: 50vh;
   z-index: 21;
 }
@@ -195,7 +264,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 2000;
 }
 
 .confirm {

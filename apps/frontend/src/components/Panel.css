@@ -3,10 +3,16 @@
   flex-direction: column;
   gap: 8px;
   padding: 16px;
-  border-radius: 12px;
   border-radius: 14px;
   color: #e5e7eb;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Si le panel a la classe glass, utiliser le style glass au lieu du style panel par défaut */
+.panel.glass {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .panel h3 {
@@ -108,11 +114,7 @@
   color: #cbd5e1;
 }
 
-.detail-modal {
-  max-width: 420px;
-  padding: 16px;
-  border-radius: 14px;
-}
+/* .detail-modal styles moved to DetailModal.css */
 
 .detail-header {
   display: flex;

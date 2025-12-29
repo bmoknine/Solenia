@@ -1,28 +1,216 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState, useRef } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import type { City, Kingdom, Place } from '../api/entities';
-import { createCity, createKingdom, createPerson, createPlace, listCities, listKingdoms, listPlaces } from '../api/entities';
+import type { City, Kingdom, Place, Breed, Sex, Membership, Language } from '../api/entities';
+import { createCity, createKingdom, createPerson, createPlace, listCities, listKingdoms, listPlaces, updatePosition } from '../api/entities';
 import './Panel.css';
+
+// Options pour les enums
+const BREED_OPTIONS: Breed[] = [
+  'ELFE',
+  'HALFELIN',
+  'HUMAIN',
+  'NAIN',
+  'DEMI_ELFE',
+  'DEMI_ORC',
+  'DRAKEIDE',
+  'GNOME',
+  'TIEFFELIN',
+  'AASIMAR',
+  'GENASIAIR',
+  'GENASITERRE',
+  'GENASIFEUR',
+  'GENASIEAU',
+  'GOLIATH',
+  'OTHER',
+];
+
+const SEX_OPTIONS: Sex[] = ['MAN', 'WOMAN', 'OTHER'];
+
+const MEMBERSHIP_OPTIONS: Membership[] = [
+  'POLITIC',
+  'RELIGEUX',
+  'MARCHAND',
+  'CCCH',
+  'CRIMINALITE',
+  'OTHER',
+];
+
+const LANGUAGE_OPTIONS: Language[] = [
+  'COMMUN',
+  'NAIN',
+  'ELFIQUE',
+  'GNOME',
+  'HALFELIN',
+  'ORC',
+  'GOBELIN',
+  'GEANT',
+  'DRACONIQUE',
+  'SYLVESTRE',
+  'INFERNAL',
+  'ABYSSAL',
+  'CELESTE',
+  'PRIMORDIAL',
+  'AQUAN',
+  'AURAN',
+  'IGNAN',
+  'TERRAN',
+  'PROFOND',
+  'SLAADI',
+  'TELEPATHIQUE',
+  'ARGOT_VOLEUR',
+];
+
+// Fonctions de formatage pour l'affichage
+const formatBreed = (breed: Breed | null | undefined): string => {
+  if (!breed) return '-';
+  return breed.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+};
+
+const formatSex = (sex: Sex | null | undefined): string => {
+  if (!sex) return '-';
+  const map: Record<Sex, string> = {
+    MAN: 'Homme',
+    WOMAN: 'Femme',
+    OTHER: 'Autre',
+  };
+  return map[sex] || sex;
+};
+
+const formatMembership = (membership: Membership | null | undefined): string => {
+  if (!membership) return '-';
+  const map: Record<Membership, string> = {
+    POLITIC: 'Politique',
+    RELIGEUX: 'Religieux',
+    MARCHAND: 'Marchand',
+    CCCH: 'CCCH',
+    CRIMINALITE: 'Criminalité',
+    OTHER: 'Autre',
+  };
+  return map[membership] || membership;
+};
+
+const formatLanguage = (lang: Language): string => {
+  const map: Record<Language, string> = {
+    COMMUN: 'Commun',
+    NAIN: 'Nain',
+    ELFIQUE: 'Elfique',
+    GNOME: 'Gnome',
+    HALFELIN: 'Halfelin',
+    ORC: 'Orc',
+    GOBELIN: 'Gobelin',
+    GEANT: 'Géant',
+    DRACONIQUE: 'Draconique',
+    SYLVESTRE: 'Sylvestre',
+    INFERNAL: 'Infernal',
+    ABYSSAL: 'Abyssal',
+    CELESTE: 'Céleste',
+    PRIMORDIAL: 'Primordial',
+    AQUAN: 'Aquan',
+    AURAN: 'Auran',
+    IGNAN: 'Ignan',
+    TERRAN: 'Terran',
+    PROFOND: 'Profond',
+    SLAADI: 'Slaadi',
+    TELEPATHIQUE: 'Télépathique',
+    ARGOT_VOLEUR: "Argot des Voleurs",
+  };
+  return map[lang] || lang;
+};
+
+// Composant dropdown pour les langues
+function LanguageDropdown({
+  selectedLanguages,
+  onLanguagesChange,
+}: {
+  selectedLanguages: Language[];
+  onLanguagesChange: (languages: Language[]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const toggleLanguage = (lang: Language) => {
+    if (selectedLanguages.includes(lang)) {
+      onLanguagesChange(selectedLanguages.filter((l) => l !== lang));
+    } else {
+      onLanguagesChange([...selectedLanguages, lang]);
+    }
+  };
+
+  const displayText = selectedLanguages.length > 0 
+    ? `${selectedLanguages.length} langue(s) sélectionnée(s)` 
+    : 'Sélectionner des langues';
+
+  return (
+    <div className="language-dropdown" ref={dropdownRef}>
+      <button
+        type="button"
+        className="language-dropdown-button"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{displayText}</span>
+        <span className="language-dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
+      </button>
+      {isOpen && (
+        <div className="language-dropdown-menu">
+          {LANGUAGE_OPTIONS.map((lang) => {
+            const isSelected = selectedLanguages.includes(lang);
+            return (
+              <label key={lang} className="language-checkbox">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleLanguage(lang)}
+                />
+                <span>{formatLanguage(lang)}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Kind = 'kingdom' | 'city' | 'place' | 'person';
 
 type Props = {
+  initialPosition?: { x: number; y: number };
   onCreated?: () => Promise<void> | void;
+  onCancel?: () => void;
 };
 
 const defaultStats = { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 };
 
-export function CreatePanel({ onCreated }: Props) {
+export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
   const { token, user } = useAuth();
   const [kind, setKind] = useState<Kind>('kingdom');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [iconUrl, setIconUrl] = useState('');
   const [population, setPopulation] = useState<number | ''>('');
   const [kingdomId, setKingdomId] = useState('');
   const [cityId, setCityId] = useState('');
   const [placeId, setPlaceId] = useState('');
-  const [membership, setMembership] = useState('');
-  const [languages, setLanguages] = useState('');
+  const [breed, setBreed] = useState<Breed | ''>('');
+  const [sex, setSex] = useState<Sex | ''>('');
+  const [membership, setMembership] = useState<Membership | ''>('');
+  const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([]);
   const [stats, setStats] = useState(defaultStats);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,12 +244,15 @@ export function CreatePanel({ onCreated }: Props) {
   const reset = () => {
     setName('');
     setDescription('');
+    setIconUrl('');
     setPopulation('');
     setKingdomId('');
     setCityId('');
     setPlaceId('');
+    setBreed('');
+    setSex('');
     setMembership('');
-    setLanguages('');
+    setSelectedLanguages([]);
     setStats(defaultStats);
   };
 
@@ -79,40 +270,62 @@ export function CreatePanel({ onCreated }: Props) {
       return;
     }
     try {
+      let createdId: string | undefined;
+      
       if (kind === 'kingdom') {
-        await createKingdom(token, {
+        const result = await createKingdom(token, {
           name,
           description: description || undefined,
           population: population === '' ? undefined : Number(population),
         });
+        createdId = result.id;
       } else if (kind === 'city') {
-        await createCity(token, {
+        const result = await createCity(token, {
           name,
           description: description || undefined,
+          iconUrl: iconUrl || undefined,
           kingdomId: kingdomId || undefined,
         });
+        createdId = result.id;
       } else if (kind === 'place') {
-        await createPlace(token, {
+        const result = await createPlace(token, {
           name,
           description: description || undefined,
+          // iconUrl sera défini automatiquement par le backend avec la valeur par défaut
           kingdomId: kingdomId || undefined,
           cityId: cityId || undefined,
         });
+        createdId = result.id;
       } else if (kind === 'person') {
-        await createPerson(token, {
+        const result = await createPerson(token, {
           name,
           description: description || undefined,
+          breed: breed || undefined,
+          sex: sex || undefined,
           kingdomId: kingdomId || undefined,
           cityId: cityId || undefined,
           placeId: placeId || undefined,
           membership: membership || undefined,
-          languages: languages
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean),
+          languages: selectedLanguages,
           ...stats,
         });
+        createdId = result.id;
       }
+      
+      // Si une position initiale a été fournie, créer la position
+      if (initialPosition && createdId) {
+        const payload =
+          kind === 'kingdom'
+            ? { x: initialPosition.x, y: initialPosition.y, kingdomId: createdId }
+            : kind === 'city'
+            ? { x: initialPosition.x, y: initialPosition.y, cityId: createdId }
+            : kind === 'place'
+            ? { x: initialPosition.x, y: initialPosition.y, placeId: createdId }
+            : { x: initialPosition.x, y: initialPosition.y, personOfInterestId: createdId };
+        
+        await updatePosition(token, payload);
+      }
+      
       setMessage('Créé avec succès.');
       reset();
       await onCreated?.();
@@ -124,7 +337,14 @@ export function CreatePanel({ onCreated }: Props) {
 
   return (
     <form className="panel glass" onSubmit={onSubmit}>
-      <h3>Créer</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <h3 style={{ margin: 0 }}>Créer</h3>
+        {onCancel && (
+          <button type="button" className="ghost" onClick={onCancel} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
+            ×
+          </button>
+        )}
+      </div>
       <label>
         Type
         <select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
@@ -142,6 +362,18 @@ export function CreatePanel({ onCreated }: Props) {
         Description
         <input value={description} onChange={(e) => setDescription(e.target.value)} />
       </label>
+      {kind === 'city' && (
+        <label>
+          Icône
+          <select value={iconUrl} onChange={(e) => setIconUrl(e.target.value)}>
+            <option value="">Aucune icône</option>
+            <option value="/Icon/capital.png">Capital</option>
+            <option value="/Icon/city.png">Cité</option>
+            <option value="/Icon/village.png">Village</option>
+            <option value="/Icon/fortified-city.png">Ville Fortifiée</option>
+          </select>
+        </label>
+      )}
       {kind === 'kingdom' && (
         <label>
           Population
@@ -192,12 +424,44 @@ export function CreatePanel({ onCreated }: Props) {
             </select>
           </label>
           <label>
-            Membership
-            <input value={membership} onChange={(e) => setMembership(e.target.value)} />
+            Race
+            <select value={breed} onChange={(e) => setBreed(e.target.value as Breed | '')}>
+              <option value="">Non spécifié</option>
+              {BREED_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {formatBreed(opt)}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
-            Langues (séparées par virgule)
-            <input value={languages} onChange={(e) => setLanguages(e.target.value)} />
+            Sexe
+            <select value={sex} onChange={(e) => setSex(e.target.value as Sex | '')}>
+              <option value="">Non spécifié</option>
+              {SEX_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {formatSex(opt)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Affiliation
+            <select value={membership} onChange={(e) => setMembership(e.target.value as Membership | '')}>
+              <option value="">Aucune affiliation</option>
+              {MEMBERSHIP_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {formatMembership(opt)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Langues
+            <LanguageDropdown
+              selectedLanguages={selectedLanguages}
+              onLanguagesChange={setSelectedLanguages}
+            />
           </label>
           <div className="stats-grid">
             {(['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'] as const).map((key) => (

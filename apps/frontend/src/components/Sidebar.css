@@ -1,0 +1,76 @@
+.sidebar {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 21;
+}
+
+.sidebar-button {
+  width: 100%;
+  min-width: 120px;
+}
+
+.sidebar-search-panel {
+  padding: 12px;
+  min-width: 280px;
+  margin-top: 0;
+}
+
+/* S'assurer que le style glass est appliqué */
+.sidebar-search-panel.glass {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.sidebar-results-panel {
+  padding: 0;
+  min-width: 280px;
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-top: 0;
+  border-radius: 0 0 14px 14px;
+  border-top: none;
+}
+
+.sidebar-select {
+  width: 100%;
+  min-width: 120px;
+  padding: 8px 12px;
+}
+
+/* Ajuster FilterPanel dans la sidebar */
+.sidebar .filter-inline {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar .filter-inline > button {
+  width: 100%;
+  min-width: 120px;
+}
+
+.sidebar .filter-inline-box {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  margin-top: 8px;
+  z-index: 22;
+  width: 100%;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}

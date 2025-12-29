@@ -8,6 +8,7 @@ export type MapPoint = {
   targetId: string | null;
   name: string;
   description: string | null;
+  iconUrl?: string | null;
 };
 
 export async function fetchMapPoints() {
