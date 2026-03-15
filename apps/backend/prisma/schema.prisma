@@ -88,6 +88,7 @@ model Kingdom {
   description String?
   dateInGame  DateTime?
   color       String?   // Couleur appliquée aux icônes des villes du royaume (hex, ex: #1a73e8)
+  flag        String?   // URL du drapeau (remplace l’icône sur la carte si défini)
   isForDM     Boolean   @default(false)
 
   cities   City[]
@@ -104,6 +105,7 @@ model City {
   name        String
   description String?
   iconUrl     String?
+  flag        String?   // URL du drapeau (remplace l’icône sur la carte si défini)
   kingdomId   String?
   isForDM     Boolean   @default(false)
 
@@ -229,6 +231,7 @@ model Organisation {
   description         String?
   organisationType    OrganisationType? // cellule ou principal
   parentOrganisationId String?
+  flag                String?  // URL du drapeau (affiché à la place de l’icône si défini)
   isForDM             Boolean  @default(false)
 
   parentOrganisation  Organisation? @relation("OrganisationHierarchy", fields: [parentOrganisationId], references: [id], onDelete: SetNull)

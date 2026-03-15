@@ -31,21 +31,6 @@ async function handle<T>(res: Response): Promise<T> {
     window.dispatchEvent(new CustomEvent('auth:token-expired'));
   }
   
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      sessionId:'debug-session',
-      runId:'run1',
-      hypothesisId:'H-api-error',
-      location:'api/client.ts:handle',
-      message:'API error',
-      data:{status:res.status,statusText:res.statusText,url:res.url},
-      timestamp:Date.now()
-    })
-  }).catch(()=>{});
-  // #endregion
   throw new Error(message);
 }
 

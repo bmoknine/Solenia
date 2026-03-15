@@ -44,7 +44,8 @@ export async function cityRoutes(app: FastifyInstance) {
 
   app.post('/cities', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const data = cityInputSchema.parse(request.body);
-    return app.prisma.city.create({ data });
+    const flag = data.flag === '' || data.flag == null ? null : data.flag;
+    return app.prisma.city.create({ data: { ...data, flag } });
   });
 
   app.put('/cities/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
@@ -71,6 +72,10 @@ export async function cityRoutes(app: FastifyInstance) {
       }
     }
     if ('kingdomId' in rawData) data.kingdomId = rawData.kingdomId ?? null;
+    if ('flag' in body) {
+      const v = body.flag;
+      data.flag = (v === '' || v === undefined || v === null) ? null : (v as string);
+    }
     console.log('Backend - data final:', data);
     return app.prisma.city.update({ where: { id }, data });
   });

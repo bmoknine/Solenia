@@ -79,23 +79,6 @@ function Content() {
     setHideActionError(false);
   }, [actionError, push]);
 
-  useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        sessionId:'debug-session',
-        runId:'run1',
-        hypothesisId:'H-render',
-        location:'App.tsx:Content',
-        message:'render state',
-        data:{points:points.length, userType:user?.type ?? null},
-        timestamp:Date.now()
-      })
-    }).catch(()=>{});
-    // #endregion
-  }, [points.length, user?.type]);
 
   const filteredPoints = useMemo(
     () =>

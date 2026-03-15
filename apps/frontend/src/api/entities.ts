@@ -2,8 +2,8 @@ import { withAuth } from './client';
 
 type Base = { name: string; description?: string };
 
-export type Kingdom = { id: string; name: string; color?: string | null; isForDM?: boolean };
-export type City = { id: string; name: string; kingdomId?: string | null; iconUrl?: string | null; isForDM?: boolean };
+export type Kingdom = { id: string; name: string; color?: string | null; flag?: string | null; isForDM?: boolean };
+export type City = { id: string; name: string; kingdomId?: string | null; iconUrl?: string | null; flag?: string | null; isForDM?: boolean };
 export type District = { 
   id: string; 
   name: string; 
@@ -16,7 +16,7 @@ export type District = {
 };
 export type Place = { id: string; name: string; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; isForDM?: boolean };
 export type OrganisationType = 'CELLULE' | 'PRINCIPAL';
-export type Organisation = { id: string; name: string; description?: string | null; organisationType?: OrganisationType | null; parentOrganisationId?: string | null; isForDM?: boolean };
+export type Organisation = { id: string; name: string; description?: string | null; organisationType?: OrganisationType | null; parentOrganisationId?: string | null; flag?: string | null; isForDM?: boolean };
 export type Breed = 'ELFE' | 'HALFELIN' | 'HUMAIN' | 'NAIN' | 'DEMI_ELFE' | 'DEMI_ORC' | 'DRAKEIDE' | 'GNOME' | 'TIEFFELIN' | 'AASIMAR' | 'GENASIAIR' | 'GENASITERRE' | 'GENASIFEUR' | 'GENASIEAU' | 'GOLIATH' | 'OTHER';
 export type Sex = 'MAN' | 'WOMAN' | 'OTHER';
 export type Membership = 'POLITIC' | 'RELIGEUX' | 'MARCHAND' | 'CCCH' | 'CRIMINALITE' | 'OTHER';
@@ -60,6 +60,7 @@ export type KingdomDetail = Kingdom & {
   population?: number | null;
   dateInGame?: string | null;
   color?: string | null;
+  flag?: string | null;
   isForDM?: boolean;
   cities?: Ref[];
   places?: Ref[];
@@ -72,6 +73,7 @@ export type KingdomDetail = Kingdom & {
 export type CityDetail = City & {
   description?: string | null;
   iconUrl?: string | null;
+  flag?: string | null;
   isForDM?: boolean;
   kingdom?: Ref | null;
   districts?: Ref[];
@@ -115,6 +117,7 @@ export type PersonDetail = Person & {
 };
 
 export type OrganisationDetail = Organisation & {
+  flag?: string | null;
   isForDM?: boolean;
   members?: Ref[];
   cities?: Ref[];
@@ -125,22 +128,31 @@ export type OrganisationDetail = Organisation & {
   lores?: LoreRef[];
 };
 
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+
+export async function getFlags(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/api/flags`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data?.flags) ? data.flags : [];
+}
+
 export async function listKingdoms() {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/kingdoms');
+  const res = await fetch(`${API_URL}/kingdoms`);
   if (!res.ok) throw new Error('Chargement royaumes échoué');
   const data = await res.json();
   return data as Kingdom[];
 }
 
 export async function listCities() {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/cities');
+  const res = await fetch(`${API_URL}/cities`);
   if (!res.ok) throw new Error('Chargement villes échoué');
   const data = await res.json();
   return data as City[];
 }
 
 export async function listDistricts() {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/districts');
+  const res = await fetch(`${API_URL}/districts`);
   if (!res.ok) throw new Error('Chargement quartiers échoué');
   const data = await res.json();
   return data as District[];
@@ -199,6 +211,7 @@ export async function updateKingdom(
     population: number | null;
     dateInGame: string | null;
     color: string | null;
+    flag: string | null;
   }>,
 ) {
   return withAuth(token).put(`/kingdoms/${id}`, data);
@@ -207,7 +220,7 @@ export async function updateKingdom(
 export async function updateCity(
   token: string,
   id: string,
-  data: Partial<{ name: string; description: string | null; iconUrl?: string | null; kingdomId?: string | null }>,
+  data: Partial<{ name: string; description: string | null; iconUrl?: string | null; flag?: string | null; kingdomId?: string | null }>,
 ) {
   return withAuth(token).put(`/cities/${id}`, data);
 }
@@ -261,11 +274,11 @@ export async function updatePerson(
   return withAuth(token).put(`/persons/${id}`, data);
 }
 
-export async function createKingdom(token: string, data: Base & { population?: number; dateInGame?: string; color?: string | null }) {
+export async function createKingdom(token: string, data: Base & { population?: number; dateInGame?: string; color?: string | null; flag?: string | null }) {
   return withAuth(token).post('/kingdoms', data);
 }
 
-export async function createCity(token: string, data: Base & { kingdomId?: string }) {
+export async function createCity(token: string, data: Base & { kingdomId?: string; iconUrl?: string | null; flag?: string | null }) {
   return withAuth(token).post('/cities', data);
 }
 
@@ -335,6 +348,7 @@ export async function createOrganisation(
   data: Base & {
     organisationType?: OrganisationType | null;
     parentOrganisationId?: string;
+    flag?: string | null;
     kingdomIds?: string[];
     cityIds?: string[];
     placeIds?: string[];
@@ -352,6 +366,7 @@ export async function updateOrganisation(
     description: string | null; 
     organisationType: OrganisationType | null;
     parentOrganisationId: string | null;
+    flag: string | null;
     kingdomIds?: string[];
     cityIds?: string[];
     placeIds?: string[];

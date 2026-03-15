@@ -63,3 +63,25 @@ function parseDate(value: string | number): Date | undefined {
   const parsed = new Date(s);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
+
+/**
+ * Retourne une valeur YYYY-MM-DD pour <input type="date"> (API renvoie souvent une chaîne ISO).
+ */
+export function toDateInputValue(
+  date: Date | string | number | null | undefined
+): string {
+  if (date == null || date === '') return '';
+  if (typeof date === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+    const d = new Date(date);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+  }
+  if (typeof date === 'number') {
+    const d = new Date(date, 0, 1);
+    return d.toISOString().slice(0, 10);
+  }
+  if (typeof date === 'object' && 'toISOString' in date) {
+    return (date as Date).toISOString().slice(0, 10);
+  }
+  return '';
+}

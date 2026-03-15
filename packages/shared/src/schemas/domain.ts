@@ -9,6 +9,7 @@ export const kingdomInputSchema = z.object({
   description: z.string().optional(),
   dateInGame: soleniaDateInGameSchema,
   isForDM: z.boolean().optional(),
+  flag: z.string().optional().nullable().or(z.literal('')),
   color: z.preprocess(
     (val) => (val === '' ? null : val),
     z.union([
@@ -22,6 +23,7 @@ export const cityInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   iconUrl: z.string().nullable().optional(),
+  flag: z.string().optional().nullable().or(z.literal('')),
   kingdomId: idSchema.optional(),
   isForDM: z.boolean().optional(),
 });
@@ -44,6 +46,7 @@ export const organisationInputSchema = z.object({
   description: z.string().optional().nullable(),
   organisationType: organisationTypeSchema.optional().nullable(),
   parentOrganisationId: idSchema.optional().nullable(),
+  flag: z.string().optional().nullable().or(z.literal('')),
   isForDM: z.boolean().optional(),
   kingdomIds: z.array(idSchema).optional(),
   cityIds: z.array(idSchema).optional(),
