@@ -6,9 +6,18 @@ import { z } from 'zod';
  * - 5 Jours Hors-Cycle en fin d'année (365 jours au total)
  */
 
-/** Schéma Zod : année (nombre), "YYYY", ou "YYYY-MM-DD" (mois 1-12, jour 1-30 ou 31-35 pour Jours Hors-Cycle). */
+/** Normalise une chaîne ISO (ex. 0671-09-11T23:50:39.000Z) en YYYY-MM-DD pour la validation. */
+function normalizeDateInput(v: unknown): unknown {
+  if (v === '' || v === null || v === undefined) return undefined;
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+    return v.slice(0, 10);
+  }
+  return v;
+}
+
+/** Schéma Zod : année (nombre), "YYYY", "YYYY-MM-DD" ou chaîne ISO (acceptée puis normalisée). */
 export const soleniaDateInGameSchema = z.preprocess(
-  (v) => (v === '' || v === null ? undefined : v),
+  (v) => normalizeDateInput(v === '' || v === null ? undefined : v),
   z
     .union([
       z.number().int(),
@@ -68,7 +77,11 @@ export function parseSoleniaDate(
   if (typeof value === 'number') {
     return new Date(value, 0, 1);
   }
-  const s = String(value).trim();
+  let s = String(value).trim();
+  // Accepter chaîne ISO (ex. 0671-09-11T23:50:39.000Z) : garder uniquement YYYY-MM-DD
+  if (s.length > 10 && /^\d{4}-\d{2}-\d{2}/.test(s)) {
+    s = s.slice(0, 10);
+  }
   if (/^\d{1,5}$/.test(s)) {
     return new Date(parseInt(s, 10), 0, 1);
   }

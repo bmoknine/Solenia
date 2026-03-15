@@ -62,8 +62,8 @@ export async function organisationRoutes(app: FastifyInstance) {
     const { kingdomIds, cityIds, placeIds, personIds, ...orgData } = rawData;
     console.log('Backend - IDs extraits:', { kingdomIds, cityIds, placeIds, personIds });
     
-    // Créer l'organisation
-    const organisation = await app.prisma.organisation.create({ data: orgData });
+    const flag = orgData.flag === '' || orgData.flag == null ? null : orgData.flag;
+    const organisation = await app.prisma.organisation.create({ data: { ...orgData, flag } });
     
     // Créer les liens avec les royaumes
     if (kingdomIds && kingdomIds.length > 0) {
@@ -197,6 +197,7 @@ export async function organisationRoutes(app: FastifyInstance) {
         throw new Error('Une organisation ne peut pas être son propre parent');
       }
     }
+    if ('flag' in orgData) data.flag = orgData.flag === '' || orgData.flag == null ? null : orgData.flag;
     
     // Mettre à jour l'organisation
     await app.prisma.organisation.update({ where: { id }, data });

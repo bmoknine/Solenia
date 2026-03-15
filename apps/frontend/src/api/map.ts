@@ -12,6 +12,8 @@ export type MapPoint = {
   name: string;
   description: string | null;
   iconUrl?: string | null;
+  /** URL du drapeau (remplace l’icône sur la carte si défini) */
+  flag?: string | null;
   /** Couleur du royaume (point par défaut) ou des villes (appliquée à l'icône) */
   kingdomColor?: string | null;
 };

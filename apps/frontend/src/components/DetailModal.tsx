@@ -43,10 +43,11 @@ import {
   listCities,
   listPlaces,
   listPersons,
+  getFlags,
 } from '../api/entities';
 import { useToast } from '../toast/ToastProvider';
 import type { Breed, Sex, Membership, Language } from '../api/entities';
-import { formatSoleniaDate } from '../utils/solenia-date';
+import { formatSoleniaDate, toDateInputValue } from '../utils/solenia-date';
 import './DetailModal.css';
 
 // Options pour les enums
@@ -405,6 +406,60 @@ type EditState =
   | LoreEditState
   | null;
 
+function FlagSelect({
+  value,
+  onChange,
+  editMode,
+}: {
+  value: string | null | undefined;
+  onChange: (v: string | null) => void;
+  editMode: boolean;
+}) {
+  const [flags, setFlags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (editMode) {
+      setLoading(true);
+      getFlags()
+        .then(setFlags)
+        .catch(() => setFlags([]))
+        .finally(() => setLoading(false));
+    }
+  }, [editMode]);
+  const current = value ?? '';
+  if (!editMode) {
+    return (
+      <span className="detail-value">
+        {current ? (
+          <img src={current} alt="Drapeau" style={{ maxWidth: 48, maxHeight: 32, verticalAlign: 'middle', marginRight: 8 }} />
+        ) : null}
+        {current ? current.split('/').pop() ?? current : '—'}
+      </span>
+    );
+  }
+  if (loading) return <span className="detail-value">Chargement...</span>;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <select
+        className="detail-input"
+        value={current}
+        onChange={(e) => onChange(e.target.value || null)}
+        style={{ minWidth: 200 }}
+      >
+        <option value="">— Aucun drapeau</option>
+        {flags.map((path) => (
+          <option key={path} value={path}>
+            {path.split('/').pop() ?? path}
+          </option>
+        ))}
+      </select>
+      {current ? (
+        <img src={current} alt="" style={{ maxWidth: 48, maxHeight: 32, objectFit: 'contain' }} />
+      ) : null}
+    </div>
+  );
+}
+
 export default function DetailModal({ point, onClose, token, onUpdated, onDelete, onNavigate, onCreateDistrict, onOpenLore, loreId, createMode }: DetailModalProps) {
   const [data, setData] = useState<EntityData>(null);
   const [loading, setLoading] = useState(false);
@@ -449,15 +504,15 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
       setError(null);
       // Initialiser editState avec le kind et des valeurs par défaut
       const defaultState: EditState = createMode.kind === 'kingdom'
-        ? { kind: 'kingdom', name: '', description: null, population: null, dateInGame: null, color: null }
+        ? { kind: 'kingdom', name: '', description: null, population: null, dateInGame: null, color: null, flag: null }
         : createMode.kind === 'city'
-        ? { kind: 'city', name: '', description: null, iconUrl: null, kingdomId: null }
+        ? { kind: 'city', name: '', description: null, iconUrl: null, flag: null, kingdomId: null }
         : createMode.kind === 'district'
         ? { kind: 'district', name: '', motto: null, ambiance: null, content: null, rumors: null, secret: null, cityId: createMode.parentCityId || '' }
         : createMode.kind === 'place'
         ? { kind: 'place', name: '', description: null, kingdomId: null, cityId: null, districtId: null }
         : createMode.kind === 'organisation'
-        ? { kind: 'organisation', name: '', description: null, organisationType: null, parentOrganisationId: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [] }
+        ? { kind: 'organisation', name: '', description: null, organisationType: null, parentOrganisationId: null, flag: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [] }
         : createMode.kind === 'lore'
         ? { kind: 'lore', title: '', content: '', tag: null, dateInGame: null, summary: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [], organisationIds: [] }
         : {
@@ -651,6 +706,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                   : undefined,
               dateInGame: kingdomState.dateInGame ?? undefined,
               color: kingdomState.color ?? undefined,
+              flag: kingdomState.flag ?? undefined,
             });
             break;
           }
@@ -660,6 +716,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               name: cityState.name ?? '',
               description: cityState.description ?? null,
               iconUrl: cityState.iconUrl ?? undefined,
+              flag: cityState.flag ?? undefined,
               kingdomId: cityState.kingdomId ?? undefined,
             });
             break;
@@ -716,6 +773,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               description: organisationState.description ?? null,
               organisationType: organisationState.organisationType ?? undefined,
               parentOrganisationId: organisationState.parentOrganisationId ?? undefined,
+              flag: organisationState.flag ?? undefined,
               kingdomIds: organisationState.kingdomIds || [],
               cityIds: organisationState.cityIds || [],
               placeIds: organisationState.placeIds || [],
@@ -807,19 +865,22 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               kingdomState.population !== undefined && kingdomState.population !== null
                 ? Number(kingdomState.population)
                 : null,
-            dateInGame: kingdomState.dateInGame ?? null,
+            dateInGame: toDateInputValue(kingdomState.dateInGame) || null,
             color: kingdomState.color ?? null,
+            flag: kingdomState.flag ?? null,
           });
           break;
         }
         case 'city': {
-          const cityIconUrl = (editState as CityDetail).iconUrl;
-          console.log('Frontend - iconUrl avant envoi:', cityIconUrl);
+          const cityState = editState as CityDetail;
+          const cityIconUrl = cityState.iconUrl;
+          const cityFlag = cityState.flag;
           const payload = {
             name: editState.name ?? '',
             description: editState.description ?? null,
             iconUrl: cityIconUrl === '' || cityIconUrl === undefined ? null : cityIconUrl,
-            kingdomId: (editState as CityDetail).kingdomId ?? null,
+            flag: cityFlag === '' || cityFlag === undefined ? null : cityFlag,
+            kingdomId: cityState.kingdomId ?? null,
           };
           console.log('Frontend - payload complet:', payload);
           await updateCity(token, point.targetId, payload);
@@ -879,6 +940,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             description: organisationState.description ?? null,
             organisationType: organisationState.organisationType ?? null,
             parentOrganisationId: organisationState.parentOrganisationId ?? null,
+            flag: organisationState.flag ?? null,
             kingdomIds: organisationState.kingdomIds ?? [],
             cityIds: organisationState.cityIds ?? [],
             placeIds: organisationState.placeIds ?? [],
@@ -1436,12 +1498,20 @@ function KingdomView({
           )}
         </div>
         <div className="detail-item">
+          <span className="detail-label">Drapeau</span>
+          <FlagSelect
+            editMode={editMode}
+            value={(editState as KingdomDetail | null)?.flag ?? data?.flag}
+            onChange={(v) => onChange('flag', v)}
+          />
+        </div>
+        <div className="detail-item">
           <span className="detail-label">Date (en jeu)</span>
           {editMode ? (
             <input
               className="detail-input"
               type="date"
-              value={((editState as KingdomDetail | null)?.dateInGame as string | undefined | null) ?? ''}
+              value={toDateInputValue((editState as KingdomDetail | null)?.dateInGame ?? data?.dateInGame)}
               onChange={(e) => onChange('dateInGame', e.target.value || null)}
             />
           ) : (
@@ -1625,6 +1695,14 @@ function CityView({
             )}
           </span>
         )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Drapeau</span>
+        <FlagSelect
+          editMode={editMode}
+          value={(editState as CityDetail | null)?.flag ?? data?.flag}
+          onChange={(v) => onChange('flag', v)}
+        />
       </div>
       <div className="detail-item">
         <span className="detail-label">Royaume</span>
@@ -2576,6 +2654,14 @@ function OrganisationView({
               : valueOrDash(null)}
           </span>
         )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Drapeau</span>
+        <FlagSelect
+          editMode={editMode}
+          value={(editState as OrganisationDetail | null)?.flag ?? data?.flag}
+          onChange={(v) => onChange('flag', v)}
+        />
       </div>
       <div className="detail-item">
         <span className="detail-label">Organisation parente</span>

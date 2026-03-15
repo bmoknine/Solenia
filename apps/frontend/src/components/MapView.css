@@ -54,15 +54,40 @@
   font-weight: 600;
   color: #f1f5f9;
   text-align: center;
-  line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
   text-shadow:
     0 0 4px rgba(15, 23, 42, 0.95),
     0 1px 2px rgba(0, 0, 0, 0.9),
     1px 1px 0 rgba(15, 23, 42, 0.98);
   letter-spacing: 0.02em;
+}
+
+/* Labels des royaumes : style manuscrit / médiéval */
+.map-pin-kingdom-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.map-kingdom-label {
+  font-family: 'Uncial Antiqua', 'Times New Roman', cursive;
+  color: #f8fafc;
+  text-align: center;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  text-shadow:
+    0 0 4px rgba(15, 23, 42, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    1px 1px 0 rgba(15, 23, 42, 0.98);
+  letter-spacing: 0.03em;
 }
 
 .map-popup {

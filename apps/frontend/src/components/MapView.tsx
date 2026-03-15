@@ -204,21 +204,6 @@ export function MapView({
       const imgEl = e.target as HTMLImageElement;
       if (imgEl?.naturalWidth && imgEl?.naturalHeight) {
         setImgSize({ width: imgEl.naturalWidth, height: imgEl.naturalHeight });
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: 'debug-session',
-            runId: 'leaflet-load',
-            hypothesisId: 'H-img',
-            location: 'MapView:ImageOverlay:load',
-            message: 'image natural size',
-            data: { w: imgEl.naturalWidth, h: imgEl.naturalHeight },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
       }
     },
     click: (e: L.LeafletMouseEvent) => {
@@ -276,14 +261,15 @@ export function MapView({
     return [y, x] as [number, number]; // [lat, lng]
   };
 
-  const getIcon = (kind: MapPoint['kind'], zoom: number, iconUrl?: string | null, kingdomColor?: string | null, name?: string) => {
+  const getIcon = (kind: MapPoint['kind'], zoom: number, iconUrl?: string | null, kingdomColor?: string | null, name?: string, flag?: string | null) => {
     // Calcul du facteur d'échelle basé sur le zoom
     const minZoom = -2;
     const maxZoom = 4;
     const scaleFactor = Math.min(Math.max((zoom - minZoom) / (maxZoom - minZoom), 0.15), 1);
 
-    // Si c'est une ville et qu'une icône est fournie (taille selon type : capital > city > fortified > village)
-    if (kind === 'city' && iconUrl) {
+    // Si c'est une ville et qu'une icône ou un drapeau est fourni (taille selon type : capital > city > fortified > village)
+    const cityImageUrl = (kind === 'city' && (flag || iconUrl)) ? (flag || iconUrl) : null;
+    if (kind === 'city' && cityImageUrl) {
       const tier = getCityIconTier(iconUrl);
       const tierSizes: Record<typeof tier, { base: number; max: number }> = {
         capital: { base: 20, max: 220 },
@@ -293,27 +279,29 @@ export function MapView({
       };
       const { base: baseSize, max: maxSize } = tierSizes[tier];
       const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+      const displaySize = flag ? size * 4 : size;
       const fontSize = Math.max(8, Math.round(size * 0.2));
-      const overlay = kingdomColor
-        ? `<div style="position:absolute;inset:0;background:${kingdomColor};opacity:0.5;pointer-events:none;mask-image:url(&quot;${iconUrl}&quot;);mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-image:url(&quot;${iconUrl}&quot;);-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;"></div>`
+      const overlay = !flag && kingdomColor
+        ? `<div style="position:absolute;inset:0;background:${kingdomColor};opacity:0.5;pointer-events:none;mask-image:url(&quot;${cityImageUrl}&quot;);mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-image:url(&quot;${cityImageUrl}&quot;);-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;"></div>`
         : '';
-      const labelMaxW = Math.round(size * 2.2);
+      const labelMaxW = Math.round(displaySize * 2.2);
       const label = name
         ? `<span class="map-city-label" style="font-size:${fontSize}px;max-width:${labelMaxW}px;">${escapeHtml(name)}</span>`
         : '';
       const labelGap = 1;
-      const totalH = size + (label ? fontSize * 0.9 + labelGap : 0);
+      const labelZoneH = fontSize * 2.8;
+      const totalH = displaySize + (label ? labelZoneH + labelGap : 0);
       return L.divIcon({
         className: 'map-pin-icon map-pin-city',
-        html: `<div class="map-pin-city-wrap" style="width:${Math.max(Math.round(size * 1.5), labelMaxW)}px;">
-          <div class="map-pin-icon-box" style="width:${size}px;margin:0 auto;">
-            <img src="${iconUrl}" alt="" style="width:100%;object-fit:contain;object-position:center;display:block;transition:all 0.3s ease;" />
+        html: `<div class="map-pin-city-wrap" style="width:${Math.max(Math.round(displaySize * 1.5), labelMaxW)}px;">
+          <div class="map-pin-icon-box" style="width:${displaySize}px;margin:0 auto;">
+            <img src="${cityImageUrl}" alt="" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;transition:all 0.3s ease;" />
             ${overlay}
           </div>
           ${label}
         </div>`,
-        iconSize: [Math.max(Math.round(size * 1.5), labelMaxW), totalH],
-        iconAnchor: [Math.max(Math.round(size * 1.5), labelMaxW) / 2, size / 2],
+        iconSize: [Math.max(Math.round(displaySize * 1.5), labelMaxW), totalH],
+        iconAnchor: [Math.max(Math.round(displaySize * 1.5), labelMaxW) / 2, displaySize / 2],
       });
     }
     // Ville sans icône personnalisée : pin par défaut + label si nom
@@ -325,7 +313,8 @@ export function MapView({
       const dotColor = kingdomColor ?? kindColor.city;
       const totalW = Math.max(size, 140);
       const labelGap = 1;
-      const totalH = size + fontSize * 0.85 + labelGap;
+      const labelZoneH = fontSize * 2.8;
+      const totalH = size + labelZoneH + labelGap;
       const label = `<span class="map-city-label" style="font-size:${fontSize}px;max-width:${totalW}px;">${escapeHtml(name)}</span>`;
       return L.divIcon({
         className: 'map-pin-icon map-pin-city',
@@ -361,6 +350,35 @@ export function MapView({
         iconAnchor: [size / 2, size / 2],
       });
     }
+    // Royaume : drapeau ou point + nom en entier (police manuscrite)
+    if (kind === 'kingdom') {
+      const baseSize = 6;
+      const maxSize = 90;
+      const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+      const iconSize = flag ? size * 4 : size;
+      const fontSize = Math.max(12, Math.round(size * 0.55));
+      const dotColor = kingdomColor ?? kindColor.kingdom;
+      const totalW = Math.max(iconSize, 280);
+      const labelGap = 2;
+      const labelZoneH = fontSize * 3;
+      const totalH = iconSize + (name ? labelZoneH + labelGap : 0);
+      const label = name
+        ? `<span class="map-kingdom-label" style="font-size:${fontSize}px;">${escapeHtml(name)}</span>`
+        : '';
+      const anchorY = totalH - iconSize / 2;
+      const iconPart = flag
+        ? `<img src="${escapeHtml(flag)}" alt="" style="width:${iconSize}px;height:${iconSize}px;object-fit:contain;object-position:center;display:block;margin:0 auto;" />`
+        : `<span class="map-pin-dot" style="background:${dotColor};width:${size}px;height:${size}px;display:block;margin:0 auto;transition:all 0.3s ease;"></span>`;
+      return L.divIcon({
+        className: 'map-pin-icon map-pin-kingdom',
+        html: `<div class="map-pin-kingdom-wrap" style="width:${totalW}px;">
+          ${label}
+          ${iconPart}
+        </div>`,
+        iconSize: [totalW, totalH],
+        iconAnchor: [totalW / 2, anchorY],
+      });
+    }
     // Si c'est un personnage
     if (kind === 'person') {
       const baseSize = 8; // Taille minimale (taille de départ conservée)
@@ -373,11 +391,11 @@ export function MapView({
         iconAnchor: [size / 2, size / 2],
       });
     }
-    // Sinon, utiliser le pin par défaut (kingdoms, cities sans icône, etc.)
+    // Sinon, utiliser le pin par défaut (cities sans icône ni nom, etc.)
     const baseSize = 6; // Taille minimale (taille de départ conservée)
     const maxSize = 90; // Taille maximale (3x plus grand : 30 × 3)
     const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
-    const dotColor = ((kind === 'kingdom' || kind === 'city') && kingdomColor) ? kingdomColor : kindColor[kind];
+    const dotColor = (kind === 'city' && kingdomColor) ? kingdomColor : kindColor[kind];
     return L.divIcon({
       className: 'map-pin-icon',
       html: `<span class="map-pin-dot" style="background:${dotColor}; width: ${size}px; height: ${size}px; transition: all 0.3s ease;"></span>`,
@@ -459,80 +477,17 @@ export function MapView({
     const img = new Image();
     img.onload = () => {
       setImgSize({ width: img.naturalWidth, height: img.naturalHeight });
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'debug-session',
-          runId: 'leaflet-preload',
-          hypothesisId: 'H-img-preload',
-          location: 'MapView:useEffect:preload',
-          message: 'image preload size',
-          data: { w: img.naturalWidth, h: img.naturalHeight },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
     };
     img.src = backgroundUrl;
   }, [backgroundUrl]);
 
-  useEffect(() => {
-    if (!mapRef) return;
-    const size = mapRef.getSize();
-    const rect = mapRef.getContainer().getBoundingClientRect();
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: 'debug-session',
-        runId: 'leaflet-size',
-        hypothesisId: 'H-size',
-        location: 'MapView:useEffect:size',
-        message: 'map size vs image',
-        data: {
-          mapW: size.x,
-          mapH: size.y,
-          rectW: rect.width,
-          rectH: rect.height,
-          imgW: imgSize.width,
-          imgH: imgSize.height,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, [mapRef, imgSize.width, imgSize.height]);
 
   useEffect(() => {
     if (!mapRef) return;
     const handler = () => {
-      const center = mapRef.getCenter();
-      const zoom = mapRef.getZoom();
-      const size = mapRef.getSize();
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'debug-session',
-          runId: 'leaflet-move',
-          hypothesisId: 'H-move',
-          location: 'MapView:useEffect:moveend',
-          message: 'move end',
-          data: {
-            lat: center.lat,
-            lng: center.lng,
-            zoom,
-            w: size.x,
-            h: size.y,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
+      void mapRef.getCenter();
+      void mapRef.getZoom();
+      void mapRef.getSize();
     };
     mapRef.on('moveend', handler);
     return () => {
@@ -550,25 +505,6 @@ export function MapView({
     setTimeout(() => {
       setInitialZoom(targetZoom);
     }, 0);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: 'debug-session',
-        runId: 'leaflet-zoom',
-        hypothesisId: 'H-zoom',
-        location: 'MapView:useEffect:initZoom',
-        message: 'compute initial zoom',
-        data: {
-          targetZoom,
-          imgW: imgSize.width,
-          imgH: imgSize.height,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
   }, [mapRef, bounds, imgSize.width, imgSize.height]);
 
   return (
@@ -733,9 +669,9 @@ export function MapView({
           }
           return (
             <AnimatedMarker
-              key={`${p.id}-${p.iconUrl || 'default'}-${p.kingdomColor || 'no-color'}-${p.name || ''}-${currentZoom}`}
+              key={`${p.id}-${p.iconUrl || 'default'}-${p.flag || 'no-flag'}-${p.kingdomColor || 'no-color'}-${p.name || ''}-${currentZoom}`}
               position={position}
-              icon={getIcon(p.kind, currentZoom, p.iconUrl, p.kingdomColor, p.name)}
+              icon={getIcon(p.kind, currentZoom, p.iconUrl, p.kingdomColor, p.name, p.flag)}
               zIndexOffset={getZIndexOffset(p.kind)}
               draggable={canEdit && Boolean(onMove)}
               eventHandlers={handlers}

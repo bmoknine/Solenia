@@ -31,13 +31,16 @@ export async function mapRoutes(app: FastifyInstance) {
           p.personOfInterestId ? 'person' :
           'unknown';
 
-        // Récupérer iconUrl et couleur selon le type d'entité
+        // Récupérer iconUrl, flag et couleur selon le type d'entité
         let iconUrl: string | null = null;
+        let flag: string | null = null;
         let kingdomColor: string | null = null;
         if (p.kingdom) {
           kingdomColor = (p.kingdom as any).color ?? null;
+          flag = (p.kingdom as any).flag ?? null;
         } else if (p.city) {
           iconUrl = (p.city as any).iconUrl ?? null;
+          flag = (p.city as any).flag ?? null;
           kingdomColor = (p.city as any).kingdom?.color ?? null;
         } else if (p.place) {
           const placeIconUrl = (p.place as any).iconUrl;
@@ -53,6 +56,7 @@ export async function mapRoutes(app: FastifyInstance) {
           name: target.name,
           description: 'description' in target ? (target as any).description ?? null : null,
           iconUrl,
+          flag: flag || null,
           kingdomColor,
         };
       })
