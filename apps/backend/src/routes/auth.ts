@@ -47,7 +47,7 @@ export async function authRoutes(app: FastifyInstance) {
       );
       const refreshToken = app.jwt.sign(
         { sub: user.id, type: user.type, email: user.email, username: user.username },
-        { expiresIn: config.refreshTtl, secret: config.refreshSecret },
+        { expiresIn: config.refreshTtl, key: config.refreshSecret },
       );
 
       return { user: { id: user.id, email: user.email, username: user.username, type: user.type }, accessToken, refreshToken };
@@ -78,7 +78,7 @@ export async function authRoutes(app: FastifyInstance) {
         );
         const refreshToken = app.jwt.sign(
           { sub: user.id, type: user.type, email: user.email, username: user.username },
-          { expiresIn: config.refreshTtl, secret: config.refreshSecret },
+          { expiresIn: config.refreshTtl, key: config.refreshSecret },
         );
         log({ hypothesisId: 'H-login', location: 'auth.ts:login', message: 'login success', data: { email: data.email } });
         return { user: { id: user.id, email: user.email, username: user.username, type: user.type }, accessToken, refreshToken };
@@ -100,9 +100,9 @@ export async function authRoutes(app: FastifyInstance) {
       if (!auth?.startsWith('Bearer ')) return reply.unauthorized('Token manquant.');
       const token = auth.substring('Bearer '.length);
 
-      let payload: any;
+      let payload: { sub: string };
       try {
-        payload = app.jwt.verify(token, { secret: config.refreshSecret });
+        payload = app.jwt.verify<{ sub: string }>(token, { key: config.refreshSecret });
       } catch {
         return reply.unauthorized('Refresh token invalide.');
       }
@@ -116,7 +116,7 @@ export async function authRoutes(app: FastifyInstance) {
       );
       const refreshToken = app.jwt.sign(
         { sub: user.id, type: user.type, email: user.email, username: user.username },
-        { expiresIn: config.refreshTtl, secret: config.refreshSecret },
+        { expiresIn: config.refreshTtl, key: config.refreshSecret },
       );
 
       return { user: { id: user.id, email: user.email, username: user.username, type: user.type }, accessToken, refreshToken };

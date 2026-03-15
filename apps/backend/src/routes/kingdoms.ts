@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, kingdomInputSchema } from '@solenia/shared';
+import { idSchema, kingdomInputSchema, parseSoleniaDate } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
 
 export async function kingdomRoutes(app: FastifyInstance) {
@@ -20,10 +20,25 @@ export async function kingdomRoutes(app: FastifyInstance) {
         places: { select: { id: true, name: true } },
         persons: { select: { id: true, name: true } },
         comments: { select: { id: true, description: true, dateInGame: true } },
+        organisations: {
+          include: {
+            organisation: { select: { id: true, name: true } },
+          },
+        },
+        lores: {
+          include: {
+            lore: { select: { id: true, title: true, tag: true, dateInGame: true } },
+          },
+        },
       },
     });
     if (!kingdom) return reply.notFound();
-    return kingdom;
+    // Transformer les données pour un format plus simple
+    return {
+      ...kingdom,
+      organisations: kingdom.organisations.map((ok) => ok.organisation),
+      lores: kingdom.lores.map((lk) => lk.lore),
+    };
   });
 
   app.post('/kingdoms', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
@@ -31,7 +46,7 @@ export async function kingdomRoutes(app: FastifyInstance) {
     return app.prisma.kingdom.create({
       data: {
         ...data,
-        dateInGame: data.dateInGame ? new Date(data.dateInGame) : undefined,
+        dateInGame: parseSoleniaDate(data.dateInGame) ?? undefined,
       },
     });
   });
@@ -39,12 +54,16 @@ export async function kingdomRoutes(app: FastifyInstance) {
   app.put('/kingdoms/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
     const id = idSchema.parse((request.params as any).id);
     const data = kingdomInputSchema.partial().parse(request.body);
+    const body = request.body as Record<string, unknown>;
+    const colorFromBody = body && 'color' in body ? (body.color ?? null) : undefined;
+    const rawDate = (data as { dateInGame?: string | number })?.dateInGame;
     const kingdom = await app.prisma.kingdom.update({
       where: { id },
       data: {
-        ...data,
-        dateInGame: data.dateInGame ? new Date(data.dateInGame) : undefined,
-      },
+        ...(data as Record<string, unknown>),
+        ...(rawDate !== undefined && { dateInGame: parseSoleniaDate(rawDate) ?? null }),
+        ...(colorFromBody !== undefined && { color: colorFromBody }),
+      } as Parameters<typeof app.prisma.kingdom.update>[0]['data'],
     });
     return kingdom;
   });

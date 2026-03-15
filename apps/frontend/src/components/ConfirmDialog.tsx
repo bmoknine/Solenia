@@ -17,7 +17,7 @@ export function ConfirmDialog({ open, title = 'Confirmer', message, onConfirm, o
         {message && <p>{message}</p>}
         <div className="confirm-actions">
           <button className="ghost" onClick={onCancel}>Annuler</button>
-          <button className="danger" onClick={onConfirm}>Confirmer</button>
+          <button className="danger glass" onClick={onConfirm}>Confirmer</button>
         </div>
       </div>
     </div>

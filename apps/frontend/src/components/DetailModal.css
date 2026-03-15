@@ -24,6 +24,10 @@
   padding: 16px;
   border-right: 1px solid rgba(255, 255, 255, 0.12);
   overflow-y: auto;
+  /* Style glass */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14px);
 }
 
 .detail-sidebar-header {
@@ -87,7 +91,10 @@
   max-width: none;
   max-height: 85vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .detail-actions {
@@ -128,11 +135,15 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .detail-input,
 .detail-textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #e2e8f0;
@@ -144,6 +155,10 @@
 .detail-textarea {
   min-height: 90px;
   resize: vertical;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .detail-title {
@@ -190,6 +205,17 @@
   color: #cbd5e1;
   line-height: 1.7;
   margin: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+
+.detail-input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .detail-grid {
@@ -206,6 +232,8 @@
   background: rgba(255, 255, 255, 0.04);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .stat-input {
@@ -237,6 +265,15 @@
   margin: 0 0 10px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.detail-section h3.section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0 0 8px 0;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .detail-list {

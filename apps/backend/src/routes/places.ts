@@ -20,10 +20,25 @@ export async function placeRoutes(app: FastifyInstance) {
         city: { select: { id: true, name: true } },
         persons: { select: { id: true, name: true } },
         comments: { select: { id: true, description: true, dateInGame: true } },
+        organisations: {
+          include: {
+            organisation: { select: { id: true, name: true } },
+          },
+        },
+        lores: {
+          include: {
+            lore: { select: { id: true, title: true, tag: true, dateInGame: true } },
+          },
+        },
       },
     });
     if (!place) return reply.notFound();
-    return place;
+    // Transformer les données pour un format plus simple
+    return {
+      ...place,
+      organisations: place.organisations.map((op) => op.organisation),
+      lores: place.lores.map((lp) => lp.lore),
+    };
   });
 
   app.post('/places', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {

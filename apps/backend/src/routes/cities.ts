@@ -17,14 +17,29 @@ export async function cityRoutes(app: FastifyInstance) {
       include: {
         position: true,
         kingdom: { select: { id: true, name: true } },
+        districts: { select: { id: true, name: true } },
         places: { select: { id: true, name: true } },
         persons: { select: { id: true, name: true } },
         comments: { select: { id: true, description: true, dateInGame: true } },
+        organisations: {
+          include: {
+            organisation: { select: { id: true, name: true } },
+          },
+        },
+        lores: {
+          include: {
+            lore: { select: { id: true, title: true, tag: true, dateInGame: true } },
+          },
+        },
       },
     });
     if (!city) return reply.notFound();
-    console.log(city);
-    return city;
+    // Transformer les données pour un format plus simple
+    return {
+      ...city,
+      organisations: city.organisations.map((oc) => oc.organisation),
+      lores: city.lores.map((lc) => lc.lore),
+    };
   });
 
   app.post('/cities', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
