@@ -4,6 +4,22 @@ import L from 'leaflet';
 import type { MapPoint } from '../api/map';
 import './MapView.css';
 
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/** Type de ville déduit de l’URL d’icône : capital > city > fortified > village (taille décroissante). */
+function getCityIconTier(iconUrl: string | null | undefined): 'capital' | 'city' | 'fortified' | 'village' {
+  if (!iconUrl) return 'city';
+  const u = iconUrl.toLowerCase();
+  if (u.includes('capital')) return 'capital';
+  if (u.includes('village')) return 'village';
+  if (u.includes('fortified')) return 'fortified';
+  return 'city';
+}
+
 // Composant pour gérer le zoom de la carte
 function ZoomHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
   const map = useMap();
@@ -260,35 +276,65 @@ export function MapView({
     return [y, x] as [number, number]; // [lat, lng]
   };
 
-  const getIcon = (kind: MapPoint['kind'], zoom: number, iconUrl?: string | null, kingdomColor?: string | null) => {
+  const getIcon = (kind: MapPoint['kind'], zoom: number, iconUrl?: string | null, kingdomColor?: string | null, name?: string) => {
     // Calcul du facteur d'échelle basé sur le zoom
-    // minZoom: -2, maxZoom: 4 (ajustez selon vos besoins)
     const minZoom = -2;
     const maxZoom = 4;
     const scaleFactor = Math.min(Math.max((zoom - minZoom) / (maxZoom - minZoom), 0.15), 1);
-    
-    // Debug: log pour le premier appel
-    if (kind === 'city') {
-      console.log('📐 getIcon - kind:', kind, 'zoom:', zoom, 'scaleFactor:', scaleFactor.toFixed(2));
-    }
 
-    // Si c'est une ville et qu'une icône est fournie
+    // Si c'est une ville et qu'une icône est fournie (taille selon type : capital > city > fortified > village)
     if (kind === 'city' && iconUrl) {
-      const baseSize = 20; // Taille minimale (taille de départ conservée)
-      const maxSize = 270; // Taille maximale (3x plus grand : 90 × 3)
+      const tier = getCityIconTier(iconUrl);
+      const tierSizes: Record<typeof tier, { base: number; max: number }> = {
+        capital: { base: 20, max: 220 },
+        city: { base: 15, max: 180 },
+        fortified: { base: 7, max: 115 },
+        village: { base: 9, max: 100 },
+      };
+      const { base: baseSize, max: maxSize } = tierSizes[tier];
       const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+      const fontSize = Math.max(8, Math.round(size * 0.2));
       const overlay = kingdomColor
         ? `<div style="position:absolute;inset:0;background:${kingdomColor};opacity:0.5;pointer-events:none;mask-image:url(&quot;${iconUrl}&quot;);mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-image:url(&quot;${iconUrl}&quot;);-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;"></div>`
         : '';
-      console.log('🏙️ City icon - size:', size, 'px');
+      const labelMaxW = Math.round(size * 2.2);
+      const label = name
+        ? `<span class="map-city-label" style="font-size:${fontSize}px;max-width:${labelMaxW}px;">${escapeHtml(name)}</span>`
+        : '';
+      const labelGap = 1;
+      const totalH = size + (label ? fontSize * 0.9 + labelGap : 0);
       return L.divIcon({
-        className: 'map-pin-icon',
-        html: `<div style="position:relative;display:inline-block;width:${size}px;height:${size}px;">
-          <img src="${iconUrl}" alt="City icon" style="width:100%;height:100%;object-fit:contain;transition:all 0.3s ease;display:block;" />
-          ${overlay}
+        className: 'map-pin-icon map-pin-city',
+        html: `<div class="map-pin-city-wrap" style="width:${Math.max(Math.round(size * 1.5), labelMaxW)}px;">
+          <div class="map-pin-icon-box" style="width:${size}px;height:${size}px;margin:0 auto;">
+            <img src="${iconUrl}" alt="" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;transition:all 0.3s ease;" />
+            ${overlay}
+          </div>
+          ${label}
         </div>`,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
+        iconSize: [Math.max(Math.round(size * 1.5), labelMaxW), totalH],
+        iconAnchor: [Math.max(Math.round(size * 1.5), labelMaxW) / 2, size / 2],
+      });
+    }
+    // Ville sans icône personnalisée : pin par défaut + label si nom
+    if (kind === 'city' && name) {
+      const baseSize = 6;
+      const maxSize = 90;
+      const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+      const fontSize = Math.max(7, Math.round(size * 0.5));
+      const dotColor = kingdomColor ?? kindColor.city;
+      const totalW = Math.max(size, 140);
+      const labelGap = 1;
+      const totalH = size + fontSize * 0.85 + labelGap;
+      const label = `<span class="map-city-label" style="font-size:${fontSize}px;max-width:${totalW}px;">${escapeHtml(name)}</span>`;
+      return L.divIcon({
+        className: 'map-pin-icon map-pin-city',
+        html: `<div class="map-pin-city-wrap" style="width:${totalW}px;">
+          <span class="map-pin-dot" style="background:${dotColor};width:${size}px;height:${size}px;display:block;margin:0 auto;transition:all 0.3s ease;"></span>
+          ${label}
+        </div>`,
+        iconSize: [totalW, totalH],
+        iconAnchor: [totalW / 2, size / 2],
       });
     }
     // Si c'est un quartier et qu'une icône est fournie
@@ -687,9 +733,9 @@ export function MapView({
           }
           return (
             <AnimatedMarker
-              key={`${p.id}-${p.iconUrl || 'default'}-${p.kingdomColor || 'no-color'}-${currentZoom}`}
+              key={`${p.id}-${p.iconUrl || 'default'}-${p.kingdomColor || 'no-color'}-${p.name || ''}-${currentZoom}`}
               position={position}
-              icon={getIcon(p.kind, currentZoom, p.iconUrl, p.kingdomColor)}
+              icon={getIcon(p.kind, currentZoom, p.iconUrl, p.kingdomColor, p.name)}
               zIndexOffset={getZIndexOffset(p.kind)}
               draggable={canEdit && Boolean(onMove)}
               eventHandlers={handlers}
