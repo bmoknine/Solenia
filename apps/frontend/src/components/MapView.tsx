@@ -1,8 +1,31 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { ImageOverlay, MapContainer, Marker } from 'react-leaflet';
+import { ImageOverlay, MapContainer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { MapPoint } from '../api/map';
 import './MapView.css';
+
+// Composant pour gérer le zoom de la carte
+function ZoomHandler({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (map) {
+      const initialZ = map.getZoom();
+      console.log('🔍 Zoom initial dans ZoomHandler:', initialZ);
+      onZoomChange(initialZ);
+    }
+  }, [map, onZoomChange]);
+  
+  useMapEvents({
+    zoomend: () => {
+      const newZoom = map.getZoom();
+      console.log('🔍 Zoom changé dans useMapEvents:', newZoom);
+      onZoomChange(newZoom);
+    },
+  });
+  
+  return null;
+}
 
 // Composant wrapper pour animer les changements de position
 function AnimatedMarker({
@@ -84,6 +107,7 @@ function AnimatedMarker({
   // Mise à jour de l'icône quand elle change
   useEffect(() => {
     if (markerRef.current) {
+      console.log('🔄 AnimatedMarker - Mise à jour de l\'icône');
       markerRef.current.setIcon(icon);
     }
   }, [icon]);
@@ -118,6 +142,7 @@ type Props = {
 const kindColor: Record<MapPoint['kind'], string> = {
   kingdom: '#f4b400',
   city: '#1a73e8',
+  district: '#8b4513', // Marron pour les quartiers
   place: '#34a853',
   person: '#d93025',
   unknown: '#9aa0a6',
@@ -139,6 +164,7 @@ export function MapView({
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const mapRefRef = useRef<L.Map | null>(null);
   const [initialZoom, setInitialZoom] = useState(-2);
+  const [currentZoom, setCurrentZoom] = useState(-2); // Nouveau state pour le zoom actuel
   const [separatedPins, setSeparatedPins] = useState<Map<string, [number, number]>>(new Map());
   const separationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const creatingModeRef = useRef(creatingMode);
@@ -234,40 +260,83 @@ export function MapView({
     return [y, x] as [number, number]; // [lat, lng]
   };
 
-  const getIcon = (kind: MapPoint['kind'], iconUrl?: string | null) => {
-    // Si c'est une ville et qu'une icône est fournie, utiliser l'icône (55x55)
+  const getIcon = (kind: MapPoint['kind'], zoom: number, iconUrl?: string | null, kingdomColor?: string | null) => {
+    // Calcul du facteur d'échelle basé sur le zoom
+    // minZoom: -2, maxZoom: 4 (ajustez selon vos besoins)
+    const minZoom = -2;
+    const maxZoom = 4;
+    const scaleFactor = Math.min(Math.max((zoom - minZoom) / (maxZoom - minZoom), 0.15), 1);
+    
+    // Debug: log pour le premier appel
+    if (kind === 'city') {
+      console.log('📐 getIcon - kind:', kind, 'zoom:', zoom, 'scaleFactor:', scaleFactor.toFixed(2));
+    }
+
+    // Si c'est une ville et qu'une icône est fournie
     if (kind === 'city' && iconUrl) {
+      const baseSize = 20; // Taille minimale (taille de départ conservée)
+      const maxSize = 270; // Taille maximale (3x plus grand : 90 × 3)
+      const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+      const overlay = kingdomColor
+        ? `<div style="position:absolute;inset:0;background:${kingdomColor};opacity:0.5;pointer-events:none;mask-image:url(&quot;${iconUrl}&quot;);mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-image:url(&quot;${iconUrl}&quot;);-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;"></div>`
+        : '';
+      console.log('🏙️ City icon - size:', size, 'px');
       return L.divIcon({
         className: 'map-pin-icon',
-        html: `<img src="${iconUrl}" alt="City icon" style="width: 55px; height: 55px; object-fit: contain;" />`,
-        iconSize: [55, 55],
-        iconAnchor: [27.5, 27.5],
+        html: `<div style="position:relative;display:inline-block;width:${size}px;height:${size}px;">
+          <img src="${iconUrl}" alt="City icon" style="width:100%;height:100%;object-fit:contain;transition:all 0.3s ease;display:block;" />
+          ${overlay}
+        </div>`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
       });
     }
-    // Si c'est un lieu et qu'une icône est fournie, utiliser l'icône (32x32)
+    // Si c'est un quartier et qu'une icône est fournie
+    if (kind === 'district' && iconUrl) {
+      const baseSize = 16; // Taille minimale
+      const maxSize = 180; // Taille maximale
+      const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+      return L.divIcon({
+        className: 'map-pin-icon',
+        html: `<img src="${iconUrl}" alt="District icon" style="width: ${size}px; height: ${size}px; object-fit: contain; transition: all 0.3s ease;" />`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+    }
+    // Si c'est un lieu et qu'une icône est fournie
     if (kind === 'place' && iconUrl) {
+      const baseSize = 12; // Taille minimale (taille de départ conservée)
+      const maxSize = 150; // Taille maximale (3x plus grand : 50 × 3)
+      const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
       return L.divIcon({
         className: 'map-pin-icon',
-        html: `<img src="${iconUrl}" alt="Place icon" style="width: 32px; height: 32px; object-fit: contain;" />`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        html: `<img src="${iconUrl}" alt="Place icon" style="width: ${size}px; height: ${size}px; object-fit: contain; transition: all 0.3s ease;" />`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
       });
     }
-    // Si c'est un personnage, utiliser l'icône Person.png (24x24)
+    // Si c'est un personnage
     if (kind === 'person') {
+      const baseSize = 8; // Taille minimale (taille de départ conservée)
+      const maxSize = 120; // Taille maximale (3x plus grand : 40 × 3)
+      const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
       return L.divIcon({
         className: 'map-pin-icon',
-        html: `<img src="/Icon/person.png" alt="Person icon" style="width: 24px; height: 24px; object-fit: contain;" />`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        html: `<img src="/Icon/person.png" alt="Person icon" style="width: ${size}px; height: ${size}px; object-fit: contain; transition: all 0.3s ease;" />`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
       });
     }
-    // Sinon, utiliser le pin par défaut
+    // Sinon, utiliser le pin par défaut (kingdoms, cities sans icône, etc.)
+    const baseSize = 6; // Taille minimale (taille de départ conservée)
+    const maxSize = 90; // Taille maximale (3x plus grand : 30 × 3)
+    const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+    const dotColor = ((kind === 'kingdom' || kind === 'city') && kingdomColor) ? kingdomColor : kindColor[kind];
     return L.divIcon({
       className: 'map-pin-icon',
-      html: `<span class="map-pin-dot" style="background:${kindColor[kind]}"></span>`,
-      iconSize: [16, 16],
-      iconAnchor: [8, 8],
+      html: `<span class="map-pin-dot" style="background:${dotColor}; width: ${size}px; height: ${size}px; transition: all 0.3s ease;"></span>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
     });
   };
 
@@ -425,6 +494,8 @@ export function MapView({
     };
   }, [mapRef]);
 
+  // Note: Le listener pour le zoom est maintenant ajouté directement dans whenCreated
+
   // Calcule un zoom initial en fonction des bounds
   useEffect(() => {
     if (!mapRef) return;
@@ -469,27 +540,16 @@ export function MapView({
         zoomControl={false}
         doubleClickZoom={false}
         attributionControl={false}
-        whenCreated={(map) => {
-          setMapRef(map);
-          mapRefRef.current = map; // Synchronise immédiatement
-          console.log('Map créée, mapRef défini:', !!map);
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId: 'debug-session',
-              runId: 'leaflet-map',
-              hypothesisId: 'H-map-created',
-              location: 'MapView:MapContainer:whenCreated',
-              message: 'map created',
-              data: {},
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-          // #endregion
+        ref={(mapInstance) => {
+          if (mapInstance) {
+            const map = mapInstance;
+            setMapRef(map);
+            mapRefRef.current = map;
+            console.log('Map créée via ref, mapRef défini:', !!map);
+          }
         }}
       >
+        <ZoomHandler onZoomChange={setCurrentZoom} />
         <ImageOverlay
           url={backgroundUrl}
           bounds={bounds}
@@ -504,7 +564,7 @@ export function MapView({
           
           // Log pour vérifier que les markers sont créés
           if (points.indexOf(p) === 0) {
-            console.log(`Création de ${points.length} markers, premier: ${p.name}`);
+            console.log(`🗺️ Création de ${points.length} markers, premier: ${p.name}, currentZoom: ${currentZoom}`);
           }
 
           const handlers: L.LeafletEventHandlerFnMap = {
@@ -627,9 +687,9 @@ export function MapView({
           }
           return (
             <AnimatedMarker
-              key={`${p.id}-${p.iconUrl || 'default'}`}
+              key={`${p.id}-${p.iconUrl || 'default'}-${p.kingdomColor || 'no-color'}-${currentZoom}`}
               position={position}
-              icon={getIcon(p.kind, p.iconUrl)}
+              icon={getIcon(p.kind, currentZoom, p.iconUrl, p.kingdomColor)}
               zIndexOffset={getZIndexOffset(p.kind)}
               draggable={canEdit && Boolean(onMove)}
               eventHandlers={handlers}

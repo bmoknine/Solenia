@@ -1,32 +1,52 @@
 import { useEffect, useState, useRef } from 'react';
-import type { MapPoint } from '../api/map';
+import type { MapPoint, NavigablePoint, EntityKind } from '../api/map';
 import {
   getKingdom,
   getCity,
+  getDistrict,
   getPlace,
   getPerson,
+  getOrganisation,
+  getLore,
   updateKingdom,
   updateCity,
+  updateDistrict,
   updatePlace,
   updatePerson,
+  updateOrganisation,
   createKingdom,
   createCity,
+  createDistrict,
   createPlace,
   createPerson,
+  createOrganisation,
+  createLore,
+  updateLore,
+  deleteLore,
   updatePosition,
-  listKingdoms,
-  listCities,
-  listPlaces,
   type KingdomDetail,
+  type LoreRef,
+  type LoreDetail,
   type CityDetail,
+  type DistrictDetail,
   type PlaceDetail,
   type PersonDetail,
+  type OrganisationDetail,
   type Kingdom,
   type City,
   type Place,
+  type District,
+  type Organisation,
+  type Person,
+  listOrganisations,
+  listKingdoms,
+  listCities,
+  listPlaces,
+  listPersons,
 } from '../api/entities';
 import { useToast } from '../toast/ToastProvider';
 import type { Breed, Sex, Membership, Language } from '../api/entities';
+import { formatSoleniaDate } from '../utils/solenia-date';
 import './DetailModal.css';
 
 // Options pour les enums
@@ -317,37 +337,75 @@ function LanguageDropdown({
   );
 }
 
+// Type étendu pour le point qui peut inclure organisation et district
+// Compatible avec HierarchyNavigablePoint
+type ExtendedMapPoint = MapPoint | {
+  id: string;
+  x: number;
+  y: number;
+  kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'unknown';
+  targetId: string | null;
+  name: string;
+  description: string | null;
+  iconUrl?: string | null;
+};
+
 type DetailModalProps = {
-  point: MapPoint | null;
+  point: ExtendedMapPoint | null;
   onClose: () => void;
   token?: string | null;
   onUpdated?: () => void;
   onDelete?: (point: MapPoint) => void;
-  onNavigate?: (point: MapPoint) => void;
+  onNavigate?: (point: NavigablePoint) => void;
+  onCreateDistrict?: (cityId: string) => void;
+  onOpenLore?: (loreId: string) => void;
+  /** Ouverture directe d'une Lore par ID (modal liste ou section entité) */
+  loreId?: string | null;
   // Mode création
   createMode?: {
-    kind: MapPoint['kind'];
-    initialPosition: { x: number; y: number };
+    kind: MapPoint['kind'] | 'district' | 'organisation' | 'lore';
+    initialPosition?: { x: number; y: number };
+    parentCityId?: string; // Pour les districts
   };
 };
 
-type EntityData = KingdomDetail | CityDetail | PlaceDetail | PersonDetail | null;
+type EntityData = KingdomDetail | CityDetail | DistrictDetail | PlaceDetail | PersonDetail | OrganisationDetail | LoreDetail | null;
 
 type PersonEditState = Partial<PersonDetail> & { 
   kind: 'person';
   kingdomId?: string | null;
   cityId?: string | null;
+  districtId?: string | null;
   placeId?: string | null;
 };
+
+type DistrictEditState = Partial<DistrictDetail> & {
+  kind: 'district';
+  cityId: string;
+};
+
+type OrganisationEditState = Partial<OrganisationDetail> & {
+  kind: 'organisation';
+  parentOrganisationId?: string | null;
+  kingdomIds?: string[];
+  cityIds?: string[];
+  placeIds?: string[];
+  personIds?: string[];
+};
+
+type LoreEditState = Partial<LoreDetail> & { kind: 'lore'; kingdomIds?: string[]; cityIds?: string[]; placeIds?: string[]; personIds?: string[]; organisationIds?: string[] };
 
 type EditState =
   | (Partial<KingdomDetail> & { kind: 'kingdom' })
   | (Partial<CityDetail> & { kind: 'city' })
+  | DistrictEditState
   | (Partial<PlaceDetail> & { kind: 'place' })
   | PersonEditState
+  | OrganisationEditState
+  | LoreEditState
   | null;
 
-export default function DetailModal({ point, onClose, token, onUpdated, onDelete, onNavigate, createMode }: DetailModalProps) {
+export default function DetailModal({ point, onClose, token, onUpdated, onDelete, onNavigate, onCreateDistrict, onOpenLore, loreId, createMode }: DetailModalProps) {
   const [data, setData] = useState<EntityData>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -358,9 +416,10 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
   const overlayRef = useRef<HTMLDivElement>(null);
   const { push } = useToast();
 
+
   // Désactiver le scroll du body quand la modal est ouverte
   useEffect(() => {
-    if (point || createMode) {
+    if (point || createMode || loreId) {
       // Sauvegarder la position de scroll actuelle
       const scrollY = window.scrollY;
       // Désactiver le scroll
@@ -378,7 +437,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
         window.scrollTo(0, scrollY);
       };
     }
-  }, [point, createMode]);
+  }, [point, createMode, loreId]);
 
   // Initialiser le mode création
   useEffect(() => {
@@ -390,11 +449,17 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
       setError(null);
       // Initialiser editState avec le kind et des valeurs par défaut
       const defaultState: EditState = createMode.kind === 'kingdom'
-        ? { kind: 'kingdom', name: '', description: null, population: null, dateInGame: null }
+        ? { kind: 'kingdom', name: '', description: null, population: null, dateInGame: null, color: null }
         : createMode.kind === 'city'
         ? { kind: 'city', name: '', description: null, iconUrl: null, kingdomId: null }
+        : createMode.kind === 'district'
+        ? { kind: 'district', name: '', motto: null, ambiance: null, content: null, rumors: null, secret: null, cityId: createMode.parentCityId || '' }
         : createMode.kind === 'place'
-        ? { kind: 'place', name: '', description: null, kingdomId: null, cityId: null }
+        ? { kind: 'place', name: '', description: null, kingdomId: null, cityId: null, districtId: null }
+        : createMode.kind === 'organisation'
+        ? { kind: 'organisation', name: '', description: null, organisationType: null, parentOrganisationId: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [] }
+        : createMode.kind === 'lore'
+        ? { kind: 'lore', title: '', content: '', tag: null, dateInGame: null, summary: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [], organisationIds: [] }
         : {
             kind: 'person',
             name: '',
@@ -405,6 +470,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             languages: [],
             kingdomId: null,
             cityId: null,
+            districtId: null,
             placeId: null,
             STR: 10,
             DEX: 10,
@@ -415,15 +481,43 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           };
       console.log('editState initialisé:', defaultState);
       setEditState(defaultState);
-    } else if (!point) {
-      // Réinitialiser editState quand on sort du mode création et qu'il n'y a pas de point
+    } else if (!point && !loreId) {
+      // Réinitialiser editState quand on sort du mode création et qu'il n'y a pas de point ni loreId
       setEditState(null);
     }
-  }, [createMode, point]);
+  }, [createMode, point, loreId]);
 
+  // Charger une Lore par ID (ouverture depuis liste ou section entité)
   useEffect(() => {
-    // Ne pas charger les données si on est en mode création
-    if (createMode) return;
+    if (!loreId || createMode) return;
+    const fetchLore = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await getLore(loreId);
+        setData(result);
+        setEditState({
+          kind: 'lore',
+          ...result,
+          kingdomIds: result.kingdoms?.map((k) => k.id) || [],
+          cityIds: result.cities?.map((c) => c.id) || [],
+          placeIds: result.places?.map((p) => p.id) || [],
+          personIds: result.persons?.map((p) => p.id) || [],
+          organisationIds: result.organisations?.map((o) => o.id) || [],
+        } as LoreEditState);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur de chargement');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLore();
+  }, [loreId, createMode]);
+
+  // Recharger les données quand le point change ou après une mise à jour
+  useEffect(() => {
+    // Ne pas charger les données si on est en mode création ou si on affiche une lore par ID
+    if (createMode || loreId) return;
     
     if (!point || !point.targetId) {
       setData(null);
@@ -444,11 +538,17 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           case 'city':
             result = await getCity(point.targetId!);
             break;
+          case 'district':
+            result = await getDistrict(point.targetId!);
+            break;
           case 'place':
             result = await getPlace(point.targetId!);
             break;
           case 'person':
             result = await getPerson(point.targetId!);
+            break;
+          case 'organisation':
+            result = await getOrganisation(point.targetId!);
             break;
         }
         setData(result);
@@ -461,6 +561,17 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                   cityId: (result as PersonDetail).city?.id ?? null,
                   placeId: (result as PersonDetail).place?.id ?? null,
                 } as PersonEditState)
+              : point.kind === 'organisation'
+              ? ({
+                  kind: 'organisation' as const,
+                  ...result,
+                  organisationType: (result as OrganisationDetail).organisationType ?? null,
+                  parentOrganisationId: (result as OrganisationDetail).parentOrganisation?.id ?? null,
+                  kingdomIds: (result as OrganisationDetail).kingdoms?.map(k => k.id) || [],
+                  cityIds: (result as OrganisationDetail).cities?.map(c => c.id) || [],
+                  placeIds: (result as OrganisationDetail).places?.map(p => p.id) || [],
+                  personIds: (result as OrganisationDetail).members?.map(m => m.id) || [],
+                } as OrganisationEditState)
               : point.kind === 'kingdom'
               ? ({
                   kind: 'kingdom' as const,
@@ -472,11 +583,27 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                   ...result,
                   kingdomId: (result as CityDetail).kingdom?.id ?? null,
                 } as EditState)
-              : ({
+              : point.kind === 'district'
+              ? ({
+                  kind: 'district' as const,
+                  ...result,
+                  cityId: (result as DistrictDetail).cityId,
+                } as EditState)
+              : point.kind === 'place'
+              ? ({
                   kind: 'place' as const,
                   ...result,
                   kingdomId: (result as PlaceDetail).kingdom?.id ?? null,
                   cityId: (result as PlaceDetail).city?.id ?? null,
+                  districtId: (result as PlaceDetail).district?.id ?? null,
+                } as EditState)
+              : ({
+                  kind: 'person' as const,
+                  ...result,
+                  kingdomId: (result as PersonDetail).kingdom?.id ?? null,
+                  cityId: (result as PersonDetail).city?.id ?? null,
+                  districtId: (result as PersonDetail).district?.id ?? null,
+                  placeId: (result as PersonDetail).place?.id ?? null,
                 } as EditState))
           : null;
         console.log('Frontend - Initial editState:', JSON.stringify(initialState, null, 2));
@@ -489,7 +616,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
     };
 
     fetchData();
-  }, [point, createMode]);
+  }, [point, createMode, loreId]);
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) {
@@ -502,12 +629,12 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
 
   const handleSave = async () => {
     if (!token || !editState) return;
-    if (!createMode && (!point || !point.targetId)) return;
+    if (!createMode && !loreId && (!point || !point.targetId)) return;
     
     setSaving(true);
     setError(null);
     try {
-      const kind = createMode ? createMode.kind : point!.kind;
+      const kind = createMode ? createMode.kind : loreId ? 'lore' : point!.kind;
       
       // Mode création
       if (createMode) {
@@ -523,6 +650,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                   ? Number(kingdomState.population)
                   : undefined,
               dateInGame: kingdomState.dateInGame ?? undefined,
+              color: kingdomState.color ?? undefined,
             });
             break;
           }
@@ -533,6 +661,20 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               description: cityState.description ?? null,
               iconUrl: cityState.iconUrl ?? undefined,
               kingdomId: cityState.kingdomId ?? undefined,
+            });
+            break;
+          }
+          case 'district': {
+            const districtState = editState as DistrictDetail;
+            createdEntity = await createDistrict(token, {
+              name: districtState.name ?? '',
+              description: districtState.motto ?? null, // Utiliser motto comme description de base
+              cityId: districtState.cityId,
+              motto: districtState.motto ?? undefined,
+              ambiance: districtState.ambiance ?? undefined,
+              content: districtState.content ?? undefined,
+              rumors: districtState.rumors ?? undefined,
+              secret: districtState.secret ?? undefined,
             });
             break;
           }
@@ -567,10 +709,42 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             });
             break;
           }
+          case 'organisation': {
+            const organisationState = editState as OrganisationEditState;
+            const createData = {
+              name: organisationState.name ?? '',
+              description: organisationState.description ?? null,
+              organisationType: organisationState.organisationType ?? undefined,
+              parentOrganisationId: organisationState.parentOrganisationId ?? undefined,
+              kingdomIds: organisationState.kingdomIds || [],
+              cityIds: organisationState.cityIds || [],
+              placeIds: organisationState.placeIds || [],
+              personIds: organisationState.personIds || [],
+            };
+            console.log('Frontend - Création organisation:', createData);
+            createdEntity = await createOrganisation(token, createData);
+            break;
+          }
+          case 'lore': {
+            const loreState = editState as LoreEditState;
+            createdEntity = await createLore(token, {
+              title: loreState.title ?? '',
+              content: loreState.content ?? '',
+              tag: loreState.tag ?? undefined,
+              dateInGame: loreState.dateInGame ?? undefined,
+              summary: loreState.summary ?? undefined,
+              kingdomIds: loreState.kingdomIds ?? [],
+              cityIds: loreState.cityIds ?? [],
+              placeIds: loreState.placeIds ?? [],
+              personIds: loreState.personIds ?? [],
+              organisationIds: loreState.organisationIds ?? [],
+            });
+            break;
+          }
         }
         
-        // Créer la position si une position initiale a été fournie
-        if (createdEntity && createMode.initialPosition) {
+        // Créer la position si une position initiale a été fournie (sauf pour les districts, organisations et lore)
+        if (createdEntity && createMode.initialPosition && kind !== 'district' && kind !== 'organisation' && kind !== 'lore') {
           const positionPayload =
             kind === 'kingdom'
               ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, kingdomId: createdEntity.id }
@@ -584,12 +758,44 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
         }
         
         push('Créé avec succès', 'success');
-        if (onUpdated) await onUpdated();
+        await handleUpdated();
         onClose();
         return;
       }
       
-      // Mode édition
+      // Mode édition Lore (ouverture par loreId)
+      if (loreId && kind === 'lore') {
+        const loreState = editState as LoreEditState;
+        await updateLore(token, loreId, {
+          title: loreState.title ?? '',
+          content: loreState.content ?? '',
+          tag: loreState.tag ?? undefined,
+          dateInGame: loreState.dateInGame ?? undefined,
+          summary: loreState.summary ?? undefined,
+          kingdomIds: loreState.kingdomIds ?? [],
+          cityIds: loreState.cityIds ?? [],
+          placeIds: loreState.placeIds ?? [],
+          personIds: loreState.personIds ?? [],
+          organisationIds: loreState.organisationIds ?? [],
+        });
+        push('Enregistré', 'success');
+        setEditMode(false);
+        await handleUpdated();
+        const refreshed = await getLore(loreId);
+        setData(refreshed);
+        setEditState({
+          kind: 'lore',
+          ...refreshed,
+          kingdomIds: refreshed.kingdoms?.map((k) => k.id) || [],
+          cityIds: refreshed.cities?.map((c) => c.id) || [],
+          placeIds: refreshed.places?.map((p) => p.id) || [],
+          personIds: refreshed.persons?.map((p) => p.id) || [],
+          organisationIds: refreshed.organisations?.map((o) => o.id) || [],
+        } as LoreEditState);
+        return;
+      }
+      
+      // Mode édition (entités carte)
       if (!point || !point.targetId) return;
       switch (point.kind) {
         case 'kingdom': {
@@ -602,6 +808,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                 ? Number(kingdomState.population)
                 : null,
             dateInGame: kingdomState.dateInGame ?? null,
+            color: kingdomState.color ?? null,
           });
           break;
         }
@@ -616,6 +823,19 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           };
           console.log('Frontend - payload complet:', payload);
           await updateCity(token, point.targetId, payload);
+          break;
+        }
+        case 'district': {
+          const districtState = editState as DistrictDetail;
+          await updateDistrict(token, point.targetId, {
+            name: districtState.name ?? '',
+            motto: districtState.motto ?? null,
+            ambiance: districtState.ambiance ?? null,
+            content: districtState.content ?? null,
+            rumors: districtState.rumors ?? null,
+            secret: districtState.secret ?? null,
+            cityId: districtState.cityId,
+          });
           break;
         }
         case 'place':
@@ -652,21 +872,64 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           await updatePerson(token, point.targetId, payload);
           break;
         }
+        case 'organisation': {
+          const organisationState = editState as OrganisationEditState;
+          const updateData = {
+            name: organisationState.name ?? '',
+            description: organisationState.description ?? null,
+            organisationType: organisationState.organisationType ?? null,
+            parentOrganisationId: organisationState.parentOrganisationId ?? null,
+            kingdomIds: organisationState.kingdomIds ?? [],
+            cityIds: organisationState.cityIds ?? [],
+            placeIds: organisationState.placeIds ?? [],
+            personIds: organisationState.personIds ?? [],
+          };
+          console.log('Frontend - Mise à jour organisation - Données complètes:', JSON.stringify(updateData, null, 2));
+          console.log('Frontend - kingdomIds:', updateData.kingdomIds, 'type:', typeof updateData.kingdomIds, 'isArray:', Array.isArray(updateData.kingdomIds));
+          await updateOrganisation(token, point.targetId, updateData);
+          break;
+        }
       }
       push('Enregistré', 'success');
       setEditMode(false);
-      if (onUpdated) await onUpdated();
+      await handleUpdated();
       // refetch to display updated data
       if (point) {
         const refreshed = await (point.kind === 'kingdom'
           ? getKingdom(point.targetId!)
           : point.kind === 'city'
           ? getCity(point.targetId!)
+          : point.kind === 'district'
+          ? getDistrict(point.targetId!)
           : point.kind === 'place'
           ? getPlace(point.targetId!)
+          : point.kind === 'organisation'
+          ? getOrganisation(point.targetId!)
           : getPerson(point.targetId!));
         setData(refreshed);
-        setEditState({ kind: point.kind, ...refreshed } as EditState);
+        if (point.kind === 'person') {
+          setEditState({
+            kind: 'person' as const,
+            ...refreshed,
+            kingdomId: (refreshed as PersonDetail).kingdom?.id ?? null,
+            cityId: (refreshed as PersonDetail).city?.id ?? null,
+            placeId: (refreshed as PersonDetail).place?.id ?? null,
+          } as PersonEditState);
+        } else if (point.kind === 'organisation') {
+          console.log('Frontend - Données rechargées après sauvegarde:', refreshed);
+          setEditState({
+            kind: 'organisation' as const,
+            ...refreshed,
+            organisationType: (refreshed as OrganisationDetail).organisationType ?? null,
+            parentOrganisationId: (refreshed as OrganisationDetail).parentOrganisation?.id ?? null,
+            kingdomIds: (refreshed as OrganisationDetail).kingdoms?.map(k => k.id) || [],
+            cityIds: (refreshed as OrganisationDetail).cities?.map(c => c.id) || [],
+            placeIds: (refreshed as OrganisationDetail).places?.map(p => p.id) || [],
+            personIds: (refreshed as OrganisationDetail).members?.map(m => m.id) || [],
+          } as OrganisationEditState);
+        } else {
+          setEditState({ kind: point.kind, ...refreshed } as EditState);
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde';
@@ -678,139 +941,219 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
   };
 
   const updateField = (key: string, value: unknown) => {
-    console.log('Frontend - updateField:', key, '=', value);
     setEditState((prev) => {
       const updated = prev ? { ...prev, [key]: value } : prev;
-      console.log('Frontend - editState après update:', updated);
       return updated as EditState;
     });
   };
 
-  // Fonction pour obtenir l'ordre de tri des entités
-  const getEntityOrder = (kind: 'kingdom' | 'city' | 'place' | 'person'): number => {
-    const order: Record<'kingdom' | 'city' | 'place' | 'person', number> = {
-      kingdom: 1,
-      city: 2,
-      place: 5, // Lieu vient après quartier et taverne (pas encore implémentés)
-      person: 6,
-    };
-    return order[kind] || 99;
+
+
+  // Fonction wrapper pour onUpdated qui force le rechargement des données
+  const handleUpdated = async () => {
+    if (onUpdated) {
+      await onUpdated();
+    }
   };
 
-  // Fonction pour obtenir la liste des entités reliées pour la sidebar
-  const getRelatedEntities = (): Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'place' | 'person'; count?: number }> => {
+  if (!point && !createMode && !loreId) return null;
+  
+  const currentKind = createMode ? createMode.kind : loreId ? 'lore' : point!.kind;
+
+  // Fonction pour obtenir les entités regroupées par type pour la sidebar (liées à l'entité courante)
+  const getGroupedEntities = (): { kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation'; label: string; entities: Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' }> }[] => {
     if (!data || !point) return [];
     
-    const entities: Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'place' | 'person'; count?: number }> = [];
+    const groups: Map<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation', Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' }>> = new Map();
     
     if (point.kind === 'kingdom') {
       const kingdomData = data as KingdomDetail;
       if (kingdomData.cities && kingdomData.cities.length > 0) {
-        kingdomData.cities.forEach(city => {
-          entities.push({ id: city.id, name: city.name, kind: 'city' });
-        });
+        groups.set('city', kingdomData.cities.map(c => ({ id: c.id, name: c.name, kind: 'city' as const })));
       }
       if (kingdomData.places && kingdomData.places.length > 0) {
-        kingdomData.places.forEach(place => {
-          entities.push({ id: place.id, name: place.name, kind: 'place' });
-        });
+        groups.set('place', kingdomData.places.map(p => ({ id: p.id, name: p.name, kind: 'place' as const })));
       }
       if (kingdomData.persons && kingdomData.persons.length > 0) {
-        kingdomData.persons.forEach(person => {
-          entities.push({ id: person.id, name: person.name, kind: 'person' });
-        });
+        groups.set('person', kingdomData.persons.map(p => ({ id: p.id, name: p.name, kind: 'person' as const })));
+      }
+      if (kingdomData.organisations && kingdomData.organisations.length > 0) {
+        groups.set('organisation', kingdomData.organisations.map(o => ({ id: o.id, name: o.name, kind: 'organisation' as const })));
       }
     } else if (point.kind === 'city') {
       const cityData = data as CityDetail;
       if (cityData.kingdom) {
-        entities.push({ id: cityData.kingdom.id, name: cityData.kingdom.name, kind: 'kingdom' });
+        groups.set('kingdom', [{ id: cityData.kingdom.id, name: cityData.kingdom.name, kind: 'kingdom' as const }]);
+      }
+      if (cityData.districts && cityData.districts.length > 0) {
+        groups.set('district', cityData.districts.map(d => ({ id: d.id, name: d.name, kind: 'district' as const })));
       }
       if (cityData.places && cityData.places.length > 0) {
-        cityData.places.forEach(place => {
-          entities.push({ id: place.id, name: place.name, kind: 'place' });
-        });
+        groups.set('place', cityData.places.map(p => ({ id: p.id, name: p.name, kind: 'place' as const })));
       }
       if (cityData.persons && cityData.persons.length > 0) {
-        cityData.persons.forEach(person => {
-          entities.push({ id: person.id, name: person.name, kind: 'person' });
-        });
+        groups.set('person', cityData.persons.map(p => ({ id: p.id, name: p.name, kind: 'person' as const })));
+      }
+      if (cityData.organisations && cityData.organisations.length > 0) {
+        groups.set('organisation', cityData.organisations.map(o => ({ id: o.id, name: o.name, kind: 'organisation' as const })));
+      }
+    } else if (point.kind === 'district') {
+      const districtData = data as DistrictDetail;
+      if (districtData.city) {
+        groups.set('city', [{ id: districtData.city.id, name: districtData.city.name, kind: 'city' as const }]);
+      }
+      if (districtData.places && districtData.places.length > 0) {
+        groups.set('place', districtData.places.map(p => ({ id: p.id, name: p.name, kind: 'place' as const })));
+      }
+      if (districtData.persons && districtData.persons.length > 0) {
+        groups.set('person', districtData.persons.map(p => ({ id: p.id, name: p.name, kind: 'person' as const })));
       }
     } else if (point.kind === 'place') {
       const placeData = data as PlaceDetail;
       if (placeData.kingdom) {
-        entities.push({ id: placeData.kingdom.id, name: placeData.kingdom.name, kind: 'kingdom' });
+        groups.set('kingdom', [{ id: placeData.kingdom.id, name: placeData.kingdom.name, kind: 'kingdom' as const }]);
       }
       if (placeData.city) {
-        entities.push({ id: placeData.city.id, name: placeData.city.name, kind: 'city' });
+        groups.set('city', [{ id: placeData.city.id, name: placeData.city.name, kind: 'city' as const }]);
+      }
+      if (placeData.district) {
+        groups.set('district', [{ id: placeData.district.id, name: placeData.district.name, kind: 'district' as const }]);
       }
       if (placeData.persons && placeData.persons.length > 0) {
-        placeData.persons.forEach(person => {
-          entities.push({ id: person.id, name: person.name, kind: 'person' });
-        });
+        groups.set('person', placeData.persons.map(p => ({ id: p.id, name: p.name, kind: 'person' as const })));
+      }
+      if (placeData.organisations && placeData.organisations.length > 0) {
+        groups.set('organisation', placeData.organisations.map(o => ({ id: o.id, name: o.name, kind: 'organisation' as const })));
       }
     } else if (point.kind === 'person') {
       const personData = data as PersonDetail;
       if (personData.kingdom) {
-        entities.push({ id: personData.kingdom.id, name: personData.kingdom.name, kind: 'kingdom' });
+        groups.set('kingdom', [{ id: personData.kingdom.id, name: personData.kingdom.name, kind: 'kingdom' as const }]);
       }
       if (personData.city) {
-        entities.push({ id: personData.city.id, name: personData.city.name, kind: 'city' });
+        groups.set('city', [{ id: personData.city.id, name: personData.city.name, kind: 'city' as const }]);
+      }
+      if (personData.district) {
+        groups.set('district', [{ id: personData.district.id, name: personData.district.name, kind: 'district' as const }]);
       }
       if (personData.place) {
-        entities.push({ id: personData.place.id, name: personData.place.name, kind: 'place' });
+        groups.set('place', [{ id: personData.place.id, name: personData.place.name, kind: 'place' as const }]);
+      }
+      if (personData.organisations && personData.organisations.length > 0) {
+        groups.set('organisation', personData.organisations.map(o => ({ id: o.id, name: o.name, kind: 'organisation' as const })));
+      }
+    } else if (point.kind === 'organisation') {
+      const organisationData = data as OrganisationDetail;
+      const orgItems: Array<{ id: string; name: string; kind: 'organisation' }> = [];
+      if (organisationData.parentOrganisation) {
+        orgItems.push({ id: organisationData.parentOrganisation.id, name: organisationData.parentOrganisation.name, kind: 'organisation' as const });
+      }
+      if (organisationData.subOrganisations && organisationData.subOrganisations.length > 0) {
+        orgItems.push(...organisationData.subOrganisations.map(subOrg => ({ id: subOrg.id, name: subOrg.name, kind: 'organisation' as const })));
+      }
+      if (orgItems.length > 0) {
+        groups.set('organisation', orgItems);
+      }
+      if (organisationData.kingdoms && organisationData.kingdoms.length > 0) {
+        groups.set('kingdom', organisationData.kingdoms.map(k => ({ id: k.id, name: k.name, kind: 'kingdom' as const })));
+      }
+      if (organisationData.members && organisationData.members.length > 0) {
+        groups.set('person', organisationData.members.map(m => ({ id: m.id, name: m.name, kind: 'person' as const })));
+      }
+      if (organisationData.cities && organisationData.cities.length > 0) {
+        groups.set('city', organisationData.cities.map(c => ({ id: c.id, name: c.name, kind: 'city' as const })));
+      }
+      if (organisationData.places && organisationData.places.length > 0) {
+        groups.set('place', organisationData.places.map(p => ({ id: p.id, name: p.name, kind: 'place' as const })));
       }
     }
     
-    // Trier les entités selon l'ordre : Royaume > Ville > Quartier > Taverne > Lieu > Personnage
-    return entities.sort((a, b) => getEntityOrder(a.kind) - getEntityOrder(b.kind));
+    // Convertir la Map en tableau avec les labels
+    const kindLabels: Record<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation', string> = {
+      kingdom: 'Royaume :',
+      city: 'Ville :',
+      district: 'Quartier :',
+      place: 'Lieu :',
+      person: 'Personne :',
+      organisation: 'Organisation :'
+    };
+    
+    const result: { kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation'; label: string; entities: Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' }> }[] = [];
+    
+    // Ordre d'affichage : Royaume > Organisation > Ville > Quartier > Lieu > Personnage
+    const order: Array<'kingdom' | 'organisation' | 'city' | 'district' | 'place' | 'person'> = ['kingdom', 'organisation', 'city', 'district', 'place', 'person'];
+    for (const kind of order) {
+      const entities = groups.get(kind);
+      if (entities && entities.length > 0) {
+        result.push({ kind, label: kindLabels[kind], entities });
+      }
+    }
+    
+    return result;
   };
 
-  const relatedEntities = point && data ? getRelatedEntities() : [];
+  const groupedEntities = point && data ? getGroupedEntities() : [];
 
-  if (!point && !createMode) return null;
-  
-  const currentKind = createMode ? createMode.kind : point!.kind;
+  // Fonction pour rendre la sidebar avec les entités liées à l'entité sélectionnée
+  const renderSidebar = () => {
+    if (!point && !createMode) return null;
+    
+    if (groupedEntities.length === 0) {
+      return null; // Ne pas afficher la sidebar si aucune entité liée
+    }
 
-  return (
-    <div className="detail-overlay" ref={overlayRef} onClick={handleOverlayClick}>
-      <div className="detail-modal-container">
-        {relatedEntities.length > 0 && (
-          <div className="detail-sidebar glass">
-            <div className="detail-sidebar-header">
-              <h3>Onglets du document</h3>
-            </div>
-            <div className="detail-sidebar-list">
-              {relatedEntities.map((entity) => (
+    const handleNavigate = (kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation', id: string, name: string) => {
+      if (onNavigate) {
+        onNavigate({
+          id,
+          x: 0,
+          y: 0,
+          kind: kind as any,
+          targetId: id,
+          name,
+          description: null,
+        });
+      }
+    };
+
+    return (
+      <div className="detail-sidebar glass">
+        <div className="detail-sidebar-list">
+          {groupedEntities.map((group) => (
+            <div key={group.kind} style={{ marginBottom: '16px' }}>
+              <h3 className="section-title" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '8px', textTransform: 'none', letterSpacing: 0 }}>
+                {group.label}
+              </h3>
+              {group.entities.map((entity) => (
                 <button
                   key={entity.id}
                   type="button"
                   className="detail-sidebar-item ghost"
-                  onClick={() => {
-                    if (onNavigate) {
-                      onNavigate({
-                        id: entity.id,
-                        x: 0,
-                        y: 0,
-                        kind: entity.kind,
-                        targetId: entity.id,
-                        name: entity.name,
-                        description: null,
-                      });
-                    }
-                  }}
+                  onClick={() => handleNavigate(entity.kind, entity.id, entity.name)}
                 >
                   <span className="detail-sidebar-icon">
                     {entity.kind === 'kingdom' && '👑'}
+                    {entity.kind === 'organisation' && '🏛️'}
                     {entity.kind === 'city' && '🏙️'}
+                    {entity.kind === 'district' && '🏘️'}
                     {entity.kind === 'place' && '📍'}
                     {entity.kind === 'person' && '👤'}
+                    {entity.kind === 'organisation' && '🏛️'}
                   </span>
                   <span className="detail-sidebar-name">{entity.name}</span>
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="detail-overlay" ref={overlayRef} onClick={handleOverlayClick}>
+      <div className="detail-modal-container">
+        {renderSidebar()}
         <div className="detail-modal glass">
           <button className="detail-close ghost" onClick={onClose}>×</button>
           <div className="detail-actions">
@@ -822,16 +1165,33 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                   </button>
                 )}
                 {editMode && (
-                  <button className="primary" disabled={saving} onClick={handleSave}>
+                  <button className="primary glass" disabled={saving} onClick={handleSave}>
                     {saving ? (createMode ? 'Création…' : 'Enregistrement…') : (createMode ? 'Créer' : 'Enregistrer')}
                   </button>
                 )}
                 {onDelete && point && !createMode && (
                   <button
-                    className="danger"
+                    className="danger glass"
                     onClick={() => {
                       if (point && point.targetId) {
                         onDelete(point);
+                      }
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                )}
+                {token && loreId && !createMode && (
+                  <button
+                    className="danger glass"
+                    onClick={async () => {
+                      try {
+                        await deleteLore(token, loreId);
+                        push('Lore supprimée', 'success');
+                        await handleUpdated();
+                        onClose();
+                      } catch (err) {
+                        push(err instanceof Error ? err.message : 'Erreur', 'error');
                       }
                     }}
                   >
@@ -856,11 +1216,25 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                 onChange={updateField}
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
+                onOpenLore={onOpenLore}
               />
             )}
             {currentKind === 'city' && (
               <CityView
                 data={data as CityDetail | null}
+                editMode={editMode}
+                editState={editState!}
+                onChange={updateField}
+                valueOrDash={valueOrDash}
+                onNavigate={onNavigate}
+                onCreateDistrict={onCreateDistrict}
+                cityId={point?.targetId || (data as CityDetail)?.id}
+                onOpenLore={onOpenLore}
+              />
+            )}
+            {currentKind === 'district' && (
+              <DistrictView
+                data={data as DistrictDetail | null}
                 editMode={editMode}
                 editState={editState!}
                 onChange={updateField}
@@ -876,6 +1250,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                 onChange={updateField}
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
+                onOpenLore={onOpenLore}
               />
             )}
             {currentKind === 'person' && (
@@ -886,6 +1261,27 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                 onChange={updateField}
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
+                onOpenLore={onOpenLore}
+              />
+            )}
+            {currentKind === 'organisation' && (
+              <OrganisationView
+                data={data as OrganisationDetail | null}
+                editMode={editMode}
+                editState={editState!}
+                onChange={updateField}
+                valueOrDash={valueOrDash}
+                onNavigate={onNavigate}
+                onOpenLore={onOpenLore}
+              />
+            )}
+            {currentKind === 'lore' && (
+              <LoreView
+                data={data as LoreDetail | null}
+                editMode={editMode}
+                editState={editState as LoreEditState}
+                onChange={updateField}
+                valueOrDash={valueOrDash}
               />
             )}
           </div>
@@ -896,8 +1292,8 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
   );
 }
 
-// Helper pour créer un MapPoint à partir d'une référence
-function createMapPointFromRef(ref: { id: string; name: string }, kind: 'kingdom' | 'city' | 'place' | 'person'): MapPoint {
+// Helper pour créer un NavigablePoint à partir d'une référence
+function createMapPointFromRef(ref: { id: string; name: string }, kind: EntityKind): NavigablePoint {
   return {
     id: ref.id,
     x: 0,
@@ -909,6 +1305,32 @@ function createMapPointFromRef(ref: { id: string; name: string }, kind: 'kingdom
   };
 }
 
+// Section liste des Lore liées (dans les modales entité)
+function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (loreId: string) => void }) {
+  if (!lores || lores.length === 0) return null;
+  return (
+    <div className="detail-section">
+      <h3 className="section-title">Lore :</h3>
+      <ul className="detail-list">
+        {lores.map((lore) => (
+          <li
+            key={lore.id}
+            style={{ cursor: onOpenLore ? 'pointer' : 'default', textDecoration: onOpenLore ? 'underline' : 'none' }}
+            onClick={() => onOpenLore?.(lore.id)}
+          >
+            <span style={{ fontWeight: 600 }}>{lore.title}</span>
+            {(lore.tag != null && lore.tag !== '') || lore.dateInGame != null ? (
+              <span style={{ marginLeft: 8, color: '#94a3b8', fontSize: '0.9em' }}>
+                {[lore.tag, lore.dateInGame != null ? String(lore.dateInGame) : ''].filter(Boolean).join(' · ')}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // Composant d'onglets
 function KingdomView({
   data,
@@ -917,13 +1339,15 @@ function KingdomView({
   onChange,
   valueOrDash,
   onNavigate,
+  onOpenLore,
 }: {
   data: KingdomDetail | null;
   editMode: boolean;
   editState: EditState;
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
-  onNavigate?: (point: MapPoint) => void;
+  onNavigate?: (point: NavigablePoint) => void;
+  onOpenLore?: (loreId: string) => void;
 }) {
   return (
     <>
@@ -970,6 +1394,48 @@ function KingdomView({
           )}
         </div>
         <div className="detail-item">
+          <span className="detail-label">Couleur (icônes villes)</span>
+          {editMode ? (
+            <div className="detail-input-group">
+              <input
+                className="detail-input"
+                type="color"
+                value={((editState as KingdomDetail | null)?.color as string) || '#1a73e8'}
+                onChange={(e) => onChange('color', e.target.value)}
+                style={{ width: 48, height: 32, padding: 2, cursor: 'pointer' }}
+              />
+              <input
+                className="detail-input"
+                type="text"
+                value={((editState as KingdomDetail | null)?.color as string) ?? ''}
+                onChange={(e) => onChange('color', e.target.value || null)}
+                placeholder="#1a73e8"
+                style={{ flex: 1, marginLeft: 8 }}
+              />
+            </div>
+          ) : (
+            <span className="detail-value">
+              {data?.color ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 20,
+                      height: 20,
+                      backgroundColor: data.color,
+                      borderRadius: 4,
+                      border: '1px solid #ccc',
+                    }}
+                  />
+                  {data.color}
+                </span>
+              ) : (
+                valueOrDash(data?.color)
+              )}
+            </span>
+          )}
+        </div>
+        <div className="detail-item">
           <span className="detail-label">Date (en jeu)</span>
           {editMode ? (
             <input
@@ -980,14 +1446,42 @@ function KingdomView({
             />
           ) : (
             <span className="detail-value">
-              {data?.dateInGame ? new Date(data.dateInGame).toLocaleDateString() : valueOrDash(data?.dateInGame)}
+              {data?.dateInGame ? formatSoleniaDate(data.dateInGame) : valueOrDash(data?.dateInGame)}
             </span>
           )}
         </div>
       </div>
+      {data?.organisations && data.organisations.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Organisations :</h3>
+          <ul className="detail-list">
+            {data?.organisations.map((org) => (
+              <li 
+                key={org.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate({
+                      id: org.id,
+                      x: 0,
+                      y: 0,
+                      kind: 'organisation' as any,
+                      targetId: org.id,
+                      name: org.name,
+                      description: null,
+                    });
+                  }
+                }}
+              >
+                {org.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {data?.cities && data.cities.length > 0 && (
         <div className="detail-section">
-          <h3>Villes ({data.cities.length})</h3>
+          <h3 className="section-title">Villes :</h3>
           <ul className="detail-list">
             {data.cities.map((c) => (
               <li 
@@ -1003,7 +1497,7 @@ function KingdomView({
       )}
       {data?.places && data.places.length > 0 && (
         <div className="detail-section">
-          <h3>Lieux ({data?.places.length})</h3>
+          <h3 className="section-title">Lieux :</h3>
           <ul className="detail-list">
             {data?.places.map((p) => (
               <li 
@@ -1019,7 +1513,7 @@ function KingdomView({
       )}
       {data?.persons && data.persons.length > 0 && (
         <div className="detail-section">
-          <h3>Personnages ({data.persons.length})</h3>
+          <h3 className="section-title">Personnages :</h3>
           <ul className="detail-list">
             {data?.persons.map((p) => (
               <li 
@@ -1033,6 +1527,7 @@ function KingdomView({
           </ul>
         </div>
       )}
+      <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
       <CommentsSection comments={data?.comments} />
     </>
   );
@@ -1045,13 +1540,19 @@ function CityView({
   onChange,
   valueOrDash,
   onNavigate,
+  onCreateDistrict,
+  cityId,
+  onOpenLore,
 }: {
   data: CityDetail | null;
   editMode: boolean;
   editState: EditState;
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
-  onNavigate?: (point: MapPoint) => void;
+  onNavigate?: (point: NavigablePoint) => void;
+  onCreateDistrict?: (cityId: string) => void;
+  cityId?: string;
+  onOpenLore?: (loreId: string) => void;
 }) {
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
@@ -1156,9 +1657,36 @@ function CityView({
           <span className="detail-value">{valueOrDash((data?.kingdom as { name: string } | null | undefined)?.name)}</span>
         )}
       </div>
+      {!editMode && onCreateDistrict && cityId && (
+        <div className="detail-section">
+          <button
+            className="ghost"
+            onClick={() => onCreateDistrict(cityId)}
+            style={{ width: '100%', marginTop: '10px' }}
+          >
+            + Créer un quartier
+          </button>
+        </div>
+      )}
+      {data?.districts && data.districts.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Quartiers :</h3>
+          <ul className="detail-list">
+            {data?.districts.map((d) => (
+              <li 
+                key={d.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(d, 'district'))}
+              >
+                {d.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {data?.places && data.places.length > 0 && (
         <div className="detail-section">
-          <h3>Lieux ({data?.places.length})</h3>
+          <h3 className="section-title">Lieux :</h3>
           <ul className="detail-list">
             {data?.places.map((p) => (
               <li 
@@ -1174,7 +1702,7 @@ function CityView({
       )}
       {data?.persons && data.persons.length > 0 && (
         <div className="detail-section">
-          <h3>Personnages ({data.persons.length})</h3>
+          <h3 className="section-title">Personnages :</h3>
           <ul className="detail-list">
             {data?.persons.map((p) => (
               <li 
@@ -1188,6 +1716,219 @@ function CityView({
           </ul>
         </div>
       )}
+      {data?.organisations && data.organisations.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Organisations :</h3>
+          <ul className="detail-list">
+            {data?.organisations.map((org) => (
+              <li 
+                key={org.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate({
+                      id: org.id,
+                      x: 0,
+                      y: 0,
+                      kind: 'organisation' as any,
+                      targetId: org.id,
+                      name: org.name,
+                      description: null,
+                    });
+                  }
+                }}
+              >
+                {org.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
+      <CommentsSection comments={data?.comments} />
+    </>
+  );
+}
+
+function DistrictView({
+  data,
+  editMode,
+  editState,
+  onChange,
+  valueOrDash,
+  onNavigate,
+}: {
+  data: DistrictDetail | null;
+  editMode: boolean;
+  editState: EditState;
+  onChange: (key: string, value: unknown) => void;
+  valueOrDash: (v: unknown) => string | number;
+  onNavigate?: (point: NavigablePoint) => void;
+}) {
+  const [cities, setCities] = useState<City[]>([]);
+  const [loadingLists, setLoadingLists] = useState(false);
+
+  useEffect(() => {
+    if (editMode) {
+      const loadLists = async () => {
+        setLoadingLists(true);
+        try {
+          const citiesData = await listCities();
+          setCities(citiesData);
+        } catch (err) {
+          console.error('Erreur lors du chargement des villes:', err);
+        } finally {
+          setLoadingLists(false);
+        }
+      };
+      loadLists();
+    }
+  }, [editMode]);
+
+  return (
+    <>
+      <div className="detail-item">
+        <span className="detail-label">Nom</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            value={(editState?.name as string) ?? ''}
+            onChange={(e) => onChange('name', e.target.value)}
+            placeholder="Nom du quartier"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.name)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Devise</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            value={((editState as DistrictDetail)?.motto as string) ?? ''}
+            onChange={(e) => onChange('motto', e.target.value)}
+            placeholder="Devise du quartier"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.motto)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Ambiance</span>
+        {editMode ? (
+          <textarea
+            className="detail-textarea"
+            value={((editState as DistrictDetail)?.ambiance as string) ?? ''}
+            onChange={(e) => onChange('ambiance', e.target.value)}
+            placeholder="Ambiance et description"
+          />
+        ) : (
+          <p className="detail-desc">{valueOrDash(data?.ambiance)}</p>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Contenu</span>
+        {editMode ? (
+          <textarea
+            className="detail-textarea"
+            value={((editState as DistrictDetail)?.content as string) ?? ''}
+            onChange={(e) => onChange('content', e.target.value)}
+            placeholder="Contenu du quartier"
+          />
+        ) : (
+          <p className="detail-desc">{valueOrDash(data?.content)}</p>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Rumeurs</span>
+        {editMode ? (
+          <textarea
+            className="detail-textarea"
+            value={((editState as DistrictDetail)?.rumors as string) ?? ''}
+            onChange={(e) => onChange('rumors', e.target.value)}
+            placeholder="Rumeurs et murmures"
+          />
+        ) : (
+          <p className="detail-desc">{valueOrDash(data?.rumors)}</p>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Secret</span>
+        {editMode ? (
+          <textarea
+            className="detail-textarea"
+            value={((editState as DistrictDetail)?.secret as string) ?? ''}
+            onChange={(e) => onChange('secret', e.target.value)}
+            placeholder="Secret caché"
+          />
+        ) : (
+          <p className="detail-desc">{valueOrDash(data?.secret)}</p>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Ville</span>
+        {editMode ? (
+          loadingLists ? (
+            <span className="detail-value">Chargement...</span>
+          ) : (
+            <SearchableSelect
+              items={cities}
+              selectedId={(editState as DistrictDetail)?.cityId !== undefined 
+                ? (editState as DistrictDetail).cityId 
+                : data?.city?.id}
+              onSelect={(id) => onChange('cityId', id ?? '')}
+              placeholder="Sélectionner une ville"
+            />
+          )
+        ) : data?.city ? (
+          <span 
+            className="detail-value" 
+            style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+            onClick={() => {
+              if (onNavigate && data?.city) {
+                onNavigate(createMapPointFromRef(data.city, 'city'));
+              }
+            }}
+          >
+            {valueOrDash(data.city?.name)}
+          </span>
+        ) : (
+          <span className="detail-value">{valueOrDash((data?.city as { name: string } | null | undefined)?.name)}</span>
+        )}
+      </div>
+      {data?.places && data.places.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Lieux :</h3>
+          <ul className="detail-list">
+            {data?.places.map((p) => (
+              <li 
+                key={p.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(p, 'place'))}
+              >
+                {p.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {data?.persons && data.persons.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Personnages :</h3>
+          <ul className="detail-list">
+            {data?.persons.map((p) => (
+              <li 
+                key={p.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(p, 'person'))}
+              >
+                {p.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
       <CommentsSection comments={data?.comments} />
     </>
   );
@@ -1200,13 +1941,15 @@ function PlaceView({
   onChange,
   valueOrDash,
   onNavigate,
+  onOpenLore,
 }: {
   data: PlaceDetail | null;
   editMode: boolean;
   editState: EditState;
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
-  onNavigate?: (point: MapPoint) => void;
+  onNavigate?: (point: NavigablePoint) => void;
+  onOpenLore?: (loreId: string) => void;
 }) {
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -1337,7 +2080,7 @@ function PlaceView({
       </div>
       {data?.persons && data.persons.length > 0 && (
         <div className="detail-section">
-          <h3>Personnages ({data.persons.length})</h3>
+          <h3 className="section-title">Personnages :</h3>
           <ul className="detail-list">
             {data?.persons.map((p) => (
               <li 
@@ -1351,6 +2094,35 @@ function PlaceView({
           </ul>
         </div>
       )}
+      {data?.organisations && data.organisations.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Organisations :</h3>
+          <ul className="detail-list">
+            {data?.organisations.map((org) => (
+              <li 
+                key={org.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate({
+                      id: org.id,
+                      x: 0,
+                      y: 0,
+                      kind: 'organisation' as any,
+                      targetId: org.id,
+                      name: org.name,
+                      description: null,
+                    });
+                  }
+                }}
+              >
+                {org.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
       <CommentsSection comments={data?.comments} />
     </>
   );
@@ -1363,13 +2135,15 @@ function PersonView({
   onChange,
   valueOrDash,
   onNavigate,
+  onOpenLore,
 }: {
   data: PersonDetail | null;
   editMode: boolean;
   editState: EditState;
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
-  onNavigate?: (point: MapPoint) => void;
+  onNavigate?: (point: NavigablePoint) => void;
+  onOpenLore?: (loreId: string) => void;
 }) {
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -1664,7 +2438,498 @@ function PersonView({
             </div>
           </div>
       
+      {data?.organisations && data.organisations.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Organisations :</h3>
+          <ul className="detail-list">
+            {data?.organisations.map((org) => (
+              <li 
+                key={org.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate({
+                      id: org.id,
+                      x: 0,
+                      y: 0,
+                      kind: 'organisation' as any,
+                      targetId: org.id,
+                      name: org.name,
+                      description: null,
+                    });
+                  }
+                }}
+              >
+                {org.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
       <CommentsSection comments={data?.comments} />
+    </>
+  );
+}
+
+function OrganisationView({
+  data,
+  editMode,
+  editState,
+  onChange,
+  valueOrDash,
+  onNavigate,
+  onOpenLore,
+}: {
+  data: OrganisationDetail | null;
+  editMode: boolean;
+  editState: EditState;
+  onChange: (key: string, value: unknown) => void;
+  valueOrDash: (v: unknown) => string | number;
+  onNavigate?: (point: NavigablePoint) => void;
+  onOpenLore?: (loreId: string) => void;
+}) {
+  const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [persons, setPersons] = useState<Person[]>([]);
+  const [loadingLists, setLoadingLists] = useState(false);
+
+  useEffect(() => {
+    if (editMode || !data?.id) { // Charger aussi en mode création
+      const loadLists = async () => {
+        setLoadingLists(true);
+        try {
+          const [organisationsData, kingdomsData, citiesData, placesData, personsData] = await Promise.all([
+            listOrganisations(),
+            listKingdoms(),
+            listCities(),
+            listPlaces(),
+            listPersons(),
+          ]);
+          // Exclure l'organisation actuelle de la liste des parents possibles
+          const filteredOrgs = data?.id 
+            ? organisationsData.filter(org => org.id !== data.id)
+            : organisationsData;
+          setOrganisations(filteredOrgs);
+          setKingdoms(kingdomsData);
+          setCities(citiesData);
+          setPlaces(placesData);
+          setPersons(personsData);
+        } catch (err) {
+          console.error('Erreur lors du chargement des listes:', err);
+        } finally {
+          setLoadingLists(false);
+        }
+      };
+      loadLists();
+    }
+  }, [editMode, data?.id]);
+
+  return (
+    <>
+      <div className="detail-item">
+        <span className="detail-label">Nom</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            value={(editState?.name as string) ?? ''}
+            onChange={(e) => onChange('name', e.target.value)}
+            placeholder="Nom de l'organisation"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.name)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Description</span>
+        {editMode ? (
+          <textarea
+            className="detail-textarea"
+            value={((editState as OrganisationDetail)?.description as string) ?? ''}
+            onChange={(e) => onChange('description', e.target.value)}
+            placeholder="Description de l'organisation"
+          />
+        ) : (
+          <p className="detail-desc">{valueOrDash(data?.description)}</p>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Type</span>
+        {editMode ? (
+          <select
+            className="detail-input"
+            value={((editState as OrganisationDetail)?.organisationType as string) ?? ''}
+            onChange={(e) => onChange('organisationType', e.target.value === '' ? null : e.target.value)}
+          >
+            <option value="">— (Non défini)</option>
+            <option value="PRINCIPAL">Principal</option>
+            <option value="CELLULE">Cellule</option>
+          </select>
+        ) : (
+          <span className="detail-value">
+            {(data as OrganisationDetail)?.organisationType === 'PRINCIPAL'
+              ? 'Principal'
+              : (data as OrganisationDetail)?.organisationType === 'CELLULE'
+              ? 'Cellule'
+              : valueOrDash(null)}
+          </span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Organisation parente</span>
+        {editMode ? (
+          loadingLists ? (
+            <span className="detail-value">Chargement...</span>
+          ) : (
+            <SearchableSelect
+              items={organisations}
+              selectedId={(editState as OrganisationDetail)?.parentOrganisationId !== undefined 
+                ? (editState as OrganisationDetail).parentOrganisationId 
+                : data?.parentOrganisation?.id}
+              onSelect={(id) => onChange('parentOrganisationId', id)}
+              placeholder="Sélectionner une organisation parente (optionnel)"
+            />
+          )
+        ) : data?.parentOrganisation ? (
+          <span 
+            className="detail-value" 
+            style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+            onClick={() => {
+              if (onNavigate && data?.parentOrganisation) {
+                onNavigate({
+                  id: data.parentOrganisation.id,
+                  x: 0,
+                  y: 0,
+                  kind: 'organisation' as any,
+                  targetId: data.parentOrganisation.id,
+                  name: data.parentOrganisation.name,
+                  description: null,
+                });
+              }
+            }}
+          >
+            {valueOrDash(data.parentOrganisation?.name)}
+          </span>
+        ) : (
+          <span className="detail-value">{valueOrDash(null)}</span>
+        )}
+      </div>
+      {data?.subOrganisations && data.subOrganisations.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Sous-organisations :</h3>
+          <ul className="detail-list">
+            {data?.subOrganisations.map((subOrg) => (
+              <li 
+                key={subOrg.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate({
+                      id: subOrg.id,
+                      x: 0,
+                      y: 0,
+                      kind: 'organisation' as any,
+                      targetId: subOrg.id,
+                      name: subOrg.name,
+                      description: null,
+                    });
+                  }
+                }}
+              >
+                {subOrg.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {data?.members && data.members.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Membres :</h3>
+          <ul className="detail-list">
+            {data?.members.map((m) => (
+              <li 
+                key={m.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(m, 'person'))}
+              >
+                {m.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {data?.cities && data.cities.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Villes :</h3>
+          <ul className="detail-list">
+            {data?.cities.map((c) => (
+              <li 
+                key={c.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(c, 'city'))}
+              >
+                {c.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {data?.places && data.places.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Lieux :</h3>
+          <ul className="detail-list">
+            {data?.places.map((p) => (
+              <li 
+                key={p.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(p, 'place'))}
+              >
+                {p.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {data?.kingdoms && data.kingdoms.length > 0 && (
+        <div className="detail-section">
+          <h3 className="section-title">Royaumes :</h3>
+          <ul className="detail-list">
+            {data?.kingdoms.map((k) => (
+              <li 
+                key={k.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => onNavigate && onNavigate(createMapPointFromRef(k, 'kingdom'))}
+              >
+                {k.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {editMode && (
+        <>
+          <div className="detail-item">
+            <span className="detail-label">Royaumes</span>
+            {loadingLists ? (
+              <span className="detail-value">Chargement...</span>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                {kingdoms.map((kingdom) => {
+                  const orgState = editState as OrganisationEditState;
+                  const selectedIds = orgState?.kingdomIds || (data?.kingdoms?.map(k => k.id) || []);
+                  const isSelected = selectedIds.includes(kingdom.id);
+                  return (
+                    <label key={kingdom.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const currentIds = (orgState?.kingdomIds || data?.kingdoms?.map(k => k.id) || []);
+                          const newIds = e.target.checked
+                            ? [...currentIds, kingdom.id]
+                            : currentIds.filter(id => id !== kingdom.id);
+                          onChange('kingdomIds', newIds);
+                        }}
+                      />
+                      <span>{kingdom.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Villes</span>
+            {loadingLists ? (
+              <span className="detail-value">Chargement...</span>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                {cities.map((city) => {
+                  const orgState = editState as OrganisationEditState;
+                  const selectedIds = orgState?.cityIds || (data?.cities?.map(c => c.id) || []);
+                  const isSelected = selectedIds.includes(city.id);
+                  return (
+                    <label key={city.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const currentIds = (orgState?.cityIds || data?.cities?.map(c => c.id) || []);
+                          const newIds = e.target.checked
+                            ? [...currentIds, city.id]
+                            : currentIds.filter(id => id !== city.id);
+                          onChange('cityIds', newIds);
+                        }}
+                      />
+                      <span>{city.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Lieux</span>
+            {loadingLists ? (
+              <span className="detail-value">Chargement...</span>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                {places.map((place) => {
+                  const orgState = editState as OrganisationEditState;
+                  const selectedIds = orgState?.placeIds || (data?.places?.map(p => p.id) || []);
+                  const isSelected = selectedIds.includes(place.id);
+                  return (
+                    <label key={place.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const currentIds = (orgState?.placeIds || data?.places?.map(p => p.id) || []);
+                          const newIds = e.target.checked
+                            ? [...currentIds, place.id]
+                            : currentIds.filter(id => id !== place.id);
+                          onChange('placeIds', newIds);
+                        }}
+                      />
+                      <span>{place.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Personnes</span>
+            {loadingLists ? (
+              <span className="detail-value">Chargement...</span>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                {persons.map((person) => {
+                  const orgState = editState as OrganisationEditState;
+                  const selectedIds = orgState?.personIds || (data?.members?.map(m => m.id) || []);
+                  const isSelected = selectedIds.includes(person.id);
+                  return (
+                    <label key={person.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const currentIds = (orgState?.personIds || data?.members?.map(m => m.id) || []);
+                          const newIds = e.target.checked
+                            ? [...currentIds, person.id]
+                            : currentIds.filter(id => id !== person.id);
+                          onChange('personIds', newIds);
+                        }}
+                      />
+                      <span>{person.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function LoreView({
+  data,
+  editMode,
+  editState,
+  onChange,
+  valueOrDash,
+}: {
+  data: LoreDetail | null;
+  editMode: boolean;
+  editState: LoreEditState;
+  onChange: (key: string, value: unknown) => void;
+  valueOrDash: (v: unknown) => string | number;
+}) {
+  return (
+    <>
+      <div className="detail-item">
+        <span className="detail-label">Titre</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            value={editState.title ?? ''}
+            onChange={(e) => onChange('title', e.target.value)}
+            placeholder="Titre de la lore"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.title)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Tag</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            value={editState.tag ?? ''}
+            onChange={(e) => onChange('tag', e.target.value || null)}
+            placeholder="Tag (optionnel)"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.tag)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Date (en jeu)</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            type="number"
+            value={editState.dateInGame ?? ''}
+            onChange={(e) => onChange('dateInGame', e.target.value === '' ? null : Number(e.target.value))}
+            placeholder="ex: 859, -120, 1330"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.dateInGame)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Résumé</span>
+        {editMode ? (
+          <input
+            className="detail-input"
+            value={editState.summary ?? ''}
+            onChange={(e) => onChange('summary', e.target.value || null)}
+            placeholder="Résumé court (optionnel)"
+          />
+        ) : (
+          <span className="detail-value">{valueOrDash(data?.summary)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Contenu</span>
+        {editMode ? (
+          <textarea
+            className="detail-textarea"
+            value={editState.content ?? ''}
+            onChange={(e) => onChange('content', e.target.value)}
+            placeholder="Contenu de la lore"
+            rows={12}
+          />
+        ) : (
+          <p className="detail-desc" style={{ whiteSpace: 'pre-wrap' }}>{valueOrDash(data?.content)}</p>
+        )}
+      </div>
+      {!editMode && data && (data.kingdoms?.length || data.cities?.length || data.places?.length || data.persons?.length || data.organisations?.length) ? (
+        <div className="detail-section">
+          <h3 className="section-title">Entités liées</h3>
+          <ul className="detail-list">
+            {data.kingdoms?.map((k) => <li key={k.id}>{k.name} (royaume)</li>)}
+            {data.cities?.map((c) => <li key={c.id}>{c.name} (ville)</li>)}
+            {data.places?.map((p) => <li key={p.id}>{p.name} (lieu)</li>)}
+            {data.persons?.map((p) => <li key={p.id}>{p.name} (personnage)</li>)}
+            {data.organisations?.map((o) => <li key={o.id}>{o.name} (organisation)</li>)}
+          </ul>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -1681,7 +2946,7 @@ function CommentsSection({ comments }: { comments?: Comment[] }) {
         {comments.map((c) => (
           <div key={c.id} className="comment-item">
             {c.dateInGame && (
-              <span className="comment-date">{new Date(c.dateInGame).toLocaleDateString()}</span>
+              <span className="comment-date">{formatSoleniaDate(c.dateInGame)}</span>
             )}
             <p>{c.description}</p>
           </div>

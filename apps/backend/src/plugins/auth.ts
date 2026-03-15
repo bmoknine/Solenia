@@ -2,20 +2,16 @@ import fp from 'fastify-plugin';
 import fastifyJwt from '@fastify/jwt';
 import { config } from '../config';
 
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    payload: { sub: string; type: string; email: string; username: string; iat?: number; exp?: number };
+    user: { sub: string; type: string; email: string; username: string; iat?: number; exp?: number };
+  }
+}
+
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: import('fastify').preHandlerHookHandler;
-  }
-
-  interface FastifyRequest {
-    user?: {
-      sub: string;
-      type: string;
-      email: string;
-      username: string;
-      iat: number;
-      exp: number;
-    };
   }
 }
 

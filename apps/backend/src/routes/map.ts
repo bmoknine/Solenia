@@ -5,7 +5,7 @@ export async function mapRoutes(app: FastifyInstance) {
     const positions = await app.prisma.position.findMany({
       include: {
         kingdom: true,
-        city: true,
+        city: { include: { kingdom: true } },
         place: true,
         personOfInterest: true,
       },
@@ -31,10 +31,14 @@ export async function mapRoutes(app: FastifyInstance) {
           p.personOfInterestId ? 'person' :
           'unknown';
 
-        // Récupérer iconUrl selon le type d'entité
+        // Récupérer iconUrl et couleur selon le type d'entité
         let iconUrl: string | null = null;
-        if (p.city) {
+        let kingdomColor: string | null = null;
+        if (p.kingdom) {
+          kingdomColor = (p.kingdom as any).color ?? null;
+        } else if (p.city) {
           iconUrl = (p.city as any).iconUrl ?? null;
+          kingdomColor = (p.city as any).kingdom?.color ?? null;
         } else if (p.place) {
           const placeIconUrl = (p.place as any).iconUrl;
           iconUrl = placeIconUrl ?? null;
@@ -49,6 +53,7 @@ export async function mapRoutes(app: FastifyInstance) {
           name: target.name,
           description: 'description' in target ? (target as any).description ?? null : null,
           iconUrl,
+          kingdomColor,
         };
       })
       .filter((p): p is NonNullable<typeof p> => p !== null);

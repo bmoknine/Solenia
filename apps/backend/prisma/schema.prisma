@@ -87,12 +87,16 @@ model Kingdom {
   population  Int?
   description String?
   dateInGame  DateTime?
+  color       String?   // Couleur appliquée aux icônes des villes du royaume (hex, ex: #1a73e8)
+  isForDM     Boolean   @default(false)
 
   cities   City[]
   places   Place[]
   comments Comment[]
   persons  PersonOfInterest[]
   position Position?
+  organisations OrganisationKingdom[]
+  lores   LoreKingdom[]
 }
 
 model City {
@@ -101,12 +105,32 @@ model City {
   description String?
   iconUrl     String?
   kingdomId   String?
+  isForDM     Boolean   @default(false)
 
-  kingdom  Kingdom? @relation(fields: [kingdomId], references: [id])
-  places   Place[]
+  kingdom   Kingdom? @relation(fields: [kingdomId], references: [id])
+  places    Place[]
+  districts District[]
+  comments  Comment[]
+  persons   PersonOfInterest[]
+  position  Position?
+  organisations OrganisationCity[]
+  lores   LoreCity[]
+}
+
+model District {
+  id          String  @id @default(uuid())
+  name        String
+  motto       String?  // Devise/citation du quartier
+  ambiance    String?  // Ambiance et description
+  content     String?  // Contenu du quartier
+  rumors      String?  // Rumeurs et murmures
+  secret      String?  // Secret caché
+  cityId      String
+
+  city     City      @relation(fields: [cityId], references: [id])
+  places   Place[]  // Lieux notables (relation)
   comments Comment[]
   persons  PersonOfInterest[]
-  position Position?
 }
 
 model Place {
@@ -116,12 +140,17 @@ model Place {
   iconUrl     String?
   kingdomId   String?
   cityId      String?
+  districtId  String?
+  isForDM     Boolean   @default(false)
 
-  kingdom  Kingdom? @relation(fields: [kingdomId], references: [id])
-  city     City?    @relation(fields: [cityId], references: [id])
+  kingdom  Kingdom?  @relation(fields: [kingdomId], references: [id])
+  city     City?     @relation(fields: [cityId], references: [id])
+  district District? @relation(fields: [districtId], references: [id])
   comments Comment[]
   persons  PersonOfInterest[]
   position Position?
+  organisations OrganisationPlace[]
+  lores   LorePlace[]
 }
 
 model PersonOfInterest {
@@ -139,15 +168,20 @@ model PersonOfInterest {
   INT         Int
   WIS         Int
   CHA         Int
+  isForDM     Boolean     @default(false)
   kingdomId   String?
   cityId      String?
+  districtId  String?
   placeId     String?
 
-  kingdom  Kingdom? @relation(fields: [kingdomId], references: [id])
-  city     City?    @relation(fields: [cityId], references: [id])
-  place    Place?   @relation(fields: [placeId], references: [id])
+  kingdom  Kingdom?  @relation(fields: [kingdomId], references: [id])
+  city     City?     @relation(fields: [cityId], references: [id])
+  district District? @relation(fields: [districtId], references: [id])
+  place    Place?    @relation(fields: [placeId], references: [id])
   comments Comment[]
   position Position?
+  organisations OrganisationMember[]
+  lores   LorePerson[]
 }
 
 model Comment {
@@ -156,12 +190,14 @@ model Comment {
   dateInGame         DateTime?
   kingdomId          String?
   cityId             String?
+  districtId         String?
   placeId            String?
   personOfInterestId String?
   authorId           String?
 
   kingdom          Kingdom?          @relation(fields: [kingdomId], references: [id])
   city             City?             @relation(fields: [cityId], references: [id])
+  district         District?         @relation(fields: [districtId], references: [id])
   place            Place?            @relation(fields: [placeId], references: [id])
   personOfInterest PersonOfInterest? @relation(fields: [personOfInterestId], references: [id])
   author           User?             @relation("UserComments", fields: [authorId], references: [id])
@@ -182,3 +218,142 @@ model Position {
   personOfInterest PersonOfInterest? @relation(fields: [personOfInterestId], references: [id])
 }
 
+enum OrganisationType {
+  CELLULE
+  PRINCIPAL
+}
+
+model Organisation {
+  id                  String   @id @default(uuid())
+  name                String
+  description         String?
+  organisationType    OrganisationType? // cellule ou principal
+  parentOrganisationId String?
+  isForDM             Boolean  @default(false)
+
+  parentOrganisation  Organisation? @relation("OrganisationHierarchy", fields: [parentOrganisationId], references: [id], onDelete: SetNull)
+  subOrganisations    Organisation[] @relation("OrganisationHierarchy")
+
+  members OrganisationMember[]
+  cities  OrganisationCity[]
+  places  OrganisationPlace[]
+  kingdoms OrganisationKingdom[]
+  lores   LoreOrganisation[]
+}
+
+model OrganisationMember {
+  id             String   @id @default(uuid())
+  organisationId String
+  personId       String
+
+  organisation Organisation        @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  person       PersonOfInterest    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, personId])
+}
+
+model OrganisationCity {
+  id             String   @id @default(uuid())
+  organisationId String
+  cityId         String
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  city         City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, cityId])
+}
+
+model OrganisationPlace {
+  id             String   @id @default(uuid())
+  organisationId String
+  placeId        String
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  place         Place        @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, placeId])
+}
+
+model OrganisationKingdom {
+  id             String   @id @default(uuid())
+  organisationId String
+  kingdomId      String
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  kingdom       Kingdom       @relation(fields: [kingdomId], references: [id], onDelete: Cascade)
+
+  @@unique([organisationId, kingdomId])
+}
+
+model Lore {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  tag        String?
+  dateInGame Int?
+  summary    String?
+  isForDM    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  kingdoms      LoreKingdom[]
+  cities        LoreCity[]
+  places        LorePlace[]
+  persons       LorePerson[]
+  organisations LoreOrganisation[]
+}
+
+model LoreKingdom {
+  id        String  @id @default(uuid())
+  loreId    String
+  kingdomId String
+
+  lore    Lore    @relation(fields: [loreId], references: [id], onDelete: Cascade)
+  kingdom Kingdom @relation(fields: [kingdomId], references: [id], onDelete: Cascade)
+
+  @@unique([loreId, kingdomId])
+}
+
+model LoreCity {
+  id      String @id @default(uuid())
+  loreId  String
+  cityId  String
+
+  lore Lore @relation(fields: [loreId], references: [id], onDelete: Cascade)
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([loreId, cityId])
+}
+
+model LorePlace {
+  id      String @id @default(uuid())
+  loreId  String
+  placeId String
+
+  lore  Lore  @relation(fields: [loreId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([loreId, placeId])
+}
+
+model LorePerson {
+  id       String @id @default(uuid())
+  loreId   String
+  personId String
+
+  lore   Lore            @relation(fields: [loreId], references: [id], onDelete: Cascade)
+  person PersonOfInterest @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([loreId, personId])
+}
+
+model LoreOrganisation {
+  id             String @id @default(uuid())
+  loreId         String
+  organisationId String
+
+  lore         Lore         @relation(fields: [loreId], references: [id], onDelete: Cascade)
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+
+  @@unique([loreId, organisationId])
+}

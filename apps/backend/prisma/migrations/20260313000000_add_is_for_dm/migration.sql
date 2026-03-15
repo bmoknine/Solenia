@@ -1,0 +1,17 @@
+-- AlterTable
+ALTER TABLE "Kingdom" ADD COLUMN "isForDM" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "City" ADD COLUMN "isForDM" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "Place" ADD COLUMN "isForDM" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "PersonOfInterest" ADD COLUMN "isForDM" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "Organisation" ADD COLUMN "isForDM" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "Lore" ADD COLUMN "isForDM" BOOLEAN NOT NULL DEFAULT false;

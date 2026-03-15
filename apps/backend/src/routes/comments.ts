@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { commentInputSchema, idSchema } from '@solenia/shared';
+import { commentInputSchema, commentUpdateSchema, idSchema, parseSoleniaDate } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
 
 export async function commentRoutes(app: FastifyInstance) {
@@ -29,7 +29,7 @@ export async function commentRoutes(app: FastifyInstance) {
     return app.prisma.comment.create({
       data: {
         ...data,
-        dateInGame: data.dateInGame ? new Date(data.dateInGame) : undefined,
+        dateInGame: parseSoleniaDate(data.dateInGame) ?? undefined,
         authorId: request.user?.sub,
       },
     });
@@ -37,12 +37,13 @@ export async function commentRoutes(app: FastifyInstance) {
 
   app.put('/comments/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
     const id = idSchema.parse((request.params as any).id);
-    const data = commentInputSchema.partial().parse(request.body);
+    const data = commentUpdateSchema.parse(request.body);
+    const { dateInGame: rawDate, ...rest } = data;
     return app.prisma.comment.update({
       where: { id },
       data: {
-        ...data,
-        dateInGame: data.dateInGame ? new Date(data.dateInGame) : undefined,
+        ...rest,
+        ...(rawDate !== undefined && { dateInGame: parseSoleniaDate(rawDate) ?? null }),
       },
     });
   });

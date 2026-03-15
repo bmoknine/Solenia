@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import './Panel.css';
 
-type Kind = 'kingdom' | 'city' | 'place' | 'person' | 'unknown';
+type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown';
 
 type Props = {
   active: Set<Kind>;
@@ -11,6 +11,7 @@ type Props = {
 const labels: Record<Kind, string> = {
   kingdom: 'Royaume',
   city: 'Ville',
+  district: 'Quartier',
   place: 'Lieu',
   person: 'Personnage',
   unknown: 'Autre',

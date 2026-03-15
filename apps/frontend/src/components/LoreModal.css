@@ -1,0 +1,83 @@
+.lore-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.lore-modal {
+  width: 90%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.lore-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.lore-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.lore-modal-actions {
+  margin-bottom: 1rem;
+}
+
+.lore-modal-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 120px;
+}
+
+.lore-modal-empty {
+  color: #94a3b8;
+  margin: 0;
+  padding: 1rem 0;
+}
+
+.lore-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lore-list-item {
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.lore-list-item:hover {
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.lore-list-item-title {
+  font-weight: 600;
+  color: #e2e8f0;
+  display: block;
+}
+
+.lore-list-item-meta {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 4px;
+}

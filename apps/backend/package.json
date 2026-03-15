@@ -16,7 +16,9 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
     "check-orphans": "tsx scripts/check-orphans.ts",
-    "clean-orphans": "tsx scripts/clean-orphans.ts"
+    "clean-orphans": "tsx scripts/clean-orphans.ts",
+    "wipe-data": "tsx scripts/wipe-all-except-users.ts",
+    "db:backup": "mkdir -p backups && (set -a && . ./.env 2>/dev/null; set +a; pg_dump \"$DATABASE_URL\" -F p -f \"backups/solenia_$(date +%Y%m%d_%H%M%S).sql\" && echo \"Sauvegarde créée dans backups/\")"
   },
   "keywords": [],
   "author": "",

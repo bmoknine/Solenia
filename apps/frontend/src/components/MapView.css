@@ -22,11 +22,10 @@
 
 .map-pin-dot {
   display: block;
-  width: 14px;
-  height: 14px;
   border-radius: 50%;
   border: 2px solid #0f172a;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  /* width et height sont définis dynamiquement via inline styles */
 }
 
 .map-pin-dot:hover {
