@@ -306,8 +306,8 @@ export function MapView({
       return L.divIcon({
         className: 'map-pin-icon map-pin-city',
         html: `<div class="map-pin-city-wrap" style="width:${Math.max(Math.round(size * 1.5), labelMaxW)}px;">
-          <div class="map-pin-icon-box" style="width:${size}px;height:${size}px;margin:0 auto;">
-            <img src="${iconUrl}" alt="" style="width:100%;height:100%;object-fit:contain;object-position:center;display:block;transition:all 0.3s ease;" />
+          <div class="map-pin-icon-box" style="width:${size}px;margin:0 auto;">
+            <img src="${iconUrl}" alt="" style="width:100%;object-fit:contain;object-position:center;display:block;transition:all 0.3s ease;" />
             ${overlay}
           </div>
           ${label}
