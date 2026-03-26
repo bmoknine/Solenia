@@ -1477,7 +1477,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
 
   return (
     <div className="detail-overlay" ref={overlayRef} onClick={handleOverlayClick}>
-      <div className="detail-modal-container">
+      <div className={`detail-modal-container ${currentKind === 'lore' ? 'detail-modal-container-lore' : ''}`}>
         {renderSidebar()}
         <div className="detail-modal glass">
           <button className="detail-close ghost" onClick={onClose}>×</button>
@@ -1655,11 +1655,41 @@ function createMapPointFromRef(ref: { id: string; name: string }, kind: EntityKi
 // Section liste des Lore liées (dans les modales entité)
 function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (loreId: string) => void }) {
   if (!lores || lores.length === 0) return null;
+  const [tagFilter, setTagFilter] = useState<string>('__all__');
+
+  const tags = Array.from(
+    new Set(lores.map((l) => (l.tag ?? '').trim()).filter((t) => t !== '')),
+  ).sort((a, b) => a.localeCompare(b));
+
+  const sorted = [...lores].sort((a, b) => {
+    const da = a.dateInGame ?? Number.POSITIVE_INFINITY;
+    const db = b.dateInGame ?? Number.POSITIVE_INFINITY;
+    return da - db;
+  });
+
+  const filtered = tagFilter === '__all__' ? sorted : sorted.filter((l) => (l.tag ?? '').trim() === tagFilter);
+
   return (
-    <div className="detail-section">
-      <h3 className="section-title">Lore :</h3>
+    <div className="detail-section lore-section">
+      <div className="lore-filter-bar">
+        <h3 className="section-title lore-filter-title">Lore :</h3>
+        {tags.length > 0 && (
+          <label className="lore-filter-label">
+            <span className="lore-filter-label-text">Filtre tag</span>
+            <select className="detail-input lore-tag-select" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
+              <option value="__all__">Tous les tags</option>
+              {tags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
       <ul className="detail-list">
-        {lores.map((lore) => (
+        {filtered.map((lore) => (
           <li
             key={lore.id}
             style={{ cursor: onOpenLore ? 'pointer' : 'default', textDecoration: onOpenLore ? 'underline' : 'none' }}
@@ -1674,6 +1704,12 @@ function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (l
           </li>
         ))}
       </ul>
+
+      {filtered.length === 0 && (
+        <div className="detail-error" style={{ marginTop: 12, padding: 0 }}>
+          Aucun lore pour ce tag.
+        </div>
+      )}
     </div>
   );
 }
