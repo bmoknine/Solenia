@@ -9,9 +9,9 @@
 }
 
 .lore-modal {
-  width: 90%;
-  max-width: 560px;
-  max-height: 80vh;
+  width: 94%;
+  max-width: 980px;
+  max-height: 92vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -35,6 +35,23 @@
 
 .lore-modal-actions {
   margin-bottom: 1rem;
+}
+
+.lore-modal-filter {
+  margin-bottom: 0.75rem;
+}
+
+.lore-modal-filter-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  color: #e2e8f0;
+}
+
+.lore-modal-filter-select {
+  width: 240px;
 }
 
 .lore-modal-list {

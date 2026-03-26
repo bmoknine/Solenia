@@ -13,16 +13,36 @@ export function LoreModal({ open, onClose, onSelectLore, onCreateNew }: LoreModa
   const [lores, setLores] = useState<Lore[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<string>('__all__');
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setLoading(true);
+    setTagFilter('__all__');
     listLores()
       .then(setLores)
       .catch((err) => setError(err instanceof Error ? err.message : 'Chargement échoué'))
       .finally(() => setLoading(false));
   }, [open]);
+
+  const sorted = [...lores].sort((a, b) => {
+    const da = a.dateInGame ?? Number.POSITIVE_INFINITY;
+    const db = b.dateInGame ?? Number.POSITIVE_INFINITY;
+    return da - db;
+  });
+
+  const tags = Array.from(
+    new Set(lores.map((l) => (l.tag ?? '').trim()).filter((t) => t !== '')),
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filtered = (() => {
+    if (tagFilter === '__all__') return sorted;
+    if (tagFilter === '__no_tag__') {
+      return sorted.filter((l) => !(l.tag ?? '').trim());
+    }
+    return sorted.filter((l) => (l.tag ?? '').trim() === tagFilter);
+  })();
 
   if (!open) return null;
 
@@ -38,15 +58,37 @@ export function LoreModal({ open, onClose, onSelectLore, onCreateNew }: LoreModa
             Créer une Lore
           </button>
         </div>
+        <div className="lore-modal-filter">
+          <label className="lore-modal-filter-label">
+            <span>Filtrer par tag</span>
+            <select
+              className="detail-input lore-modal-filter-select"
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+            >
+              <option value="__all__">Tous</option>
+              <option value="__no_tag__">Sans tag</option>
+              {tags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         {loading && <div className="detail-loading">Chargement…</div>}
         {error && <div className="detail-error">{error}</div>}
         {!loading && !error && (
           <div className="lore-modal-list">
-            {lores.length === 0 ? (
-              <p className="lore-modal-empty">Aucune lore. Cliquez sur « Créer une Lore » pour en ajouter.</p>
+            {filtered.length === 0 ? (
+              <p className="lore-modal-empty">
+                {lores.length === 0
+                  ? 'Aucune lore. Cliquez sur « Créer une Lore » pour en ajouter.'
+                  : 'Aucune lore pour ce tag.'}
+              </p>
             ) : (
               <ul className="lore-list">
-                {lores.map((lore) => (
+                {filtered.map((lore) => (
                   <li
                     key={lore.id}
                     className="lore-list-item glass"
