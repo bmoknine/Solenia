@@ -23,8 +23,9 @@ export const cityInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   iconUrl: z.string().nullable().optional(),
+  map: z.string().nullable().optional(),
   flag: z.string().optional().nullable().or(z.literal('')),
-  kingdomId: idSchema.optional(),
+  kingdomId: idSchema.nullable().optional(),
   isForDM: z.boolean().optional(),
 });
 
@@ -58,9 +59,13 @@ export const placeInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   iconUrl: z.string().nullable().optional(),
-  kingdomId: idSchema.optional(),
-  cityId: idSchema.optional(),
-  districtId: idSchema.optional(),
+  map: z.string().nullable().optional(),
+  kingdomId: idSchema.nullable().optional(),
+  cityId: idSchema.nullable().optional(),
+  districtId: idSchema.nullable().optional(),
+  /** Liens Organisation ↔ Lieu (table de jointure) */
+  organisationIds: z.array(idSchema).optional(),
+  showOnMap: z.boolean().optional(),
   isForDM: z.boolean().optional(),
 });
 
@@ -130,6 +135,9 @@ export const personInputSchema = z
     sex: sexEnum.nullish(),
     membership: membershipEnum.nullish(),
     languages: z.array(languageEnum).default([]),
+    pv: z.number().int().nonnegative().nullable().optional(),
+    ca: z.number().int().nonnegative().nullable().optional(),
+    showOnMap: z.boolean().optional(),
     isForDM: z.boolean().optional(),
     kingdomId: idSchema.nullish(),
     cityId: idSchema.nullish(),

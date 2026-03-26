@@ -105,6 +105,7 @@ model City {
   name        String
   description String?
   iconUrl     String?
+  map         String?
   flag        String?   // URL du drapeau (remplace l’icône sur la carte si défini)
   kingdomId   String?
   isForDM     Boolean   @default(false)
@@ -140,9 +141,11 @@ model Place {
   name        String
   description String?
   iconUrl     String?
+  map         String?
   kingdomId   String?
   cityId      String?
   districtId  String?
+  showOnMap   Boolean   @default(true) // Afficher sur la carte
   isForDM     Boolean   @default(false)
 
   kingdom  Kingdom?  @relation(fields: [kingdomId], references: [id])
@@ -170,6 +173,9 @@ model PersonOfInterest {
   INT         Int
   WIS         Int
   CHA         Int
+  pv          Int?        // Points de vie
+  ca          Int?        // Classe d'armure
+  showOnMap   Boolean     @default(true) // Afficher sur la carte
   isForDM     Boolean     @default(false)
   kingdomId   String?
   cityId      String?

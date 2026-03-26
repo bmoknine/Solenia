@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Place" ADD COLUMN "showOnMap" BOOLEAN NOT NULL DEFAULT true;
+
+-- AlterTable
+ALTER TABLE "PersonOfInterest" ADD COLUMN "ca" INTEGER,
+ADD COLUMN "pv" INTEGER,
+ADD COLUMN "showOnMap" BOOLEAN NOT NULL DEFAULT true;

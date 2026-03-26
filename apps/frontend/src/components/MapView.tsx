@@ -267,8 +267,8 @@ export function MapView({
     const maxZoom = 4;
     const scaleFactor = Math.min(Math.max((zoom - minZoom) / (maxZoom - minZoom), 0.15), 1);
 
-    // Si c'est une ville et qu'une icône ou un drapeau est fourni (taille selon type : capital > city > fortified > village)
-    const cityImageUrl = (kind === 'city' && (flag || iconUrl)) ? (flag || iconUrl) : null;
+    // Ville : utiliser uniquement l'icône de ville (pas le drapeau)
+    const cityImageUrl = (kind === 'city' && iconUrl) ? iconUrl : null;
     if (kind === 'city' && cityImageUrl) {
       const tier = getCityIconTier(iconUrl);
       const tierSizes: Record<typeof tier, { base: number; max: number }> = {
@@ -279,9 +279,9 @@ export function MapView({
       };
       const { base: baseSize, max: maxSize } = tierSizes[tier];
       const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
-      const displaySize = flag ? size * 4 : size;
+      const displaySize = size;
       const fontSize = Math.max(8, Math.round(size * 0.2));
-      const overlay = !flag && kingdomColor
+      const overlay = kingdomColor
         ? `<div style="position:absolute;inset:0;background:${kingdomColor};opacity:0.5;pointer-events:none;mask-image:url(&quot;${cityImageUrl}&quot;);mask-size:contain;mask-repeat:no-repeat;mask-position:center;-webkit-mask-image:url(&quot;${cityImageUrl}&quot;);-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;"></div>`
         : '';
       const labelMaxW = Math.round(displaySize * 2.2);
@@ -319,7 +319,7 @@ export function MapView({
       return L.divIcon({
         className: 'map-pin-icon map-pin-city',
         html: `<div class="map-pin-city-wrap" style="width:${totalW}px;">
-          <span class="map-pin-dot" style="background:${dotColor};width:${size}px;height:${size}px;display:block;margin:0 auto;transition:all 0.3s ease;"></span>
+          <span class="map-pin-dot" style="background:${dotColor};width:${size}px;display:block;margin:0 auto;transition:all 0.3s ease;"></span>
           ${label}
         </div>`,
         iconSize: [totalW, totalH],
@@ -508,7 +508,13 @@ export function MapView({
   }, [mapRef, bounds, imgSize.width, imgSize.height]);
 
   return (
-    <div className="map-shell" style={{ cursor: creatingMode ? 'crosshair' : 'default' }}>
+    <div
+      className="map-shell"
+      style={{
+        cursor: creatingMode ? 'crosshair' : 'default',
+        minHeight: '100vh',
+      }}
+    >
       <MapContainer
         className="leaflet-map"
         crs={L.CRS.Simple}
@@ -517,7 +523,7 @@ export function MapView({
         zoom={initialZoom}
         minZoom={Math.min(initialZoom - 2, -6)}
         maxZoom={8}
-        style={{ width: '100%', height: `${imgSize.height}px`, minHeight: '800px' }}
+        style={{ width: '100%', height: `max(100vh, ${imgSize.height}px)` }}
         scrollWheelZoom
         zoomControl={false}
         doubleClickZoom={false}

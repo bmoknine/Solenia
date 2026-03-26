@@ -17,9 +17,23 @@ export async function cityRoutes(app: FastifyInstance) {
       include: {
         position: true,
         kingdom: { select: { id: true, name: true } },
-        districts: { select: { id: true, name: true } },
-        places: { select: { id: true, name: true } },
-        persons: { select: { id: true, name: true } },
+        districts: {
+          orderBy: { name: 'asc' },
+          include: {
+            places: { select: { id: true, name: true }, orderBy: { name: 'asc' } },
+            persons: { select: { id: true, name: true }, orderBy: { name: 'asc' } },
+          },
+        },
+        places: {
+          where: { districtId: null },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        },
+        persons: {
+          where: { districtId: null },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        },
         comments: { select: { id: true, description: true, dateInGame: true } },
         organisations: {
           include: {
@@ -44,8 +58,10 @@ export async function cityRoutes(app: FastifyInstance) {
 
   app.post('/cities', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const data = cityInputSchema.parse(request.body);
-    const flag = data.flag === '' || data.flag == null ? null : data.flag;
-    return app.prisma.city.create({ data: { ...data, flag } });
+    const body = request.body as Record<string, unknown>;
+    const flag = 'flag' in body ? (body.flag === '' || body.flag == null ? null : (body.flag as string)) : null;
+    const map = 'map' in body ? (body.map === '' || body.map == null ? null : (body.map as string)) : null;
+    return app.prisma.city.create({ data: { ...data, flag, map } });
   });
 
   app.put('/cities/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
@@ -75,6 +91,10 @@ export async function cityRoutes(app: FastifyInstance) {
     if ('flag' in body) {
       const v = body.flag;
       data.flag = (v === '' || v === undefined || v === null) ? null : (v as string);
+    }
+    if ('map' in body) {
+      const v = body.map;
+      data.map = (v === '' || v === undefined || v === null) ? null : (v as string);
     }
     console.log('Backend - data final:', data);
     return app.prisma.city.update({ where: { id }, data });

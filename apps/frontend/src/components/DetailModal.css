@@ -78,6 +78,59 @@
   flex-shrink: 0;
 }
 
+.detail-sidebar-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.detail-sidebar-district-block {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detail-sidebar-district-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.detail-sidebar-district-title:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.detail-sidebar-nested {
+  padding-left: 12px;
+}
+
+.detail-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.detail-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
 .detail-sidebar-name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -100,7 +153,24 @@
 .detail-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.detail-modal-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.detail-modal-header-block .detail-title {
+  margin-bottom: 0;
+}
+
+.detail-header-map {
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .detail-close {
@@ -234,6 +304,12 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   min-width: 0;
   overflow-wrap: break-word;
+}
+
+/* En lecture, masquer les champs vides (pas d'input/textarea/select et valeur vide) */
+.detail-item:not(:has(.detail-input, .detail-textarea, input, textarea, select, button)):has(.detail-value:empty),
+.detail-item:not(:has(.detail-input, .detail-textarea, input, textarea, select, button)):has(.detail-desc:empty) {
+  display: none;
 }
 
 .stat-input {
