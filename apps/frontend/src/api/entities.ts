@@ -3,7 +3,7 @@ import { withAuth } from './client';
 type Base = { name: string; description?: string };
 
 export type Kingdom = { id: string; name: string; color?: string | null; flag?: string | null; isForDM?: boolean };
-export type City = { id: string; name: string; kingdomId?: string | null; iconUrl?: string | null; flag?: string | null; isForDM?: boolean };
+export type City = { id: string; name: string; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; flag?: string | null; isForDM?: boolean };
 export type District = { 
   id: string; 
   name: string; 
@@ -14,7 +14,7 @@ export type District = {
   rumors?: string | null;
   secret?: string | null;
 };
-export type Place = { id: string; name: string; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; isForDM?: boolean };
+export type Place = { id: string; name: string; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; showOnMap?: boolean; isForDM?: boolean };
 export type OrganisationType = 'CELLULE' | 'PRINCIPAL';
 export type Organisation = { id: string; name: string; description?: string | null; organisationType?: OrganisationType | null; parentOrganisationId?: string | null; flag?: string | null; isForDM?: boolean };
 export type Breed = 'ELFE' | 'HALFELIN' | 'HUMAIN' | 'NAIN' | 'DEMI_ELFE' | 'DEMI_ORC' | 'DRAKEIDE' | 'GNOME' | 'TIEFFELIN' | 'AASIMAR' | 'GENASIAIR' | 'GENASITERRE' | 'GENASIFEUR' | 'GENASIEAU' | 'GOLIATH' | 'OTHER';
@@ -36,6 +36,9 @@ export type Person = {
   INT: number;
   WIS: number;
   CHA: number;
+  pv?: number | null;
+  ca?: number | null;
+  showOnMap?: boolean;
   isForDM?: boolean;
 };
 
@@ -73,10 +76,13 @@ export type KingdomDetail = Kingdom & {
 export type CityDetail = City & {
   description?: string | null;
   iconUrl?: string | null;
+  map?: string | null;
   flag?: string | null;
   isForDM?: boolean;
   kingdom?: Ref | null;
-  districts?: Ref[];
+  /** Quartiers avec lieux / personnages rattachés (GET ville enrichi) */
+  districts?: Array<Ref & { places?: Ref[]; persons?: Ref[] }>;
+  /** Lieux directement rattachés à la ville (sans quartier) */
   places?: Ref[];
   persons?: Ref[];
   comments?: CommentRef[];
@@ -94,6 +100,7 @@ export type DistrictDetail = District & {
 export type PlaceDetail = Place & {
   description?: string | null;
   iconUrl?: string | null;
+  map?: string | null;
   isForDM?: boolean;
   kingdom?: Ref | null;
   city?: Ref | null;
@@ -135,6 +142,13 @@ export async function getFlags(): Promise<string[]> {
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data?.flags) ? data.flags : [];
+}
+
+export async function getMaps(): Promise<string[]> {
+  const res = await fetch(`${API_URL}/api/maps`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data?.maps) ? data.maps : [];
 }
 
 export async function listKingdoms() {
@@ -220,7 +234,7 @@ export async function updateKingdom(
 export async function updateCity(
   token: string,
   id: string,
-  data: Partial<{ name: string; description: string | null; iconUrl?: string | null; flag?: string | null; kingdomId?: string | null }>,
+  data: Partial<{ name: string; description: string | null; iconUrl?: string | null; map?: string | null; flag?: string | null; kingdomId?: string | null }>,
 ) {
   return withAuth(token).put(`/cities/${id}`, data);
 }
@@ -244,7 +258,17 @@ export async function updateDistrict(
 export async function updatePlace(
   token: string,
   id: string,
-  data: Partial<{ name: string; description: string | null; iconUrl?: string | null; kingdomId?: string | null; cityId?: string | null; districtId?: string | null }>,
+  data: Partial<{
+    name: string;
+    description: string | null;
+    iconUrl?: string | null;
+    map?: string | null;
+    kingdomId?: string | null;
+    cityId?: string | null;
+    districtId?: string | null;
+    organisationIds?: string[];
+    showOnMap?: boolean;
+  }>,
 ) {
   return withAuth(token).put(`/places/${id}`, data);
 }
@@ -259,6 +283,9 @@ export async function updatePerson(
     sex?: Sex | null;
     membership?: Membership | null;
     languages?: Language[];
+    pv?: number | null;
+    ca?: number | null;
+    showOnMap?: boolean;
     STR?: number;
     DEX?: number;
     CON?: number;
@@ -278,7 +305,7 @@ export async function createKingdom(token: string, data: Base & { population?: n
   return withAuth(token).post('/kingdoms', data);
 }
 
-export async function createCity(token: string, data: Base & { kingdomId?: string; iconUrl?: string | null; flag?: string | null }) {
+export async function createCity(token: string, data: Base & { kingdomId?: string; iconUrl?: string | null; map?: string | null; flag?: string | null }) {
   return withAuth(token).post('/cities', data);
 }
 
@@ -296,7 +323,18 @@ export async function createDistrict(
   return withAuth(token).post('/districts', data);
 }
 
-export async function createPlace(token: string, data: Base & { iconUrl?: string; kingdomId?: string; cityId?: string; districtId?: string }) {
+export async function createPlace(
+  token: string,
+  data: Base & {
+    iconUrl?: string;
+    map?: string | null;
+    kingdomId?: string;
+    cityId?: string;
+    districtId?: string;
+    organisationIds?: string[];
+    showOnMap?: boolean;
+  },
+) {
   return withAuth(token).post('/places', data);
 }
 
@@ -309,6 +347,9 @@ export async function createPerson(
     placeId?: string;
     membership?: string;
     languages?: string[];
+    pv?: number | null;
+    ca?: number | null;
+    showOnMap?: boolean;
     STR: number;
     DEX: number;
     CON: number;

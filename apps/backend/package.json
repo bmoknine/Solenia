@@ -12,6 +12,7 @@
     "format": "prettier --check .",
     "test": "vitest",
     "prisma:generate": "prisma generate",
+    "prisma:sync": "node scripts/run-migrate.mjs && prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "node scripts/run-migrate.mjs",
     "prisma:push": "prisma db push",

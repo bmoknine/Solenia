@@ -41,9 +41,11 @@ import {
   listOrganisations,
   listKingdoms,
   listCities,
+  listDistricts,
   listPlaces,
   listPersons,
   getFlags,
+  getMaps,
 } from '../api/entities';
 import { useToast } from '../toast/ToastProvider';
 import type { Breed, Sex, Membership, Language } from '../api/entities';
@@ -428,12 +430,13 @@ function FlagSelect({
   }, [editMode]);
   const current = value ?? '';
   if (!editMode) {
+    if (!current) return null;
     return (
       <span className="detail-value">
         {current ? (
-          <img src={current} alt="Drapeau" style={{ maxWidth: 48, maxHeight: 32, verticalAlign: 'middle', marginRight: 8 }} />
+          <img src={current} alt="Drapeau" style={{ maxWidth: 200, maxHeight: 120, verticalAlign: 'middle', marginRight: 8 }} />
         ) : null}
-        {current ? current.split('/').pop() ?? current : '—'}
+        {current.split('/').pop() ?? current}
       </span>
     );
   }
@@ -454,7 +457,59 @@ function FlagSelect({
         ))}
       </select>
       {current ? (
-        <img src={current} alt="" style={{ maxWidth: 48, maxHeight: 32, objectFit: 'contain' }} />
+        <img src={current} alt="" style={{ maxWidth: 200, maxHeight: 120, objectFit: 'contain' }} />
+      ) : null}
+    </div>
+  );
+}
+
+function MapSelect({
+  value,
+  onChange,
+  editMode,
+}: {
+  value: string | null | undefined;
+  onChange: (v: string | null) => void;
+  editMode: boolean;
+}) {
+  const [maps, setMaps] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (editMode) {
+      setLoading(true);
+      getMaps()
+        .then(setMaps)
+        .catch(() => setMaps([]))
+        .finally(() => setLoading(false));
+    }
+  }, [editMode]);
+  const current = value ?? '';
+  if (!editMode) {
+    if (!current) return null;
+    return (
+      <span className="detail-value">
+        <img src={current} alt="Map" style={{ maxWidth: 240, maxHeight: 160, objectFit: 'contain' }} />
+      </span>
+    );
+  }
+  if (loading) return <span className="detail-value">Chargement...</span>;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <select
+        className="detail-input"
+        value={current}
+        onChange={(e) => onChange(e.target.value || null)}
+        style={{ minWidth: 220 }}
+      >
+        <option value="">— Aucune map</option>
+        {maps.map((path) => (
+          <option key={path} value={path}>
+            {path.split('/').pop() ?? path}
+          </option>
+        ))}
+      </select>
+      {current ? (
+        <img src={current} alt="" style={{ maxWidth: 180, maxHeight: 120, objectFit: 'contain' }} />
       ) : null}
     </div>
   );
@@ -506,11 +561,21 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
       const defaultState: EditState = createMode.kind === 'kingdom'
         ? { kind: 'kingdom', name: '', description: null, population: null, dateInGame: null, color: null, flag: null }
         : createMode.kind === 'city'
-        ? { kind: 'city', name: '', description: null, iconUrl: null, flag: null, kingdomId: null }
+        ? { kind: 'city', name: '', description: null, iconUrl: null, map: null, flag: null, kingdomId: null }
         : createMode.kind === 'district'
         ? { kind: 'district', name: '', motto: null, ambiance: null, content: null, rumors: null, secret: null, cityId: createMode.parentCityId || '' }
         : createMode.kind === 'place'
-        ? { kind: 'place', name: '', description: null, kingdomId: null, cityId: null, districtId: null }
+        ? {
+            kind: 'place',
+            name: '',
+            description: null,
+            map: null,
+            kingdomId: null,
+            cityId: null,
+            districtId: null,
+            organisationIds: [] as string[],
+            showOnMap: true,
+          }
         : createMode.kind === 'organisation'
         ? { kind: 'organisation', name: '', description: null, organisationType: null, parentOrganisationId: null, flag: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [] }
         : createMode.kind === 'lore'
@@ -527,6 +592,9 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             cityId: null,
             districtId: null,
             placeId: null,
+            pv: null,
+            ca: null,
+            showOnMap: true,
             STR: 10,
             DEX: 10,
             CON: 10,
@@ -651,6 +719,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                   kingdomId: (result as PlaceDetail).kingdom?.id ?? null,
                   cityId: (result as PlaceDetail).city?.id ?? null,
                   districtId: (result as PlaceDetail).district?.id ?? null,
+                  organisationIds: (result as PlaceDetail).organisations?.map((o) => o.id) ?? [],
                 } as EditState)
               : ({
                   kind: 'person' as const,
@@ -680,7 +749,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
   };
 
   const valueOrDash = (v: unknown): string | number =>
-    v === null || v === undefined || v === '' ? '—' : (v as string | number);
+    v === null || v === undefined || v === '' ? '' : (v as string | number);
 
   const handleSave = async () => {
     if (!token || !editState) return;
@@ -716,6 +785,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               name: cityState.name ?? '',
               description: cityState.description ?? null,
               iconUrl: cityState.iconUrl ?? undefined,
+              map: cityState.map ?? undefined,
               flag: cityState.flag ?? undefined,
               kingdomId: cityState.kingdomId ?? undefined,
             });
@@ -736,12 +806,16 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             break;
           }
           case 'place': {
-            const placeState = editState as PlaceDetail;
+            const placeState = editState as PlaceDetail & { organisationIds?: string[] };
             createdEntity = await createPlace(token, {
               name: placeState.name ?? '',
               description: placeState.description ?? null,
+              map: placeState.map ?? undefined,
               kingdomId: placeState.kingdomId ?? undefined,
               cityId: placeState.cityId ?? undefined,
+              districtId: placeState.districtId ?? undefined,
+              organisationIds: placeState.organisationIds ?? [],
+              showOnMap: placeState.showOnMap ?? true,
             });
             break;
           }
@@ -756,7 +830,11 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               languages: personState.languages ?? [],
               kingdomId: (personState as PersonEditState).kingdomId ?? undefined,
               cityId: (personState as PersonEditState).cityId ?? undefined,
+              districtId: (personState as PersonEditState).districtId ?? undefined,
               placeId: (personState as PersonEditState).placeId ?? undefined,
+              pv: personState.pv ?? null,
+              ca: personState.ca ?? null,
+              showOnMap: personState.showOnMap ?? true,
               STR: personState.STR,
               DEX: personState.DEX,
               CON: personState.CON,
@@ -801,8 +879,22 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           }
         }
         
-        // Créer la position si une position initiale a été fournie (sauf pour les districts, organisations et lore)
-        if (createdEntity && createMode.initialPosition && kind !== 'district' && kind !== 'organisation' && kind !== 'lore') {
+        // Créer la position si une position initiale a été fournie (sauf districts, orgs, lore, et lieux rattachés ville/quartier)
+        const placeEmbedded =
+          kind === 'place'
+            ? Boolean(
+                (editState as PlaceDetail & { organisationIds?: string[] }).cityId ||
+                  (editState as PlaceDetail & { organisationIds?: string[] }).districtId,
+              )
+            : false;
+        if (
+          createdEntity &&
+          createMode.initialPosition &&
+          kind !== 'district' &&
+          kind !== 'organisation' &&
+          kind !== 'lore' &&
+          !placeEmbedded
+        ) {
           const positionPayload =
             kind === 'kingdom'
               ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, kingdomId: createdEntity.id }
@@ -811,7 +903,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               : kind === 'place'
               ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, placeId: createdEntity.id }
               : { x: createMode.initialPosition.x, y: createMode.initialPosition.y, personOfInterestId: createdEntity.id };
-          
+
           await updatePosition(token, positionPayload);
         }
         
@@ -879,6 +971,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             name: editState.name ?? '',
             description: editState.description ?? null,
             iconUrl: cityIconUrl === '' || cityIconUrl === undefined ? null : cityIconUrl,
+            map: cityState.map === '' || cityState.map === undefined ? null : cityState.map,
             flag: cityFlag === '' || cityFlag === undefined ? null : cityFlag,
             kingdomId: cityState.kingdomId ?? null,
           };
@@ -899,15 +992,20 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           });
           break;
         }
-        case 'place':
+        case 'place': {
+          const ps = editState as PlaceDetail & { organisationIds?: string[] };
           await updatePlace(token, point.targetId, {
             name: editState.name ?? '',
             description: editState.description ?? null,
-            // iconUrl n'est pas modifiable, on ne l'envoie pas
-            kingdomId: (editState as PlaceDetail).kingdomId ?? null,
-            cityId: (editState as PlaceDetail).cityId ?? null,
+            map: ps.map ?? null,
+            kingdomId: ps.kingdomId ?? null,
+            cityId: ps.cityId ?? null,
+            districtId: ps.districtId ?? null,
+            organisationIds: ps.organisationIds ?? [],
+            showOnMap: ps.showOnMap ?? true,
           });
           break;
+        }
         case 'person': {
           const personState = editState as PersonDetail;
           console.log('Frontend - personState complet:', JSON.stringify(personState, null, 2));
@@ -920,7 +1018,11 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             languages: personState.languages ?? [],
             kingdomId: (personState as PersonEditState).kingdomId ?? null,
             cityId: (personState as PersonEditState).cityId ?? null,
+            districtId: (personState as PersonEditState).districtId ?? null,
             placeId: (personState as PersonEditState).placeId ?? null,
+            pv: personState.pv ?? null,
+            ca: personState.ca ?? null,
+            showOnMap: personState.showOnMap ?? true,
             STR: personState.STR,
             DEX: personState.DEX,
             CON: personState.CON,
@@ -989,6 +1091,16 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             placeIds: (refreshed as OrganisationDetail).places?.map(p => p.id) || [],
             personIds: (refreshed as OrganisationDetail).members?.map(m => m.id) || [],
           } as OrganisationEditState);
+        } else if (point.kind === 'place') {
+          const pr = refreshed as PlaceDetail;
+          setEditState({
+            kind: 'place' as const,
+            ...pr,
+            kingdomId: pr.kingdom?.id ?? null,
+            cityId: pr.city?.id ?? null,
+            districtId: pr.district?.id ?? null,
+            organisationIds: pr.organisations?.map((o) => o.id) ?? [],
+          } as EditState);
         } else {
           setEditState({ kind: point.kind, ...refreshed } as EditState);
         }
@@ -1021,11 +1133,33 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
   if (!point && !createMode && !loreId) return null;
   
   const currentKind = createMode ? createMode.kind : loreId ? 'lore' : point!.kind;
+  const headerName =
+    currentKind === 'lore'
+      ? ((editState as LoreEditState | null)?.title ?? (data as LoreDetail | null)?.title ?? 'Lore')
+      : ((editState as { name?: string } | null)?.name ??
+        (data as { name?: string } | null)?.name ??
+        (createMode ? `Nouveau ${createMode.kind}` : 'Détail'));
+  const headerFlag =
+    currentKind === 'kingdom'
+      ? ((editState as KingdomDetail | null)?.flag ?? (data as KingdomDetail | null)?.flag ?? null)
+      : currentKind === 'city'
+      ? ((editState as CityDetail | null)?.flag ?? (data as CityDetail | null)?.flag ?? null)
+      : currentKind === 'organisation'
+      ? ((editState as OrganisationDetail | null)?.flag ?? (data as OrganisationDetail | null)?.flag ?? null)
+      : null;
+  const headerMap =
+    currentKind === 'city'
+      ? ((editState as CityDetail | null)?.map ?? (data as CityDetail | null)?.map ?? null)
+      : currentKind === 'place'
+      ? ((editState as PlaceDetail | null)?.map ?? (data as PlaceDetail | null)?.map ?? null)
+      : null;
 
   // Fonction pour obtenir les entités regroupées par type pour la sidebar (liées à l'entité courante)
   const getGroupedEntities = (): { kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation'; label: string; entities: Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' }> }[] => {
     if (!data || !point) return [];
-    
+    // La ville utilise une sidebar dédiée (quartiers + entités imbriquées)
+    if (point.kind === 'city') return [];
+
     const groups: Map<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation', Array<{ id: string; name: string; kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' }>> = new Map();
     
     if (point.kind === 'kingdom') {
@@ -1041,23 +1175,6 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
       }
       if (kingdomData.organisations && kingdomData.organisations.length > 0) {
         groups.set('organisation', kingdomData.organisations.map(o => ({ id: o.id, name: o.name, kind: 'organisation' as const })));
-      }
-    } else if (point.kind === 'city') {
-      const cityData = data as CityDetail;
-      if (cityData.kingdom) {
-        groups.set('kingdom', [{ id: cityData.kingdom.id, name: cityData.kingdom.name, kind: 'kingdom' as const }]);
-      }
-      if (cityData.districts && cityData.districts.length > 0) {
-        groups.set('district', cityData.districts.map(d => ({ id: d.id, name: d.name, kind: 'district' as const })));
-      }
-      if (cityData.places && cityData.places.length > 0) {
-        groups.set('place', cityData.places.map(p => ({ id: p.id, name: p.name, kind: 'place' as const })));
-      }
-      if (cityData.persons && cityData.persons.length > 0) {
-        groups.set('person', cityData.persons.map(p => ({ id: p.id, name: p.name, kind: 'person' as const })));
-      }
-      if (cityData.organisations && cityData.organisations.length > 0) {
-        groups.set('organisation', cityData.organisations.map(o => ({ id: o.id, name: o.name, kind: 'organisation' as const })));
       }
     } else if (point.kind === 'district') {
       const districtData = data as DistrictDetail;
@@ -1159,10 +1276,6 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
   // Fonction pour rendre la sidebar avec les entités liées à l'entité sélectionnée
   const renderSidebar = () => {
     if (!point && !createMode) return null;
-    
-    if (groupedEntities.length === 0) {
-      return null; // Ne pas afficher la sidebar si aucune entité liée
-    }
 
     const handleNavigate = (kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation', id: string, name: string) => {
       if (onNavigate) {
@@ -1178,14 +1291,165 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
       }
     };
 
+    // Ville : quartiers avec lieux / personnages regroupés sur le côté
+    if (point?.kind === 'city' && data) {
+      const cityData = data as CityDetail;
+      const districts = (cityData.districts ?? []) as Array<{
+        id: string;
+        name: string;
+        places?: { id: string; name: string }[];
+        persons?: { id: string; name: string }[];
+      }>;
+      const districtsWithChildren = districts.filter(
+        (d) => (d.places?.length ?? 0) > 0 || (d.persons?.length ?? 0) > 0,
+      );
+      const districtsEmpty = districts.filter(
+        (d) => (d.places?.length ?? 0) === 0 && (d.persons?.length ?? 0) === 0,
+      );
+
+      const hasKingdom = Boolean(cityData.kingdom);
+      const hasOrgs = (cityData.organisations?.length ?? 0) > 0;
+      const hasCityPlaces = (cityData.places?.length ?? 0) > 0;
+      const hasCityPersons = (cityData.persons?.length ?? 0) > 0;
+      const hasSidebar =
+        hasKingdom ||
+        hasOrgs ||
+        districtsWithChildren.length > 0 ||
+        districtsEmpty.length > 0 ||
+        hasCityPlaces ||
+        hasCityPersons;
+
+      if (!hasSidebar) return null;
+
+      return (
+        <div className="detail-sidebar glass">
+          <div className="detail-sidebar-list">
+            {hasKingdom && cityData.kingdom && (
+              <div style={{ marginBottom: '16px' }}>
+                <h3 className="section-title detail-sidebar-section-title">Royaume :</h3>
+                <button
+                  type="button"
+                  className="detail-sidebar-item ghost"
+                  onClick={() => handleNavigate('kingdom', cityData.kingdom!.id, cityData.kingdom!.name)}
+                >
+                  <span className="detail-sidebar-icon">👑</span>
+                  <span className="detail-sidebar-name">{cityData.kingdom.name}</span>
+                </button>
+              </div>
+            )}
+            {hasOrgs && (
+              <div style={{ marginBottom: '16px' }}>
+                <h3 className="section-title detail-sidebar-section-title">Organisations :</h3>
+                {cityData.organisations!.map((org) => (
+                  <button
+                    key={org.id}
+                    type="button"
+                    className="detail-sidebar-item ghost"
+                    onClick={() => handleNavigate('organisation', org.id, org.name)}
+                  >
+                    <span className="detail-sidebar-icon">🏛️</span>
+                    <span className="detail-sidebar-name">{org.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {districtsWithChildren.map((d) => (
+              <div key={d.id} className="detail-sidebar-district-block">
+                <button
+                  type="button"
+                  className="detail-sidebar-district-title ghost"
+                  onClick={() => handleNavigate('district', d.id, d.name)}
+                >
+                  <span className="detail-sidebar-icon">🏘️</span>
+                  <span>{d.name}</span>
+                </button>
+                {(d.places ?? []).map((p) => (
+                  <button
+                    key={`p-${p.id}`}
+                    type="button"
+                    className="detail-sidebar-item ghost detail-sidebar-nested"
+                    onClick={() => handleNavigate('place', p.id, p.name)}
+                  >
+                    <span className="detail-sidebar-icon">📍</span>
+                    <span className="detail-sidebar-name">{p.name}</span>
+                  </button>
+                ))}
+                {(d.persons ?? []).map((p) => (
+                  <button
+                    key={`per-${p.id}`}
+                    type="button"
+                    className="detail-sidebar-item ghost detail-sidebar-nested"
+                    onClick={() => handleNavigate('person', p.id, p.name)}
+                  >
+                    <span className="detail-sidebar-icon">👤</span>
+                    <span className="detail-sidebar-name">{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+            {districtsEmpty.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <h3 className="section-title detail-sidebar-section-title">Quartiers :</h3>
+                {districtsEmpty.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    className="detail-sidebar-item ghost"
+                    onClick={() => handleNavigate('district', d.id, d.name)}
+                  >
+                    <span className="detail-sidebar-icon">🏘️</span>
+                    <span className="detail-sidebar-name">{d.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {hasCityPlaces && (
+              <div style={{ marginBottom: '16px' }}>
+                <h3 className="section-title detail-sidebar-section-title">Lieux (ville) :</h3>
+                {cityData.places!.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="detail-sidebar-item ghost"
+                    onClick={() => handleNavigate('place', p.id, p.name)}
+                  >
+                    <span className="detail-sidebar-icon">📍</span>
+                    <span className="detail-sidebar-name">{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {hasCityPersons && (
+              <div style={{ marginBottom: '16px' }}>
+                <h3 className="section-title detail-sidebar-section-title">Personnages (ville) :</h3>
+                {cityData.persons!.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="detail-sidebar-item ghost"
+                    onClick={() => handleNavigate('person', p.id, p.name)}
+                  >
+                    <span className="detail-sidebar-icon">👤</span>
+                    <span className="detail-sidebar-name">{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (groupedEntities.length === 0) {
+      return null;
+    }
+
     return (
       <div className="detail-sidebar glass">
         <div className="detail-sidebar-list">
           {groupedEntities.map((group) => (
             <div key={group.kind} style={{ marginBottom: '16px' }}>
-              <h3 className="section-title" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '8px', textTransform: 'none', letterSpacing: 0 }}>
-                {group.label}
-              </h3>
+              <h3 className="section-title detail-sidebar-section-title">{group.label}</h3>
               {group.entities.map((entity) => (
                 <button
                   key={entity.id}
@@ -1200,7 +1464,6 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                     {entity.kind === 'district' && '🏘️'}
                     {entity.kind === 'place' && '📍'}
                     {entity.kind === 'person' && '👤'}
-                    {entity.kind === 'organisation' && '🏛️'}
                   </span>
                   <span className="detail-sidebar-name">{entity.name}</span>
                 </button>
@@ -1263,6 +1526,27 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
               </>
             )}
           </div>
+          <div className="detail-modal-header-block">
+            <h2 className="detail-title">
+              {headerName}
+              {headerFlag ? (
+                <img
+                  src={headerFlag}
+                  alt=""
+                  style={{ height: 56, width: 'auto', objectFit: 'contain', display: 'block' }}
+                />
+              ) : null}
+            </h2>
+            {headerMap ? (
+              <div className="detail-header-map">
+                <img
+                  src={headerMap}
+                  alt="Map"
+                  style={{ width: '100%', maxHeight: 520, objectFit: 'contain', display: 'block' }}
+                />
+              </div>
+            ) : null}
+          </div>
           {loading && <div className="detail-loading">Chargement…</div>}
           {error && <div className="detail-error">{error}</div>}
           {!loading && !error && createMode && !editState && (
@@ -1302,6 +1586,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                 onChange={updateField}
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
+                onOpenLore={onOpenLore}
               />
             )}
             {currentKind === 'place' && (
@@ -1413,19 +1698,17 @@ function KingdomView({
 }) {
   return (
     <>
-      <div className="detail-item">
-        <span className="detail-label">Nom</span>
-        {editMode ? (
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Nom</span>
           <input
             className="detail-input"
             value={(editState?.name as string) ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom du royaume"
           />
-        ) : (
-          <span className="detail-value">{valueOrDash(data?.name)}</span>
-        )}
-      </div>
+        </div>
+      )}
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
@@ -1497,14 +1780,16 @@ function KingdomView({
             </span>
           )}
         </div>
-        <div className="detail-item">
-          <span className="detail-label">Drapeau</span>
-          <FlagSelect
-            editMode={editMode}
-            value={(editState as KingdomDetail | null)?.flag ?? data?.flag}
-            onChange={(v) => onChange('flag', v)}
-          />
-        </div>
+      {editMode && (
+          <div className="detail-item">
+            <span className="detail-label">Drapeau</span>
+            <FlagSelect
+              editMode={editMode}
+              value={(editState as KingdomDetail | null)?.flag ?? data?.flag}
+              onChange={(v) => onChange('flag', v)}
+            />
+          </div>
+        )}
         <div className="detail-item">
           <span className="detail-label">Date (en jeu)</span>
           {editMode ? (
@@ -1646,19 +1931,17 @@ function CityView({
 
   return (
     <>
-      <div className="detail-item">
-        <span className="detail-label">Nom</span>
-        {editMode ? (
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Nom</span>
           <input
             className="detail-input"
             value={(editState?.name as string) ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom de la ville"
           />
-        ) : (
-          <span className="detail-value">{valueOrDash(data?.name)}</span>
-        )}
-      </div>
+        </div>
+      )}
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
@@ -1696,14 +1979,16 @@ function CityView({
           </span>
         )}
       </div>
-      <div className="detail-item">
-        <span className="detail-label">Drapeau</span>
-        <FlagSelect
-          editMode={editMode}
-          value={(editState as CityDetail | null)?.flag ?? data?.flag}
-          onChange={(v) => onChange('flag', v)}
-        />
-      </div>
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Drapeau</span>
+          <FlagSelect
+            editMode={editMode}
+            value={(editState as CityDetail | null)?.flag ?? data?.flag}
+            onChange={(v) => onChange('flag', v)}
+          />
+        </div>
+      )}
       <div className="detail-item">
         <span className="detail-label">Royaume</span>
         {editMode ? (
@@ -1835,6 +2120,7 @@ function DistrictView({
   onChange,
   valueOrDash,
   onNavigate,
+  onOpenLore,
 }: {
   data: DistrictDetail | null;
   editMode: boolean;
@@ -1842,6 +2128,7 @@ function DistrictView({
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
   onNavigate?: (point: NavigablePoint) => void;
+  onOpenLore?: (loreId: string) => void;
 }) {
   const [cities, setCities] = useState<City[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
@@ -2031,19 +2318,34 @@ function PlaceView({
 }) {
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
+
+  const placeEdit = editState as PlaceDetail & { organisationIds?: string[] };
+  const selectedCityId =
+    placeEdit.cityId !== undefined && placeEdit.cityId !== null
+      ? placeEdit.cityId
+      : data?.city?.id ?? null;
+  const districtsForCity = selectedCityId
+    ? districts.filter((d) => d.cityId === selectedCityId)
+    : [];
 
   useEffect(() => {
     if (editMode) {
       const loadLists = async () => {
         setLoadingLists(true);
         try {
-          const [kingdomsData, citiesData] = await Promise.all([
+          const [kingdomsData, citiesData, districtsData, orgsData] = await Promise.all([
             listKingdoms(),
             listCities(),
+            listDistricts(),
+            listOrganisations(),
           ]);
           setKingdoms(kingdomsData);
           setCities(citiesData);
+          setDistricts(districtsData);
+          setOrganisations(orgsData);
         } catch (err) {
           console.error('Erreur lors du chargement des listes:', err);
         } finally {
@@ -2092,6 +2394,9 @@ function PlaceView({
           )}
         </span>
       </div>
+      <p className="detail-hint" style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#94a3b8' }}>
+        Rattachement : royaume, ville, quartier et/ou organisations. Un lieu lié à une ville ou un quartier partage sa position sur la carte avec cette ville (pas de marqueur séparé).
+      </p>
       <div className="detail-grid">
         <div className="detail-item">
           <span className="detail-label">Royaume</span>
@@ -2101,10 +2406,12 @@ function PlaceView({
             ) : (
               <SearchableSelect
                 items={kingdoms}
-                selectedId={(editState as PlaceDetail)?.kingdomId !== undefined 
-                  ? (editState as PlaceDetail).kingdomId 
-                  : data?.kingdom?.id}
-                onSelect={(id) => onChange('kingdomId', id)}
+                selectedId={placeEdit.kingdomId !== undefined ? placeEdit.kingdomId : data?.kingdom?.id}
+                onSelect={(id) => {
+                  onChange('kingdomId', id);
+                  onChange('cityId', null);
+                  onChange('districtId', null);
+                }}
                 placeholder="Sélectionner un royaume"
               />
             )
@@ -2132,10 +2439,12 @@ function PlaceView({
             ) : (
               <SearchableSelect
                 items={cities}
-                selectedId={(editState as PlaceDetail)?.cityId !== undefined 
-                  ? (editState as PlaceDetail).cityId 
-                  : data?.city?.id}
-                onSelect={(id) => onChange('cityId', id)}
+                selectedId={placeEdit.cityId !== undefined ? placeEdit.cityId : data?.city?.id}
+                onSelect={(id) => {
+                  onChange('cityId', id);
+                  onChange('districtId', null);
+                  onChange('kingdomId', null);
+                }}
                 placeholder="Sélectionner une ville"
               />
             )
@@ -2155,6 +2464,87 @@ function PlaceView({
             <span className="detail-value">{valueOrDash((data?.city as { name: string } | null | undefined)?.name)}</span>
           )}
         </div>
+        <div className="detail-item">
+          <span className="detail-label">Quartier</span>
+          {editMode ? (
+            loadingLists ? (
+              <span className="detail-value">Chargement...</span>
+            ) : (
+              <SearchableSelect
+                items={districtsForCity}
+                selectedId={placeEdit.districtId !== undefined ? placeEdit.districtId : data?.district?.id}
+                onSelect={(id) => {
+                  onChange('districtId', id);
+                  if (id) {
+                    const di = districts.find((x) => x.id === id);
+                    if (di) {
+                      onChange('cityId', di.cityId);
+                      onChange('kingdomId', null);
+                    }
+                  }
+                }}
+                placeholder={selectedCityId ? 'Quartier (optionnel)' : 'Choisir une ville d’abord'}
+              />
+            )
+          ) : data?.district ? (
+            <span
+              className="detail-value"
+              style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+              onClick={() => {
+                if (onNavigate && data.district) {
+                  onNavigate(createMapPointFromRef(data.district, 'district'));
+                }
+              }}
+            >
+              {valueOrDash(data.district.name)}
+            </span>
+          ) : (
+            <span className="detail-value">{valueOrDash(null)}</span>
+          )}
+        </div>
+      </div>
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Organisations</span>
+          {loadingLists ? (
+            <span className="detail-value">Chargement...</span>
+          ) : (
+            <div className="detail-checkbox-list">
+              {organisations.map((org) => {
+                const ids = placeEdit.organisationIds ?? [];
+                const checked = ids.includes(org.id);
+                return (
+                  <label key={org.id} className="detail-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const next = checked ? ids.filter((i) => i !== org.id) : [...ids, org.id];
+                        onChange('organisationIds', next);
+                      }}
+                    />
+                    {org.name}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="detail-item">
+        <span className="detail-label">Afficher sur la carte</span>
+        {editMode ? (
+          <label className="detail-checkbox-label">
+            <input
+              type="checkbox"
+              checked={(placeEdit.showOnMap ?? true)}
+              onChange={(e) => onChange('showOnMap', e.target.checked)}
+            />
+            Oui
+          </label>
+        ) : (
+          <span className="detail-value">{(data?.showOnMap ?? true) ? 'Oui' : 'Non'}</span>
+        )}
       </div>
       {data?.persons && data.persons.length > 0 && (
         <div className="detail-section">
@@ -2172,7 +2562,7 @@ function PlaceView({
           </ul>
         </div>
       )}
-      {data?.organisations && data.organisations.length > 0 && (
+      {!editMode && data?.organisations && data.organisations.length > 0 && (
         <div className="detail-section">
           <h3 className="section-title">Organisations :</h3>
           <ul className="detail-list">
@@ -2327,6 +2717,54 @@ function PersonView({
             </div>
           ))}
         </div>
+        <div className="stats-grid" style={{ marginTop: '12px', gap: '12px' }}>
+          <div className="stat-item">
+            <span className="stat-label">PV</span>
+            {editMode ? (
+              <input
+                className="detail-input stat-input"
+                type="number"
+                min={0}
+                value={(editState as PersonDetail | null)?.pv ?? ''}
+                onChange={(e) => onChange('pv', e.target.value === '' ? null : Number(e.target.value))}
+                placeholder="—"
+              />
+            ) : (
+              <span className="stat-value">{valueOrDash((data as PersonDetail)?.pv)}</span>
+            )}
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">CA</span>
+            {editMode ? (
+              <input
+                className="detail-input stat-input"
+                type="number"
+                min={0}
+                value={(editState as PersonDetail | null)?.ca ?? ''}
+                onChange={(e) => onChange('ca', e.target.value === '' ? null : Number(e.target.value))}
+                placeholder="—"
+              />
+            ) : (
+              <span className="stat-value">{valueOrDash((data as PersonDetail)?.ca)}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="detail-item">
+        <span className="detail-label">Afficher sur la carte</span>
+        {editMode ? (
+          <label className="detail-checkbox-label">
+            <input
+              type="checkbox"
+              checked={(editState as PersonDetail | null)?.showOnMap ?? true}
+              onChange={(e) => onChange('showOnMap', e.target.checked)}
+            />
+            Oui
+          </label>
+        ) : (
+          <span className="detail-value">{((data as PersonDetail)?.showOnMap ?? true) ? 'Oui' : 'Non'}</span>
+        )}
       </div>
 
       <div className="detail-section">
@@ -2607,19 +3045,17 @@ function OrganisationView({
 
   return (
     <>
-      <div className="detail-item">
-        <span className="detail-label">Nom</span>
-        {editMode ? (
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Nom</span>
           <input
             className="detail-input"
             value={(editState?.name as string) ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom de l'organisation"
           />
-        ) : (
-          <span className="detail-value">{valueOrDash(data?.name)}</span>
-        )}
-      </div>
+        </div>
+      )}
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
@@ -2655,14 +3091,16 @@ function OrganisationView({
           </span>
         )}
       </div>
-      <div className="detail-item">
-        <span className="detail-label">Drapeau</span>
-        <FlagSelect
-          editMode={editMode}
-          value={(editState as OrganisationDetail | null)?.flag ?? data?.flag}
-          onChange={(v) => onChange('flag', v)}
-        />
-      </div>
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Drapeau</span>
+          <FlagSelect
+            editMode={editMode}
+            value={(editState as OrganisationDetail | null)?.flag ?? data?.flag}
+            onChange={(v) => onChange('flag', v)}
+          />
+        </div>
+      )}
       <div className="detail-item">
         <span className="detail-label">Organisation parente</span>
         {editMode ? (

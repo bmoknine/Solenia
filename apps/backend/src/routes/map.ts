@@ -6,8 +6,8 @@ export async function mapRoutes(app: FastifyInstance) {
       include: {
         kingdom: true,
         city: { include: { kingdom: true } },
-        place: true,
-        personOfInterest: true,
+        place: { select: { id: true, name: true, iconUrl: true, description: true, cityId: true, districtId: true, showOnMap: true } },
+        personOfInterest: { select: { id: true, name: true, description: true, showOnMap: true } },
       },
     });
 
@@ -23,6 +23,14 @@ export async function mapRoutes(app: FastifyInstance) {
         if (!target) {
           return null;
         }
+
+        // Lieux rattachés à une ville ou un quartier : pas de marqueur carte (position héritée logiquement, non affichée)
+        if (p.placeId && p.place && (p.place.cityId || p.place.districtId)) {
+          return null;
+        }
+        // Lieux ou personnages avec affichage carte désactivé
+        if (p.placeId && p.place && (p.place as any).showOnMap === false) return null;
+        if (p.personOfInterestId && p.personOfInterest && (p.personOfInterest as any).showOnMap === false) return null;
 
         const kind =
           p.kingdomId ? 'kingdom' :
