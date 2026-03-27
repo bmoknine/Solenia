@@ -3,13 +3,27 @@ import { idSchema, loreInputSchema } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
 
 export async function loreRoutes(app: FastifyInstance) {
+  const normalizeTagsFromBody = (body: unknown): string[] | undefined => {
+    if (!body || typeof body !== 'object' || !('tags' in body)) return undefined;
+    const value = (body as { tags?: unknown }).tags;
+    if (!Array.isArray(value)) return [];
+    return Array.from(
+      new Set(
+        value
+          .filter((item): item is string => typeof item === 'string')
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ),
+    );
+  };
+
   app.get('/lores', async () => {
     return app.prisma.lore.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         title: true,
-        tag: true,
+        tags: true,
         dateInGame: true,
         summary: true,
         isForDM: true,
@@ -64,6 +78,10 @@ export async function loreRoutes(app: FastifyInstance) {
   app.post('/lores', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const rawData = loreInputSchema.parse(request.body);
     const { kingdomIds, cityIds, placeIds, personIds, organisationIds, ...loreData } = rawData;
+    const bodyTags = normalizeTagsFromBody(request.body);
+    if (bodyTags !== undefined) {
+      (loreData as { tags?: string[] }).tags = bodyTags;
+    }
 
     const lore = await app.prisma.lore.create({ data: loreData });
 
@@ -144,6 +162,10 @@ export async function loreRoutes(app: FastifyInstance) {
     const id = idSchema.parse((request.params as any).id);
     const rawData = loreInputSchema.partial().parse(request.body);
     const { kingdomIds, cityIds, placeIds, personIds, organisationIds, ...loreData } = rawData;
+    const bodyTags = normalizeTagsFromBody(request.body);
+    if (bodyTags !== undefined) {
+      (loreData as { tags?: string[] }).tags = bodyTags;
+    }
 
     await app.prisma.lore.update({ where: { id }, data: loreData });
 

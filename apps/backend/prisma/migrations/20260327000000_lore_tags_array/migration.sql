@@ -1,0 +1,10 @@
+ALTER TABLE "Lore"
+ADD COLUMN "tags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+
+UPDATE "Lore"
+SET "tags" = CASE
+  WHEN "tag" IS NULL OR BTRIM("tag") = '' THEN ARRAY[]::TEXT[]
+  ELSE ARRAY["tag"]
+END;
+
+ALTER TABLE "Lore" DROP COLUMN "tag";

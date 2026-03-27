@@ -47,7 +47,7 @@ type Ref = { id: string; name: string };
 type CommentRef = { id: string; description: string; dateInGame?: string | null };
 
 // Lore
-export type LoreRef = { id: string; title: string; tag?: string | null; dateInGame?: number | null; isForDM?: boolean };
+export type LoreRef = { id: string; title: string; tags?: string[]; dateInGame?: number | null; isForDM?: boolean };
 export type Lore = LoreRef & { content?: string; summary?: string | null };
 export type LoreDetail = LoreRef & { content: string; summary?: string | null } & {
   kingdoms?: Ref[];
@@ -462,7 +462,7 @@ export async function getLore(id: string): Promise<LoreDetail> {
 export type LoreInput = {
   title: string;
   content: string;
-  tag?: string | null;
+  tags?: string[];
   dateInGame?: number | null;
   summary?: string | null;
   isForDM?: boolean;

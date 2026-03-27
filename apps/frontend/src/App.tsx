@@ -336,7 +336,10 @@ function Content() {
               point={null}
               loreId={selectedLoreId}
               token={token}
-              onClose={() => setSelectedLoreId(null)}
+              onClose={() => {
+                setSelectedLoreId(null);
+                setShowLoreModal(true);
+              }}
               onUpdated={async () => {
                 await reload();
                 await reloadOrganisations();

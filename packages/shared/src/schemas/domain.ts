@@ -185,7 +185,10 @@ export const positionInputSchema = z
 export const loreInputSchema = z.object({
   title: z.string().min(1),
   content: z.string().min(1),
-  tag: z.string().optional().nullable(),
+  tags: z
+    .array(z.string().trim().min(1))
+    .optional()
+    .transform((value) => (value ? Array.from(new Set(value)) : value)),
   dateInGame: z.number().optional().nullable(),
   summary: z.string().optional().nullable(),
   isForDM: z.boolean().optional(),

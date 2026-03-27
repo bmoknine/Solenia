@@ -477,6 +477,65 @@
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
+.lore-tags-editor {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lore-tags-list {
+  min-height: 30px;
+}
+
+.lore-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.lore-tag-chip:hover {
+  background: rgba(99, 102, 241, 0.32);
+  border-color: rgba(129, 140, 248, 0.55);
+}
+
+.lore-tag-input {
+  width: 100%;
+}
+
+.lore-tags-help {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.lore-tag-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lore-tags-suggestions-list {
+  gap: 6px;
+}
+
+.lore-tag-suggestion {
+  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+}
+
+.lore-tag-suggestion:hover {
+  background: rgba(99, 102, 241, 0.24);
+  border-color: rgba(129, 140, 248, 0.55);
+}
+
+.lore-tag-suggestion.active {
+  background: rgba(99, 102, 241, 0.34);
+  border-color: rgba(129, 140, 248, 0.7);
+  color: #eef2ff;
+}
+
 .language-dropdown {
   position: relative;
   width: 100%;

@@ -358,7 +358,10 @@ export function MapView({
       const iconSize = flag ? size * 4 : size;
       const fontSize = Math.max(12, Math.round(size * 0.55));
       const dotColor = kingdomColor ?? kindColor.kingdom;
-      const totalW = Math.max(iconSize, 280);
+      const estimatedLabelW = name
+        ? Math.max(iconSize, Math.round(name.length * fontSize * 0.62) + 20)
+        : iconSize;
+      const totalW = estimatedLabelW;
       const labelGap = 2;
       const labelZoneH = fontSize * 3;
       const totalH = iconSize + (name ? labelZoneH + labelGap : 0);

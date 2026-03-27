@@ -28,7 +28,7 @@ export async function kingdomRoutes(app: FastifyInstance) {
           },
           lores: {
             include: {
-              lore: { select: { id: true, title: true, tag: true, dateInGame: true } },
+              lore: { select: { id: true, title: true, tags: true, dateInGame: true } },
             },
           },
         },
