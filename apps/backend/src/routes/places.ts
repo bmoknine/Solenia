@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, placeInputSchema } from '@solenia/shared';
+import { placeInputSchema } from '@solenia/shared';
 import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 async function syncPlaceOrganisations(
   app: FastifyInstance,
@@ -73,7 +74,7 @@ export async function placeRoutes(app: FastifyInstance) {
   });
 
   app.get('/places/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const place = await app.prisma.place.findUnique({
       where: { id },
       include: {
@@ -136,7 +137,7 @@ export async function placeRoutes(app: FastifyInstance) {
   });
 
   app.put('/places/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const rawData = placeInputSchema.partial().parse(request.body);
     const { organisationIds, ...rawRest } = rawData;
 
@@ -178,7 +179,7 @@ export async function placeRoutes(app: FastifyInstance) {
   });
 
   app.delete('/places/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     await app.prisma.position.deleteMany({ where: { placeId: id } });
     await app.prisma.place.delete({ where: { id } });
     reply.code(204);

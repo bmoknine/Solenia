@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, personInputSchema } from '@solenia/shared';
+import { personInputSchema } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 export async function personRoutes(app: FastifyInstance) {
   app.get('/persons', async () => {
@@ -11,7 +12,7 @@ export async function personRoutes(app: FastifyInstance) {
   });
 
   app.get('/persons/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const person = await app.prisma.personOfInterest.findUnique({
       where: { id },
       include: {
@@ -47,9 +48,8 @@ export async function personRoutes(app: FastifyInstance) {
   });
 
   app.put('/persons/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
-    const id = idSchema.parse((request.params as any).id);
-    console.log('Backend PUT /persons/:id - request.body:', JSON.stringify(request.body, null, 2));
-    
+    const id = parseRouteUuid(request);
+
     // Gérer explicitement les champs enum pour éviter qu'ils soient filtrés par Zod
     const rawBody = request.body as any;
     const validBreedValues = ['ELFE', 'HALFELIN', 'HUMAIN', 'NAIN', 'DEMI_ELFE', 'DEMI_ORC', 'DRAKEIDE', 'GNOME', 'TIEFFELIN', 'AASIMAR', 'GENASIAIR', 'GENASITERRE', 'GENASIFEUR', 'GENASIEAU', 'GOLIATH', 'OTHER'];
@@ -99,14 +99,11 @@ export async function personRoutes(app: FastifyInstance) {
       parsedData.placeId = rawBody.placeId === '' || rawBody.placeId === null ? null : rawBody.placeId;
     }
     
-    console.log('Backend PUT /persons/:id - data après parse et correction:', JSON.stringify(parsedData, null, 2));
-    const result = await app.prisma.personOfInterest.update({ where: { id }, data: parsedData });
-    console.log('Backend PUT /persons/:id - result:', JSON.stringify(result, null, 2));
-    return result;
+    return app.prisma.personOfInterest.update({ where: { id }, data: parsedData });
   });
 
   app.delete('/persons/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     // Supprimer la position associée si elle existe
     await app.prisma.position.deleteMany({ where: { personOfInterestId: id } });
     await app.prisma.personOfInterest.delete({ where: { id } });

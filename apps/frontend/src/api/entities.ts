@@ -138,6 +138,13 @@ export type OrganisationDetail = Organisation & {
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
+/** GET JSON public (sans auth) ; une seule responsabilité : fetch + erreur métier. */
+async function getPublicJson<T>(path: string, errorMessage: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`);
+  if (!res.ok) throw new Error(errorMessage);
+  return (await res.json()) as T;
+}
+
 export async function getFlags(): Promise<string[]> {
   const res = await fetch(`${API_URL}/api/flags`);
   if (!res.ok) return [];
@@ -153,68 +160,43 @@ export async function getMaps(): Promise<string[]> {
 }
 
 export async function listKingdoms() {
-  const res = await fetch(`${API_URL}/kingdoms`);
-  if (!res.ok) throw new Error('Chargement royaumes échoué');
-  const data = await res.json();
-  return data as Kingdom[];
+  return getPublicJson<Kingdom[]>('/kingdoms', 'Chargement royaumes échoué');
 }
 
 export async function listCities() {
-  const res = await fetch(`${API_URL}/cities`);
-  if (!res.ok) throw new Error('Chargement villes échoué');
-  const data = await res.json();
-  return data as City[];
+  return getPublicJson<City[]>('/cities', 'Chargement villes échoué');
 }
 
 export async function listDistricts() {
-  const res = await fetch(`${API_URL}/districts`);
-  if (!res.ok) throw new Error('Chargement quartiers échoué');
-  const data = await res.json();
-  return data as District[];
+  return getPublicJson<District[]>('/districts', 'Chargement quartiers échoué');
 }
 
 export async function listPlaces() {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/places');
-  if (!res.ok) throw new Error('Chargement lieux échoué');
-  const data = await res.json();
-  return data as Place[];
+  return getPublicJson<Place[]>('/places', 'Chargement lieux échoué');
 }
 
 export async function listPersons() {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/persons');
-  if (!res.ok) throw new Error('Chargement personnages échoué');
-  const data = await res.json();
-  return data as Person[];
+  return getPublicJson<Person[]>('/persons', 'Chargement personnages échoué');
 }
 
 export async function getKingdom(id: string) {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/kingdoms/${id}`);
-  if (!res.ok) throw new Error('Chargement royaume échoué');
-  return (await res.json()) as KingdomDetail;
+  return getPublicJson<KingdomDetail>(`/kingdoms/${id}`, 'Chargement royaume échoué');
 }
 
 export async function getCity(id: string) {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/cities/${id}`);
-  if (!res.ok) throw new Error('Chargement ville échoué');
-  return (await res.json()) as CityDetail;
+  return getPublicJson<CityDetail>(`/cities/${id}`, 'Chargement ville échoué');
 }
 
 export async function getDistrict(id: string) {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/districts/${id}`);
-  if (!res.ok) throw new Error('Chargement quartier échoué');
-  return (await res.json()) as DistrictDetail;
+  return getPublicJson<DistrictDetail>(`/districts/${id}`, 'Chargement quartier échoué');
 }
 
 export async function getPlace(id: string) {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/places/${id}`);
-  if (!res.ok) throw new Error('Chargement lieu échoué');
-  return (await res.json()) as PlaceDetail;
+  return getPublicJson<PlaceDetail>(`/places/${id}`, 'Chargement lieu échoué');
 }
 
 export async function getPerson(id: string) {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/persons/${id}`);
-  if (!res.ok) throw new Error('Chargement personnage échoué');
-  return (await res.json()) as PersonDetail;
+  return getPublicJson<PersonDetail>(`/persons/${id}`, 'Chargement personnage échoué');
 }
 
 export async function updateKingdom(
@@ -377,16 +359,11 @@ export async function updatePosition(
 
 // Organisation API functions
 export async function listOrganisations() {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/organisations');
-  if (!res.ok) throw new Error('Chargement organisations échoué');
-  const data = await res.json();
-  return data as Organisation[];
+  return getPublicJson<Organisation[]>('/organisations', 'Chargement organisations échoué');
 }
 
 export async function getOrganisation(id: string) {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/organisations/${id}`);
-  if (!res.ok) throw new Error('Chargement organisation échoué');
-  return (await res.json()) as OrganisationDetail;
+  return getPublicJson<OrganisationDetail>(`/organisations/${id}`, 'Chargement organisation échoué');
 }
 
 export async function createOrganisation(
@@ -452,16 +429,11 @@ export async function removeOrganisationPlace(token: string, organisationId: str
 
 // Lore API
 export async function listLores(): Promise<Lore[]> {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + '/lores');
-  if (!res.ok) throw new Error('Chargement lore échoué');
-  const data = await res.json();
-  return data as Lore[];
+  return getPublicJson<Lore[]>('/lores', 'Chargement lore échoué');
 }
 
 export async function getLore(id: string): Promise<LoreDetail> {
-  const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/lores/${id}`);
-  if (!res.ok) throw new Error('Chargement lore échoué');
-  return (await res.json()) as LoreDetail;
+  return getPublicJson<LoreDetail>(`/lores/${id}`, 'Chargement lore échoué');
 }
 
 export type LoreInput = {

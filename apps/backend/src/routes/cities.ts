@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { cityInputSchema, idSchema } from '@solenia/shared';
+import { cityInputSchema } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 export async function cityRoutes(app: FastifyInstance) {
   app.get('/cities', async () => {
@@ -11,7 +12,7 @@ export async function cityRoutes(app: FastifyInstance) {
   });
 
   app.get('/cities/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const city = await app.prisma.city.findUnique({
       where: { id },
       include: {
@@ -65,10 +66,8 @@ export async function cityRoutes(app: FastifyInstance) {
   });
 
   app.put('/cities/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
-    const id = idSchema.parse((request.params as any).id);
-    console.log('Backend - request.body:', request.body);
+    const id = parseRouteUuid(request);
     const rawData = cityInputSchema.partial().parse(request.body);
-    console.log('Backend - rawData après parse:', rawData);
     // Convertir undefined en null pour les champs optionnels qu'on veut mettre à null
     const data: Record<string, unknown> = {};
     if ('name' in rawData) data.name = rawData.name;
@@ -96,12 +95,11 @@ export async function cityRoutes(app: FastifyInstance) {
       const v = body.map;
       data.map = (v === '' || v === undefined || v === null) ? null : (v as string);
     }
-    console.log('Backend - data final:', data);
     return app.prisma.city.update({ where: { id }, data });
   });
 
   app.delete('/cities/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     // Supprimer la position associée si elle existe
     await app.prisma.position.deleteMany({ where: { cityId: id } });
     await app.prisma.city.delete({ where: { id } });

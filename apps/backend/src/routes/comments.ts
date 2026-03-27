@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { commentInputSchema, commentUpdateSchema, idSchema, parseSoleniaDate } from '@solenia/shared';
+import { commentInputSchema, commentUpdateSchema, parseSoleniaDate } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 export async function commentRoutes(app: FastifyInstance) {
   app.get('/comments', async () => {
@@ -13,7 +14,7 @@ export async function commentRoutes(app: FastifyInstance) {
   });
 
   app.get('/comments/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const comment = await app.prisma.comment.findUnique({
       where: { id },
       include: {
@@ -36,7 +37,7 @@ export async function commentRoutes(app: FastifyInstance) {
   });
 
   app.put('/comments/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const data = commentUpdateSchema.parse(request.body);
     const { dateInGame: rawDate, ...rest } = data;
     return app.prisma.comment.update({
@@ -49,7 +50,7 @@ export async function commentRoutes(app: FastifyInstance) {
   });
 
   app.delete('/comments/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     await app.prisma.comment.delete({ where: { id } });
     reply.code(204);
   });
