@@ -145,18 +145,28 @@ async function getPublicJson<T>(path: string, errorMessage: string): Promise<T> 
   return (await res.json()) as T;
 }
 
-export async function getFlags(): Promise<string[]> {
-  const res = await fetch(`${API_URL}/api/flags`);
-  if (!res.ok) return [];
+/** GET public : parse le corps si 200, sinon valeur par défaut (listes assets, etc.). */
+async function getPublicJsonOrDefault<T>(path: string, parse: (data: unknown) => T, fallback: T): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`);
+  if (!res.ok) return fallback;
   const data = await res.json();
-  return Array.isArray(data?.flags) ? data.flags : [];
+  return parse(data);
+}
+
+export async function getFlags(): Promise<string[]> {
+  return getPublicJsonOrDefault(
+    '/api/flags',
+    (d) => (Array.isArray((d as { flags?: unknown })?.flags) ? (d as { flags: string[] }).flags : []),
+    [],
+  );
 }
 
 export async function getMaps(): Promise<string[]> {
-  const res = await fetch(`${API_URL}/api/maps`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  return Array.isArray(data?.maps) ? data.maps : [];
+  return getPublicJsonOrDefault(
+    '/api/maps',
+    (d) => (Array.isArray((d as { maps?: unknown })?.maps) ? (d as { maps: string[] }).maps : []),
+    [],
+  );
 }
 
 export async function listKingdoms() {
