@@ -1,5 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 
+/** Extrait une description affichable depuis l’entité cible d’une position. */
+function descriptionFromPositionTarget(target: {
+  name: string;
+  description?: string | null;
+}): string | null {
+  return target.description ?? null;
+}
+
 export async function mapRoutes(app: FastifyInstance) {
   app.get('/map/points', async () => {
     const positions = await app.prisma.position.findMany({
@@ -13,24 +21,17 @@ export async function mapRoutes(app: FastifyInstance) {
 
     return positions
       .map((p) => {
-        const target =
-          p.kingdom ??
-          p.city ??
-          p.place ??
-          p.personOfInterest;
+        const target = p.kingdom ?? p.city ?? p.place ?? p.personOfInterest;
 
-        // Filtrer les positions sans entité associée (positions orphelines)
         if (!target) {
           return null;
         }
 
-        // Lieux rattachés à une ville ou un quartier : pas de marqueur carte (position héritée logiquement, non affichée)
         if (p.placeId && p.place && (p.place.cityId || p.place.districtId)) {
           return null;
         }
-        // Lieux ou personnages avec affichage carte désactivé
-        if (p.placeId && p.place && (p.place as any).showOnMap === false) return null;
-        if (p.personOfInterestId && p.personOfInterest && (p.personOfInterest as any).showOnMap === false) return null;
+        if (p.placeId && p.place && p.place.showOnMap === false) return null;
+        if (p.personOfInterestId && p.personOfInterest && p.personOfInterest.showOnMap === false) return null;
 
         const kind =
           p.kingdomId ? 'kingdom' :
@@ -39,20 +40,18 @@ export async function mapRoutes(app: FastifyInstance) {
           p.personOfInterestId ? 'person' :
           'unknown';
 
-        // Récupérer iconUrl, flag et couleur selon le type d'entité
         let iconUrl: string | null = null;
         let flag: string | null = null;
         let kingdomColor: string | null = null;
         if (p.kingdom) {
-          kingdomColor = (p.kingdom as any).color ?? null;
-          flag = (p.kingdom as any).flag ?? null;
+          kingdomColor = p.kingdom.color ?? null;
+          flag = p.kingdom.flag ?? null;
         } else if (p.city) {
-          iconUrl = (p.city as any).iconUrl ?? null;
-          flag = (p.city as any).flag ?? null;
-          kingdomColor = (p.city as any).kingdom?.color ?? null;
+          iconUrl = p.city.iconUrl ?? null;
+          flag = p.city.flag ?? null;
+          kingdomColor = p.city.kingdom?.color ?? null;
         } else if (p.place) {
-          const placeIconUrl = (p.place as any).iconUrl;
-          iconUrl = placeIconUrl ?? null;
+          iconUrl = p.place.iconUrl ?? null;
         }
 
         return {
@@ -62,7 +61,7 @@ export async function mapRoutes(app: FastifyInstance) {
           kind,
           targetId: p.kingdomId ?? p.cityId ?? p.placeId ?? p.personOfInterestId ?? null,
           name: target.name,
-          description: 'description' in target ? (target as any).description ?? null : null,
+          description: descriptionFromPositionTarget(target),
           iconUrl,
           flag: flag || null,
           kingdomColor,
@@ -71,4 +70,3 @@ export async function mapRoutes(app: FastifyInstance) {
       .filter((p): p is NonNullable<typeof p> => p !== null);
   });
 }
-

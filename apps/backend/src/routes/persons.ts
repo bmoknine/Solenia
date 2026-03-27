@@ -1,5 +1,12 @@
 import type { FastifyInstance } from 'fastify';
-import { personInputSchema } from '@solenia/shared';
+import type { Prisma } from '@prisma/client';
+import {
+  personInputSchema,
+  PERSON_BREED_VALUES,
+  PERSON_LANGUAGE_VALUES,
+  PERSON_MEMBERSHIP_VALUES,
+  PERSON_SEX_VALUES,
+} from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
 import { parseRouteUuid } from '../utils/routeParams';
 
@@ -51,11 +58,7 @@ export async function personRoutes(app: FastifyInstance) {
     const id = parseRouteUuid(request);
 
     // Gérer explicitement les champs enum pour éviter qu'ils soient filtrés par Zod
-    const rawBody = request.body as any;
-    const validBreedValues = ['ELFE', 'HALFELIN', 'HUMAIN', 'NAIN', 'DEMI_ELFE', 'DEMI_ORC', 'DRAKEIDE', 'GNOME', 'TIEFFELIN', 'AASIMAR', 'GENASIAIR', 'GENASITERRE', 'GENASIFEUR', 'GENASIEAU', 'GOLIATH', 'OTHER'];
-    const validSexValues = ['MAN', 'WOMAN', 'OTHER'];
-    const validMembershipValues = ['POLITIC', 'RELIGEUX', 'MARCHAND', 'CCCH', 'CRIMINALITE', 'OTHER'];
-    const validLanguageValues = ['COMMUN', 'NAIN', 'ELFIQUE', 'GNOME', 'HALFELIN', 'ORC', 'GOBELIN', 'GEANT', 'DRACONIQUE', 'SYLVESTRE', 'INFERNAL', 'ABYSSAL', 'CELESTE', 'PRIMORDIAL', 'AQUAN', 'AURAN', 'IGNAN', 'TERRAN', 'PROFOND', 'SLAADI', 'TELEPATHIQUE', 'ARGOT_VOLEUR'];
+    const rawBody = request.body as Record<string, unknown>;
     
     // Construire l'objet de données en excluant les champs enum et les IDs du parse Zod
     const bodyWithoutEnums = { ...rawBody };
@@ -71,35 +74,48 @@ export async function personRoutes(app: FastifyInstance) {
     const parsedData = personInputSchema.partial().parse(bodyWithoutEnums);
     
     // Ajouter les champs enum manuellement avec validation
+    const includes = <T extends readonly string[]>(allowed: T, v: string): v is T[number] =>
+      (allowed as readonly string[]).includes(v);
+
     if ('breed' in rawBody) {
-      parsedData.breed = rawBody.breed === '' || rawBody.breed === null ? null : 
-        (validBreedValues.includes(rawBody.breed) ? rawBody.breed : null);
+      const b = rawBody.breed;
+      parsedData.breed =
+        b === '' || b === null ? null : typeof b === 'string' && includes(PERSON_BREED_VALUES, b) ? b : null;
     }
     if ('sex' in rawBody) {
-      parsedData.sex = rawBody.sex === '' || rawBody.sex === null ? null : 
-        (validSexValues.includes(rawBody.sex) ? rawBody.sex : null);
+      const s = rawBody.sex;
+      parsedData.sex =
+        s === '' || s === null ? null : typeof s === 'string' && includes(PERSON_SEX_VALUES, s) ? s : null;
     }
     if ('membership' in rawBody) {
-      parsedData.membership = rawBody.membership === '' || rawBody.membership === null ? null : 
-        (validMembershipValues.includes(rawBody.membership) ? rawBody.membership : null);
+      const m = rawBody.membership;
+      parsedData.membership =
+        m === '' || m === null ? null : typeof m === 'string' && includes(PERSON_MEMBERSHIP_VALUES, m) ? m : null;
     }
     if ('languages' in rawBody && Array.isArray(rawBody.languages)) {
-      // Filtrer uniquement les langues valides selon l'enum
-      parsedData.languages = rawBody.languages.filter((lang: string) => validLanguageValues.includes(lang));
+      parsedData.languages = rawBody.languages.filter(
+        (lang): lang is (typeof PERSON_LANGUAGE_VALUES)[number] =>
+          typeof lang === 'string' && includes(PERSON_LANGUAGE_VALUES, lang),
+      );
     }
-    
-    // Ajouter les IDs manuellement avec validation (accepter null)
+
     if ('kingdomId' in rawBody) {
-      parsedData.kingdomId = rawBody.kingdomId === '' || rawBody.kingdomId === null ? null : rawBody.kingdomId;
+      const v = rawBody.kingdomId;
+      parsedData.kingdomId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
     }
     if ('cityId' in rawBody) {
-      parsedData.cityId = rawBody.cityId === '' || rawBody.cityId === null ? null : rawBody.cityId;
+      const v = rawBody.cityId;
+      parsedData.cityId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
     }
     if ('placeId' in rawBody) {
-      parsedData.placeId = rawBody.placeId === '' || rawBody.placeId === null ? null : rawBody.placeId;
+      const v = rawBody.placeId;
+      parsedData.placeId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
     }
     
-    return app.prisma.personOfInterest.update({ where: { id }, data: parsedData });
+    return app.prisma.personOfInterest.update({
+      where: { id },
+      data: parsedData as Prisma.PersonOfInterestUpdateInput,
+    });
   });
 
   app.delete('/persons/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {

@@ -26,6 +26,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@solenia/shared": "*",
     "@fastify/cors": "^8.4.2",
     "@fastify/jwt": "^7.2.0",
     "@fastify/sensible": "^5.6.0",

@@ -18,6 +18,7 @@
     ]
   },
   "dependencies": {
+    "@solenia/shared": "*",
     "@tabler/icons-react": "^3.36.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",
