@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { districtInputSchema, idSchema } from '@solenia/shared';
+import { districtInputSchema } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 export async function districtRoutes(app: FastifyInstance) {
   app.get('/districts', async () => {
@@ -13,7 +14,7 @@ export async function districtRoutes(app: FastifyInstance) {
   });
 
   app.get('/districts/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const district = await app.prisma.district.findUnique({
       where: { id },
       include: {
@@ -33,7 +34,7 @@ export async function districtRoutes(app: FastifyInstance) {
   });
 
   app.put('/districts/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const rawData = districtInputSchema.partial().parse(request.body);
     // Convertir undefined en null pour les champs optionnels qu'on veut mettre à null
     const data: Record<string, unknown> = {};
@@ -48,7 +49,7 @@ export async function districtRoutes(app: FastifyInstance) {
   });
 
   app.delete('/districts/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     await app.prisma.district.delete({ where: { id } });
     reply.code(204);
   });

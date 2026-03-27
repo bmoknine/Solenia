@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, loreInputSchema } from '@solenia/shared';
+import { loreInputSchema } from '@solenia/shared';
 import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 export async function loreRoutes(app: FastifyInstance) {
   const normalizeTagsFromBody = (body: unknown): string[] | undefined => {
@@ -33,7 +34,7 @@ export async function loreRoutes(app: FastifyInstance) {
   });
 
   app.get('/lores/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const lore = await app.prisma.lore.findUnique({
       where: { id },
       include: {
@@ -150,7 +151,7 @@ export async function loreRoutes(app: FastifyInstance) {
   });
 
   app.put('/lores/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const rawData = loreInputSchema.partial().parse(request.body);
     const { kingdomIds, cityIds, placeIds, personIds, organisationIds, ...loreData } = rawData;
     const bodyTags = normalizeTagsFromBody(request.body);
@@ -239,7 +240,7 @@ export async function loreRoutes(app: FastifyInstance) {
   });
 
   app.delete('/lores/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     await app.prisma.lore.delete({ where: { id } });
     reply.code(204);
   });

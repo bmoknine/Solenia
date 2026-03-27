@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, kingdomInputSchema, parseSoleniaDate } from '@solenia/shared';
+import { kingdomInputSchema, parseSoleniaDate } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
+import { parseRouteUuid } from '../utils/routeParams';
 
 export async function kingdomRoutes(app: FastifyInstance) {
   app.get('/kingdoms', async () => {
@@ -12,7 +13,7 @@ export async function kingdomRoutes(app: FastifyInstance) {
 
   app.get('/kingdoms/:id', async (request, reply) => {
     try {
-      const id = idSchema.parse((request.params as any).id);
+      const id = parseRouteUuid(request);
       const kingdom = await app.prisma.kingdom.findUnique({
         where: { id },
         include: {
@@ -74,7 +75,7 @@ export async function kingdomRoutes(app: FastifyInstance) {
   });
 
   app.put('/kingdoms/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const data = kingdomInputSchema.partial().parse(request.body);
     const body = request.body as Record<string, unknown>;
     const colorFromBody = body && 'color' in body ? (body.color ?? null) : undefined;
@@ -93,96 +94,16 @@ export async function kingdomRoutes(app: FastifyInstance) {
   });
 
   app.delete('/kingdoms/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: 'debug-session',
-        runId: 'kingdom-delete-pre-fix',
-        hypothesisId: 'A',
-        location: 'routes/kingdoms.ts:delete:entry',
-        message: 'delete kingdom attempt',
-        data: { id },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
+    const id = parseRouteUuid(request);
     const existing = await app.prisma.kingdom.findUnique({ where: { id } });
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: 'debug-session',
-        runId: 'kingdom-delete-pre-fix',
-        hypothesisId: 'B',
-        location: 'routes/kingdoms.ts:delete:found',
-        message: 'existing kingdom lookup',
-        data: { id, found: Boolean(existing) },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
-    if (!existing) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'debug-session',
-          runId: 'kingdom-delete-pre-fix',
-          hypothesisId: 'B',
-          location: 'routes/kingdoms.ts:delete:notFound',
-          message: 'kingdom not found, returning 404',
-          data: { id },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-      return reply.notFound();
-    }
+    if (!existing) return reply.notFound();
 
     try {
-      // Supprimer la position associée si elle existe
       await app.prisma.position.deleteMany({ where: { kingdomId: id } });
       await app.prisma.kingdom.delete({ where: { id } });
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'debug-session',
-          runId: 'kingdom-delete-pre-fix',
-          hypothesisId: 'C',
-          location: 'routes/kingdoms.ts:delete:success',
-          message: 'kingdom deleted',
-          data: { id },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
       return reply.code(204).send();
-    } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/4b615a6a-3388-40b4-9df2-ee03a04a8c5a', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'debug-session',
-          runId: 'kingdom-delete-pre-fix',
-          hypothesisId: 'C',
-          location: 'routes/kingdoms.ts:delete:error',
-          message: 'delete failed',
-          data: { id, code: error?.code, message: error?.message },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
+    } catch (err) {
+      app.log.error(err, 'DELETE /kingdoms/:id');
       return reply.internalServerError('Delete kingdom failed');
     }
   });

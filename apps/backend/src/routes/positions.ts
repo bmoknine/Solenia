@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, positionInputSchema } from '@solenia/shared';
+import { positionInputSchema } from '@solenia/shared';
+import { parseRouteUuid } from '../utils/routeParams';
 import { requireRole } from '../utils/rbac';
 
 const pickTarget = (data: { kingdomId?: string; cityId?: string; placeId?: string; personOfInterestId?: string }) => {
@@ -21,7 +22,7 @@ export async function positionRoutes(app: FastifyInstance) {
   });
 
   app.get('/positions/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const position = await app.prisma.position.findUnique({ where: { id } });
     if (!position) return reply.notFound();
     return position;
@@ -43,7 +44,7 @@ export async function positionRoutes(app: FastifyInstance) {
   });
 
   app.delete('/positions/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     await app.prisma.position.delete({ where: { id } });
     reply.code(204);
   });

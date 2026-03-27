@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import { organisationInputSchema, idSchema } from '@solenia/shared';
+import { idSchema, organisationInputSchema } from '@solenia/shared';
 import { createOrganisationLinks, replaceOrganisationLinks } from '../utils/organisationLinks';
 import { isPrismaUniqueViolation } from '../utils/prisma';
+import { parseRouteUuid } from '../utils/routeParams';
 import { requireRole } from '../utils/rbac';
 
 export async function organisationRoutes(app: FastifyInstance) {
@@ -12,7 +13,7 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.get('/organisations/:id', async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const organisation = await app.prisma.organisation.findUnique({
       where: { id },
       include: {
@@ -108,7 +109,7 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.put('/organisations/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const rawData = organisationInputSchema.partial().passthrough().parse(request.body);
     const { kingdomIds, cityIds, placeIds, personIds, ...orgData } = rawData;
     
@@ -173,14 +174,14 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.delete('/organisations/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     await app.prisma.organisation.delete({ where: { id } });
     reply.code(204);
   });
 
   // Routes pour gérer les membres
   app.post('/organisations/:id/members', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const { personId } = request.body as { personId: string };
     if (!personId || !idSchema.safeParse(personId).success) {
       return reply.badRequest('personId is required and must be a valid UUID');
@@ -204,8 +205,8 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.delete('/organisations/:id/members/:personId', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
-    const personId = idSchema.parse((request.params as any).personId);
+    const id = parseRouteUuid(request);
+    const personId = parseRouteUuid(request, 'personId');
     await app.prisma.organisationMember.deleteMany({
       where: {
         organisationId: id,
@@ -217,7 +218,7 @@ export async function organisationRoutes(app: FastifyInstance) {
 
   // Routes pour gérer les villes
   app.post('/organisations/:id/cities', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const { cityId } = request.body as { cityId: string };
     if (!cityId || !idSchema.safeParse(cityId).success) {
       return reply.badRequest('cityId is required and must be a valid UUID');
@@ -241,8 +242,8 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.delete('/organisations/:id/cities/:cityId', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
-    const cityId = idSchema.parse((request.params as any).cityId);
+    const id = parseRouteUuid(request);
+    const cityId = parseRouteUuid(request, 'cityId');
     await app.prisma.organisationCity.deleteMany({
       where: {
         organisationId: id,
@@ -254,7 +255,7 @@ export async function organisationRoutes(app: FastifyInstance) {
 
   // Routes pour gérer les lieux
   app.post('/organisations/:id/places', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const { placeId } = request.body as { placeId: string };
     if (!placeId || !idSchema.safeParse(placeId).success) {
       return reply.badRequest('placeId is required and must be a valid UUID');
@@ -278,8 +279,8 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.delete('/organisations/:id/places/:placeId', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
-    const placeId = idSchema.parse((request.params as any).placeId);
+    const id = parseRouteUuid(request);
+    const placeId = parseRouteUuid(request, 'placeId');
     await app.prisma.organisationPlace.deleteMany({
       where: {
         organisationId: id,
@@ -291,7 +292,7 @@ export async function organisationRoutes(app: FastifyInstance) {
 
   // Routes pour gérer les royaumes
   app.post('/organisations/:id/kingdoms', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
+    const id = parseRouteUuid(request);
     const { kingdomId } = request.body as { kingdomId: string };
     if (!kingdomId || !idSchema.safeParse(kingdomId).success) {
       return reply.badRequest('kingdomId is required and must be a valid UUID');
@@ -315,8 +316,8 @@ export async function organisationRoutes(app: FastifyInstance) {
   });
 
   app.delete('/organisations/:id/kingdoms/:kingdomId', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
-    const id = idSchema.parse((request.params as any).id);
-    const kingdomId = idSchema.parse((request.params as any).kingdomId);
+    const id = parseRouteUuid(request);
+    const kingdomId = parseRouteUuid(request, 'kingdomId');
     await app.prisma.organisationKingdom.deleteMany({
       where: {
         organisationId: id,
