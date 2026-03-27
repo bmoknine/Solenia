@@ -7,8 +7,8 @@ export function LanguageDropdown({
   selectedLanguages,
   onLanguagesChange,
 }: {
-  selectedLanguages: string[];
-  onLanguagesChange: (languages: string[]) => void;
+  selectedLanguages: Language[];
+  onLanguagesChange: (languages: Language[]) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

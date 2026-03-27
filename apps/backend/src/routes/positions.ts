@@ -1,20 +1,41 @@
 import type { FastifyInstance } from 'fastify';
+import type { Prisma } from '@prisma/client';
 import { positionInputSchema } from '@solenia/shared';
 import { parseRouteUuid } from '../utils/routeParams';
 import { requireRole } from '../utils/rbac';
 
+type TargetKey = 'kingdomId' | 'cityId' | 'placeId' | 'personOfInterestId';
+
 const pickTarget = (data: { kingdomId?: string; cityId?: string; placeId?: string; personOfInterestId?: string }) => {
-  const entries = [
-    ['kingdomId', data.kingdomId],
-    ['cityId', data.cityId],
-    ['placeId', data.placeId],
-    ['personOfInterestId', data.personOfInterestId],
-  ].filter(([, v]) => Boolean(v)) as [string, string][];
+  const entries = (
+    [
+      ['kingdomId', data.kingdomId],
+      ['cityId', data.cityId],
+      ['placeId', data.placeId],
+      ['personOfInterestId', data.personOfInterestId],
+    ] as const
+  ).filter((entry): entry is [TargetKey, string] => Boolean(entry[1]));
 
   if (entries.length !== 1) return null;
-  const [key, value] = entries[0];
-  return { key, value };
+  return { key: entries[0][0], value: entries[0][1] };
 };
+
+function positionWhereUnique(key: TargetKey, value: string): Prisma.PositionWhereUniqueInput {
+  switch (key) {
+    case 'kingdomId':
+      return { kingdomId: value };
+    case 'cityId':
+      return { cityId: value };
+    case 'placeId':
+      return { placeId: value };
+    case 'personOfInterestId':
+      return { personOfInterestId: value };
+    default: {
+      const _x: never = key;
+      throw new Error(`Clé position inconnue: ${String(_x)}`);
+    }
+  }
+}
 
 export async function positionRoutes(app: FastifyInstance) {
   app.get('/positions', async () => {
@@ -36,7 +57,7 @@ export async function positionRoutes(app: FastifyInstance) {
     const payload = { x: data.x, y: data.y, [target.key]: target.value };
 
     const position = await app.prisma.position.upsert({
-      where: { [target.key]: target.value } as any,
+      where: positionWhereUnique(target.key, target.value),
       create: payload,
       update: payload,
     });

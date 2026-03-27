@@ -126,6 +126,12 @@ const languageEnum = z.enum([
   'ARGOT_VOLEUR',
 ]);
 
+/** Listes dérivées des schémas Zod — source unique pour API, backend et UI. */
+export const PERSON_BREED_VALUES = breedEnum.options;
+export const PERSON_SEX_VALUES = sexEnum.options;
+export const PERSON_MEMBERSHIP_VALUES = membershipEnum.options;
+export const PERSON_LANGUAGE_VALUES = languageEnum.options;
+
 export const personInputSchema = z
   .object({
     name: z.string().min(1),

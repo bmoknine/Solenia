@@ -123,7 +123,6 @@ function Content() {
   };
 
   const handleMapClickForCreation = useCallback((x: number, y: number) => {
-    console.log('onMapClick appelé avec:', { x, y });
     setCreatePosition({ x, y });
     setCreatingMode(false);
   }, []);

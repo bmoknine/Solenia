@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import type { Prisma } from '@prisma/client';
 import { placeInputSchema } from '@solenia/shared';
 import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
@@ -172,7 +173,7 @@ export async function placeRoutes(app: FastifyInstance) {
     data.cityId = merged.cityId;
     data.districtId = merged.districtId;
 
-    const updated = await app.prisma.place.update({ where: { id }, data: data as any });
+    const updated = await app.prisma.place.update({ where: { id }, data: data as Prisma.PlaceUpdateInput });
     await syncPlaceOrganisations(app, id, organisationIds);
     await syncEmbeddedPlacePosition(app, id, updated.cityId, updated.districtId);
     return updated;

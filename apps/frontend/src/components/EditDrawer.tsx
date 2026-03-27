@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import type { MapPoint } from '../api/map';
 import { getKingdom, getPerson } from '../api/entities';
-import type { Person } from '../api/entities';
+import type { Language, Membership, Person } from '../api/entities';
 import { updateCity, updateKingdom, updatePerson, updatePlace } from '../api/update';
+import { MEMBERSHIP_OPTIONS } from './detail-modal/entityOptions';
+import { formatMembership } from './detail-modal/entityFormatters';
+import { LanguageDropdown } from './detail-modal/LanguageDropdown';
 import './Panel.css';
 
 type Props = {
@@ -18,8 +21,8 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
   const [description, setDescription] = useState('');
   const [population, setPopulation] = useState<number | ''>('');
   const [dateInGame, setDateInGame] = useState('');
-  const [membership, setMembership] = useState('');
-  const [languages, setLanguages] = useState('');
+  const [membership, setMembership] = useState<Membership | ''>('');
+  const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([]);
   const [stats, setStats] = useState({ STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +57,8 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
         try {
           const p: Person = await getPerson(point.targetId);
           if (!mounted) return;
-          setMembership(p.membership ?? '');
-          setLanguages(p.languages?.join(', ') ?? '');
+          setMembership((p.membership as Membership | null) ?? '');
+          setSelectedLanguages(p.languages ?? []);
           setStats({
             STR: p.STR,
             DEX: p.DEX,
@@ -107,10 +110,7 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
           name,
           description: description || undefined,
           membership: membership || undefined,
-          languages: languages
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean),
+          languages: selectedLanguages,
           ...stats,
         });
       }
@@ -160,12 +160,19 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
       {point.kind === 'person' && (
         <>
           <label>
-            Membership
-            <input value={membership} onChange={(e) => setMembership(e.target.value)} />
+            Affiliation
+            <select value={membership} onChange={(e) => setMembership(e.target.value as Membership | '')}>
+              <option value="">—</option>
+              {MEMBERSHIP_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {formatMembership(opt)}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
-            Langues (séparées par virgule)
-            <input value={languages} onChange={(e) => setLanguages(e.target.value)} />
+            Langues
+            <LanguageDropdown selectedLanguages={selectedLanguages} onLanguagesChange={setSelectedLanguages} />
           </label>
           <div className="stats-grid">
             {(['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'] as const).map((key) => (
