@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import './Panel.css';
 
-type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown';
+type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation';
 
 type Props = {
   active: Set<Kind>;
@@ -15,6 +15,7 @@ const labels: Record<Kind, string> = {
   place: 'Lieu',
   person: 'Personnage',
   unknown: 'Autre',
+  organisation: 'Organisation',
 };
 
 export function FilterPanel({ active, onToggle }: Props) {

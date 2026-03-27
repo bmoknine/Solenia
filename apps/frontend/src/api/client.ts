@@ -87,28 +87,35 @@ export function getApiUrl() {
   return API_URL;
 }
 
+function mergeAuthHeaders(init: RequestInit | undefined, token: string | null | undefined): Headers {
+  const headers = new Headers(init?.headers as HeadersInit | undefined);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return headers;
+}
+
 export function withAuth(token?: string | null) {
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
   return {
     get: <T>(path: string, init?: RequestInit) =>
       apiGet<T>(path, {
         ...init,
-        headers: { ...(init?.headers ?? {}), ...authHeaders },
+        headers: mergeAuthHeaders(init, token),
       }),
     post: <T>(path: string, body: unknown, init?: RequestInit) =>
       apiPost<T>(path, body, {
         ...init,
-        headers: { ...(init?.headers ?? {}), ...authHeaders },
+        headers: mergeAuthHeaders(init, token),
       }),
     put: <T>(path: string, body: unknown, init?: RequestInit) =>
       apiPut<T>(path, body, {
         ...init,
-        headers: { ...(init?.headers ?? {}), ...authHeaders },
+        headers: mergeAuthHeaders(init, token),
       }),
     delete: <T>(path: string, init?: RequestInit) =>
       apiDelete<T>(path, {
         ...init,
-        headers: { ...(init?.headers ?? {}), ...authHeaders },
+        headers: mergeAuthHeaders(init, token),
       }),
   };
 }

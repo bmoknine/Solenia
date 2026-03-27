@@ -1,13 +1,13 @@
 import { apiGet, withAuth } from './client';
 
 // Type pour les entités navigables (inclut district même s'il n'est pas sur la map)
-export type EntityKind = 'kingdom' | 'city' | 'district' | 'place' | 'person';
+export type EntityKind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation';
 
 export type MapPoint = {
   id: string;
   x: number;
   y: number;
-  kind: 'kingdom' | 'city' | 'place' | 'person' | 'unknown';
+  kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation';
   targetId: string | null;
   name: string;
   description: string | null;

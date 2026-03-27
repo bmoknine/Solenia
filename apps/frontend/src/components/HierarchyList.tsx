@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
-import { listKingdoms, listOrganisations, listCities, listDistricts, listPlaces, listPersons, getPerson, getDistrict, getPlace } from '../api/entities';
-import type { Kingdom, Organisation, City, District, Place, Person, OrganisationDetail, PersonDetail, DistrictDetail } from '../api/entities';
-import type { HierarchyNavigablePoint } from './Sidebar';
+import { listKingdoms, listOrganisations, listCities, listDistricts, listPlaces, getDistrict } from '../api/entities';
+import type { Kingdom, Organisation, City, District, Place, OrganisationDetail, DistrictDetail } from '../api/entities';
+import type { NavigablePoint } from '../api/map';
 import './HierarchyList.css';
 
 type HierarchyListProps = {
-  onSelect: (point: HierarchyNavigablePoint) => void;
+  onSelect: (point: NavigablePoint) => void;
 };
 
 type ExpandedState = {
@@ -21,8 +21,6 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
   const [cities, setCities] = useState<City[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
-  const [persons, setPersons] = useState<Person[]>([]);
-  const [personDetails, setPersonDetails] = useState<Map<string, PersonDetail>>(new Map());
   const [districtDetails, setDistrictDetails] = useState<Map<string, DistrictDetail>>(new Map());
   const [organisationDetails, setOrganisationDetails] = useState<Map<string, OrganisationDetail>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -38,13 +36,12 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [kingdomsData, organisationsData, citiesData, districtsData, placesData, personsData] = await Promise.all([
+        const [kingdomsData, organisationsData, citiesData, districtsData, placesData] = await Promise.all([
           listKingdoms(),
           listOrganisations(),
           listCities(),
           listDistricts(),
           listPlaces(),
-          listPersons(),
         ]);
 
         setKingdoms(kingdomsData);
@@ -52,7 +49,6 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
         setCities(citiesData);
         setDistricts(districtsData);
         setPlaces(placesData);
-        setPersons(personsData);
 
         // Charger les détails des organisations pour connaître leurs relations
         const orgDetailsMap = new Map<string, OrganisationDetail>();
@@ -120,17 +116,6 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
       }
     });
 
-    // Grouper les personnes par quartier, lieu, ville et royaume
-    const personsByDistrict = new Map<string, Person[]>();
-    const personsByPlace = new Map<string, Person[]>();
-    const personsByCity = new Map<string, Person[]>();
-    const personsByKingdom = new Map<string, Person[]>();
-    persons.forEach(person => {
-      // Note: les personnes peuvent avoir districtId, placeId, cityId, kingdomId
-      // On doit charger les détails pour savoir, mais pour simplifier on utilise les données de base
-      // On va utiliser une approche différente : on va mapper par les IDs disponibles
-    });
-
     // Grouper les organisations par royaume (via leurs villes)
     const organisationsByKingdom = new Map<string, Organisation[]>();
     organisations.forEach(org => {
@@ -159,7 +144,7 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
       placesByKingdom,
       organisationsByKingdom,
     };
-  }, [kingdoms, organisations, cities, districts, places, persons, organisationDetails]);
+  }, [kingdoms, organisations, cities, districts, places, organisationDetails]);
 
   const toggleKingdom = (kingdomId: string) => {
     setExpanded(prev => ({
@@ -189,7 +174,7 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
     }));
   };
 
-  const handleSelect = (kind: HierarchyNavigablePoint['kind'], id: string, name: string) => {
+  const handleSelect = (kind: NavigablePoint['kind'], id: string, name: string) => {
     onSelect({
       id,
       name,
@@ -198,18 +183,7 @@ export function HierarchyList({ onSelect }: HierarchyListProps) {
       y: 0,
       targetId: id,
       description: null,
-    } as HierarchyNavigablePoint);
-  };
-
-  // Charger les détails d'une personne quand nécessaire
-  const loadPersonDetails = async (personId: string) => {
-    if (personDetails.has(personId)) return;
-    try {
-      const detail = await getPerson(personId);
-      setPersonDetails(prev => new Map(prev).set(personId, detail));
-    } catch (e) {
-      console.error(`Erreur chargement personne ${personId}:`, e);
-    }
+    });
   };
 
   // Charger les détails d'un quartier quand nécessaire

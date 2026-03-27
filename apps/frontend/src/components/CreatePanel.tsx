@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import type { FormEvent } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import type { City, Kingdom, Place, Breed, Sex, Membership, Language } from '../api/entities';
 import { createCity, createKingdom, createPerson, createPlace, listCities, listKingdoms, listPlaces, updatePosition } from '../api/entities';

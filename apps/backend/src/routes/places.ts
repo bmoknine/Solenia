@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { idSchema, placeInputSchema } from '@solenia/shared';
+import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
 
 async function syncPlaceOrganisations(
@@ -10,13 +11,11 @@ async function syncPlaceOrganisations(
   if (organisationIds === undefined) return;
   await app.prisma.organisationPlace.deleteMany({ where: { placeId } });
   for (const organisationId of organisationIds) {
-    await app.prisma.organisationPlace
-      .create({
+    await ignoreUniqueViolation(
+      app.prisma.organisationPlace.create({
         data: { placeId, organisationId },
-      })
-      .catch((err: { code?: string }) => {
-        if (err.code !== 'P2002') throw err;
-      });
+      }),
+    );
   }
 }
 

@@ -25,7 +25,6 @@ import {
   deleteLore,
   updatePosition,
   type KingdomDetail,
-  type LoreRef,
   type LoreDetail,
   type CityDetail,
   type DistrictDetail,
@@ -44,10 +43,11 @@ import {
   listDistricts,
   listPlaces,
   listPersons,
-  listLores,
   getFlags,
-  getMaps,
 } from '../api/entities';
+import { LoreSection } from './detail-modal/LoreSection';
+import { LoreView } from './detail-modal/LoreView';
+import type { LoreEditState } from './detail-modal/loreTypes';
 import { useToast } from '../toast/ToastProvider';
 import type { Breed, Sex, Membership, Language } from '../api/entities';
 import { formatSoleniaDate, toDateInputValue } from '../utils/solenia-date';
@@ -397,13 +397,11 @@ type OrganisationEditState = Partial<OrganisationDetail> & {
   personIds?: string[];
 };
 
-type LoreEditState = Partial<LoreDetail> & { kind: 'lore'; kingdomIds?: string[]; cityIds?: string[]; placeIds?: string[]; personIds?: string[]; organisationIds?: string[] };
-
 type EditState =
   | (Partial<KingdomDetail> & { kind: 'kingdom' })
   | (Partial<CityDetail> & { kind: 'city' })
   | DistrictEditState
-  | (Partial<PlaceDetail> & { kind: 'place' })
+  | (Partial<PlaceDetail> & { kind: 'place'; organisationIds?: string[] })
   | PersonEditState
   | OrganisationEditState
   | LoreEditState
@@ -459,58 +457,6 @@ function FlagSelect({
       </select>
       {current ? (
         <img src={current} alt="" style={{ maxWidth: 200, maxHeight: 120, objectFit: 'contain' }} />
-      ) : null}
-    </div>
-  );
-}
-
-function MapSelect({
-  value,
-  onChange,
-  editMode,
-}: {
-  value: string | null | undefined;
-  onChange: (v: string | null) => void;
-  editMode: boolean;
-}) {
-  const [maps, setMaps] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    if (editMode) {
-      setLoading(true);
-      getMaps()
-        .then(setMaps)
-        .catch(() => setMaps([]))
-        .finally(() => setLoading(false));
-    }
-  }, [editMode]);
-  const current = value ?? '';
-  if (!editMode) {
-    if (!current) return null;
-    return (
-      <span className="detail-value">
-        <img src={current} alt="Map" style={{ maxWidth: 240, maxHeight: 160, objectFit: 'contain' }} />
-      </span>
-    );
-  }
-  if (loading) return <span className="detail-value">Chargement...</span>;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-      <select
-        className="detail-input"
-        value={current}
-        onChange={(e) => onChange(e.target.value || null)}
-        style={{ minWidth: 220 }}
-      >
-        <option value="">— Aucune map</option>
-        {maps.map((path) => (
-          <option key={path} value={path}>
-            {path.split('/').pop() ?? path}
-          </option>
-        ))}
-      </select>
-      {current ? (
-        <img src={current} alt="" style={{ maxWidth: 180, maxHeight: 120, objectFit: 'contain' }} />
       ) : null}
     </div>
   );
@@ -775,7 +721,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             const kingdomState = editState as KingdomDetail;
             createdEntity = await createKingdom(token, {
               name: kingdomState.name ?? '',
-              description: kingdomState.description ?? null,
+              description: kingdomState.description ?? undefined,
               population:
                 kingdomState.population !== undefined && kingdomState.population !== null
                   ? Number(kingdomState.population)
@@ -790,7 +736,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             const cityState = editState as CityDetail;
             createdEntity = await createCity(token, {
               name: cityState.name ?? '',
-              description: cityState.description ?? null,
+              description: cityState.description ?? undefined,
               iconUrl: cityState.iconUrl ?? undefined,
               map: cityState.map ?? undefined,
               flag: cityState.flag ?? undefined,
@@ -802,7 +748,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             const districtState = editState as DistrictDetail;
             createdEntity = await createDistrict(token, {
               name: districtState.name ?? '',
-              description: districtState.motto ?? null, // Utiliser motto comme description de base
+              description: districtState.motto ?? undefined, // Utiliser motto comme description de base
               cityId: districtState.cityId,
               motto: districtState.motto ?? undefined,
               ambiance: districtState.ambiance ?? undefined,
@@ -816,7 +762,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             const placeState = editState as PlaceDetail & { organisationIds?: string[] };
             createdEntity = await createPlace(token, {
               name: placeState.name ?? '',
-              description: placeState.description ?? null,
+              description: placeState.description ?? undefined,
               map: placeState.map ?? undefined,
               kingdomId: placeState.kingdomId ?? undefined,
               cityId: placeState.cityId ?? undefined,
@@ -830,7 +776,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             const personState = editState as PersonDetail;
             createdEntity = await createPerson(token, {
               name: personState.name ?? '',
-              description: personState.description ?? null,
+              description: personState.description ?? undefined,
               breed: personState.breed ?? undefined,
               sex: personState.sex ?? undefined,
               membership: personState.membership ?? undefined,
@@ -855,7 +801,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             const organisationState = editState as OrganisationEditState;
             const createData = {
               name: organisationState.name ?? '',
-              description: organisationState.description ?? null,
+              description: organisationState.description ?? undefined,
               organisationType: organisationState.organisationType ?? undefined,
               parentOrganisationId: organisationState.parentOrganisationId ?? undefined,
               flag: organisationState.flag ?? undefined,
@@ -902,14 +848,15 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           kind !== 'lore' &&
           !placeEmbedded
         ) {
+          const newId = (createdEntity as { id: string }).id;
           const positionPayload =
             kind === 'kingdom'
-              ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, kingdomId: createdEntity.id }
+              ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, kingdomId: newId }
               : kind === 'city'
-              ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, cityId: createdEntity.id }
+              ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, cityId: newId }
               : kind === 'place'
-              ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, placeId: createdEntity.id }
-              : { x: createMode.initialPosition.x, y: createMode.initialPosition.y, personOfInterestId: createdEntity.id };
+              ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, placeId: newId }
+              : { x: createMode.initialPosition.x, y: createMode.initialPosition.y, personOfInterestId: newId };
 
           await updatePosition(token, positionPayload);
         }
@@ -975,8 +922,8 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           const cityIconUrl = cityState.iconUrl;
           const cityFlag = cityState.flag;
           const payload = {
-            name: editState.name ?? '',
-            description: editState.description ?? null,
+            name: cityState.name ?? '',
+            description: cityState.description ?? null,
             iconUrl: cityIconUrl === '' || cityIconUrl === undefined ? null : cityIconUrl,
             map: cityState.map === '' || cityState.map === undefined ? null : cityState.map,
             flag: cityFlag === '' || cityFlag === undefined ? null : cityFlag,
@@ -1002,8 +949,8 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
         case 'place': {
           const ps = editState as PlaceDetail & { organisationIds?: string[] };
           await updatePlace(token, point.targetId, {
-            name: editState.name ?? '',
-            description: editState.description ?? null,
+            name: ps.name ?? '',
+            description: ps.description ?? null,
             map: ps.map ?? null,
             kingdomId: ps.kingdomId ?? null,
             cityId: ps.cityId ?? null,
@@ -1652,7 +1599,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
 
 // Helper pour créer un NavigablePoint à partir d'une référence
 function createMapPointFromRef(ref: { id: string; name: string }, kind: EntityKind): NavigablePoint {
-  return {
+  const point: NavigablePoint = {
     id: ref.id,
     x: 0,
     y: 0,
@@ -1661,69 +1608,7 @@ function createMapPointFromRef(ref: { id: string; name: string }, kind: EntityKi
     name: ref.name,
     description: null,
   };
-}
-
-// Section liste des Lore liées (dans les modales entité)
-function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (loreId: string) => void }) {
-  if (!lores || lores.length === 0) return null;
-  const [tagFilter, setTagFilter] = useState<string>('__all__');
-  const loreTags = (lore: LoreRef) => Array.from(new Set((lore.tags ?? []).map((t) => t.trim()).filter(Boolean)));
-
-  const tags = Array.from(
-    new Set(lores.flatMap((l) => loreTags(l))),
-  ).sort((a, b) => a.localeCompare(b));
-
-  const sorted = [...lores].sort((a, b) => {
-    const da = a.dateInGame ?? Number.POSITIVE_INFINITY;
-    const db = b.dateInGame ?? Number.POSITIVE_INFINITY;
-    return da - db;
-  });
-
-  const filtered = tagFilter === '__all__' ? sorted : sorted.filter((l) => loreTags(l).includes(tagFilter));
-
-  return (
-    <div className="detail-section lore-section">
-      <div className="lore-filter-bar">
-        <h3 className="section-title lore-filter-title">Lore :</h3>
-        {tags.length > 0 && (
-          <label className="lore-filter-label">
-            <span className="lore-filter-label-text">Filtre tag</span>
-            <select className="detail-input lore-tag-select" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
-              <option value="__all__">Tous les tags</option>
-              {tags.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
-
-      <ul className="detail-list">
-        {filtered.map((lore) => (
-          <li
-            key={lore.id}
-            style={{ cursor: onOpenLore ? 'pointer' : 'default', textDecoration: onOpenLore ? 'underline' : 'none' }}
-            onClick={() => onOpenLore?.(lore.id)}
-          >
-            <span style={{ fontWeight: 600 }}>{lore.title}</span>
-            {loreTags(lore).length > 0 || lore.dateInGame != null ? (
-              <span style={{ marginLeft: 8, color: '#94a3b8', fontSize: '0.9em' }}>
-                {[loreTags(lore).join(', '), lore.dateInGame != null ? String(lore.dateInGame) : ''].filter(Boolean).join(' · ')}
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-
-      {filtered.length === 0 && (
-        <div className="detail-error" style={{ marginTop: 12, padding: 0 }}>
-          Aucun lore pour ce tag.
-        </div>
-      )}
-    </div>
-  );
+  return point;
 }
 
 // Composant d'onglets
@@ -1751,7 +1636,7 @@ function KingdomView({
           <span className="detail-label">Nom</span>
           <input
             className="detail-input"
-            value={(editState?.name as string) ?? ''}
+            value={(editState as Partial<KingdomDetail> & { kind: 'kingdom' })?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom du royaume"
           />
@@ -1762,7 +1647,7 @@ function KingdomView({
         {editMode ? (
           <textarea
             className="detail-textarea"
-            value={(editState?.description as string) ?? ''}
+            value={(editState as Partial<KingdomDetail> & { kind: 'kingdom' })?.description ?? ''}
             onChange={(e) => onChange('description', e.target.value)}
             placeholder="Description du royaume"
           />
@@ -1984,7 +1869,7 @@ function CityView({
           <span className="detail-label">Nom</span>
           <input
             className="detail-input"
-            value={(editState?.name as string) ?? ''}
+            value={(editState as Partial<CityDetail> & { kind: 'city' })?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom de la ville"
           />
@@ -1995,7 +1880,7 @@ function CityView({
         {editMode ? (
           <textarea
             className="detail-textarea"
-            value={(editState?.description as string) ?? ''}
+            value={(editState as Partial<CityDetail> & { kind: 'city' })?.description ?? ''}
             onChange={(e) => onChange('description', e.target.value)}
             placeholder="Description de la ville"
           />
@@ -2205,7 +2090,7 @@ function DistrictView({
         {editMode ? (
           <input
             className="detail-input"
-            value={(editState?.name as string) ?? ''}
+            value={(editState as DistrictEditState)?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom du quartier"
           />
@@ -2411,7 +2296,7 @@ function PlaceView({
         {editMode ? (
           <input
             className="detail-input"
-            value={(editState?.name as string) ?? ''}
+            value={(editState as Partial<PlaceDetail> & { kind: 'place' })?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom du lieu"
           />
@@ -2424,7 +2309,7 @@ function PlaceView({
         {editMode ? (
           <textarea
             className="detail-textarea"
-            value={(editState?.description as string) ?? ''}
+            value={(editState as Partial<PlaceDetail> & { kind: 'place' })?.description ?? ''}
             onChange={(e) => onChange('description', e.target.value)}
             placeholder="Description du lieu"
           />
@@ -2705,7 +2590,7 @@ function PersonView({
         {editMode ? (
           <input
             className="detail-input"
-            value={(editState?.name as string) ?? ''}
+            value={(editState as PersonEditState)?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom du personnage"
           />
@@ -2737,7 +2622,7 @@ function PersonView({
         {editMode ? (
           <textarea
             className="detail-textarea"
-            value={(editState?.description as string) ?? ''}
+            value={(editState as PersonEditState)?.description ?? ''}
             onChange={(e) => onChange('description', e.target.value)}
             placeholder="Description du personnage"
           />
@@ -2824,9 +2709,9 @@ function PersonView({
           />
         ) : (
           <div className="tags">
-            {(data.languages ?? []).length === 0
+            {(data?.languages ?? []).length === 0
               ? valueOrDash('')
-              : data.languages.map((lang, i) => <span key={i} className="tag">{formatLanguage(lang)}</span>)}
+              : (data?.languages ?? []).map((lang, i) => <span key={i} className="tag">{formatLanguage(lang)}</span>)}
           </div>
         )}
       </div>
@@ -2853,7 +2738,7 @@ function PersonView({
               ))}
             </select>
           ) : (
-            <span className="detail-value">{valueOrDash(formatBreed(data.breed))}</span>
+            <span className="detail-value">{valueOrDash(formatBreed(data?.breed))}</span>
           )}
         </div>
         <div className="detail-item">
@@ -2877,7 +2762,7 @@ function PersonView({
               ))}
             </select>
           ) : (
-            <span className="detail-value">{valueOrDash(formatSex(data.sex))}</span>
+            <span className="detail-value">{valueOrDash(formatSex(data?.sex))}</span>
           )}
         </div>
       </div>
@@ -2893,7 +2778,7 @@ function PersonView({
                     items={kingdoms}
                     selectedId={(editState as PersonEditState)?.kingdomId !== undefined 
                       ? (editState as PersonEditState).kingdomId 
-                      : data.kingdom?.id}
+                      : data?.kingdom?.id}
                     onSelect={(id) => onChange('kingdomId', id)}
                     placeholder="Sélectionner un royaume"
                   />
@@ -2932,7 +2817,7 @@ function PersonView({
                     items={cities}
                     selectedId={(editState as PersonEditState)?.cityId !== undefined 
                       ? (editState as PersonEditState).cityId 
-                      : data.city?.id}
+                      : data?.city?.id}
                     onSelect={(id) => onChange('cityId', id)}
                     placeholder="Sélectionner une ville"
                   />
@@ -2971,7 +2856,7 @@ function PersonView({
                     items={places}
                     selectedId={(editState as PersonEditState)?.placeId !== undefined 
                       ? (editState as PersonEditState).placeId 
-                      : data.place?.id}
+                      : data?.place?.id}
                     onSelect={(id) => onChange('placeId', id)}
                     placeholder="Sélectionner un lieu"
                   />
@@ -3098,7 +2983,7 @@ function OrganisationView({
           <span className="detail-label">Nom</span>
           <input
             className="detail-input"
-            value={(editState?.name as string) ?? ''}
+            value={(editState as OrganisationEditState)?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom de l'organisation"
           />
@@ -3404,207 +3289,7 @@ function OrganisationView({
           </div>
         </>
       )}
-    </>
-  );
-}
-
-function LoreView({
-  data,
-  editMode,
-  editState,
-  onChange,
-  valueOrDash,
-}: {
-  data: LoreDetail | null;
-  editMode: boolean;
-  editState: LoreEditState;
-  onChange: (key: string, value: unknown) => void;
-  valueOrDash: (v: unknown) => string | number;
-}) {
-  const [tagDraft, setTagDraft] = useState('');
-  const [existingTags, setExistingTags] = useState<string[]>([]);
-  const normalizeTags = (values: string[]) => Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
-  const selectedTags = normalizeTags(editState.tags ?? []);
-  const viewTags = normalizeTags(data?.tags ?? []);
-
-  const commitTagsInput = (rawValue: string) => {
-    const parsed = normalizeTags(rawValue.split(','));
-    if (parsed.length === 0) return;
-    onChange('tags', normalizeTags([...selectedTags, ...parsed]));
-    setTagDraft('');
-  };
-
-  useEffect(() => {
-    if (!editMode) setTagDraft('');
-  }, [editMode]);
-
-  useEffect(() => {
-    let cancelled = false;
-    listLores()
-      .then((lores) => {
-        if (cancelled) return;
-        const tags = Array.from(
-          new Set(
-            lores.flatMap((lore) => (lore.tags ?? []).map((tag) => tag.trim())).filter(Boolean),
-          ),
-        ).sort((a, b) => a.localeCompare(b));
-        setExistingTags(tags);
-      })
-      .catch(() => {
-        if (!cancelled) setExistingTags([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return (
-    <>
-      <div className="detail-item">
-        <span className="detail-label">Titre</span>
-        {editMode ? (
-          <input
-            className="detail-input"
-            value={editState.title ?? ''}
-            onChange={(e) => onChange('title', e.target.value)}
-            placeholder="Titre de la lore"
-          />
-        ) : (
-          <span className="detail-value">{valueOrDash(data?.title)}</span>
-        )}
-      </div>
-      <div className="detail-item">
-        <span className="detail-label">Tags</span>
-        {editMode ? (
-          <div className="lore-tags-editor">
-            <div className="tags lore-tags-list">
-              {selectedTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className="tag lore-tag-chip"
-                  onClick={() => onChange('tags', selectedTags.filter((value) => value !== tag))}
-                  title={`Retirer le tag ${tag}`}
-                >
-                  {tag} <span aria-hidden="true">×</span>
-                </button>
-              ))}
-            </div>
-            <input
-              className="detail-input lore-tag-input"
-              value={tagDraft}
-              onChange={(e) => setTagDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ',') {
-                  e.preventDefault();
-                  commitTagsInput(tagDraft);
-                } else if (e.key === 'Backspace' && !tagDraft && selectedTags.length > 0) {
-                  onChange('tags', selectedTags.slice(0, -1));
-                }
-              }}
-              onBlur={() => commitTagsInput(tagDraft)}
-              placeholder="Ajouter un tag (Entree ou virgule)"
-            />
-            <span className="detail-hint lore-tags-help">
-              0 a N tags. Tu peux creer un nouveau tag en le saisissant.
-            </span>
-            {existingTags.length > 0 && (
-              <div className="lore-tag-suggestions">
-                <span className="detail-hint lore-tags-help">
-                  Tags existants (cliquer pour ajouter/retirer)
-                </span>
-                <div className="tags lore-tags-suggestions-list">
-                  {existingTags.map((tag) => {
-                    const isSelected = selectedTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={`tag lore-tag-chip lore-tag-suggestion ${isSelected ? 'active' : ''}`}
-                        onClick={() =>
-                          onChange(
-                            'tags',
-                            isSelected
-                              ? selectedTags.filter((value) => value !== tag)
-                              : normalizeTags([...selectedTags, tag]),
-                          )
-                        }
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          viewTags.length > 0 ? (
-            <div className="tags">
-              {viewTags.map((tag) => (
-                <span key={tag} className="tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <span className="detail-value">-</span>
-          )
-        )}
-      </div>
-      <div className="detail-item">
-        <span className="detail-label">Date (en jeu)</span>
-        {editMode ? (
-          <input
-            className="detail-input"
-            type="number"
-            value={editState.dateInGame ?? ''}
-            onChange={(e) => onChange('dateInGame', e.target.value === '' ? null : Number(e.target.value))}
-            placeholder="ex: 859, -120, 1330"
-          />
-        ) : (
-          <span className="detail-value">{valueOrDash(data?.dateInGame)}</span>
-        )}
-      </div>
-      <div className="detail-item">
-        <span className="detail-label">Résumé</span>
-        {editMode ? (
-          <input
-            className="detail-input"
-            value={editState.summary ?? ''}
-            onChange={(e) => onChange('summary', e.target.value || null)}
-            placeholder="Résumé court (optionnel)"
-          />
-        ) : (
-          <span className="detail-value">{valueOrDash(data?.summary)}</span>
-        )}
-      </div>
-      <div className="detail-item">
-        <span className="detail-label">Contenu</span>
-        {editMode ? (
-          <textarea
-            className="detail-textarea"
-            value={editState.content ?? ''}
-            onChange={(e) => onChange('content', e.target.value)}
-            placeholder="Contenu de la lore"
-            rows={12}
-          />
-        ) : (
-          <p className="detail-desc" style={{ whiteSpace: 'pre-wrap' }}>{valueOrDash(data?.content)}</p>
-        )}
-      </div>
-      {!editMode && data && (data.kingdoms?.length || data.cities?.length || data.places?.length || data.persons?.length || data.organisations?.length) ? (
-        <div className="detail-section">
-          <h3 className="section-title">Entités liées</h3>
-          <ul className="detail-list">
-            {data.kingdoms?.map((k) => <li key={k.id}>{k.name} (royaume)</li>)}
-            {data.cities?.map((c) => <li key={c.id}>{c.name} (ville)</li>)}
-            {data.places?.map((p) => <li key={p.id}>{p.name} (lieu)</li>)}
-            {data.persons?.map((p) => <li key={p.id}>{p.name} (personnage)</li>)}
-            {data.organisations?.map((o) => <li key={o.id}>{o.name} (organisation)</li>)}
-          </ul>
-        </div>
-      ) : null}
+      <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
     </>
   );
 }
