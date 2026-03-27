@@ -44,6 +44,7 @@ import {
   listDistricts,
   listPlaces,
   listPersons,
+  listLores,
   getFlags,
   getMaps,
 } from '../api/entities';
@@ -579,7 +580,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
         : createMode.kind === 'organisation'
         ? { kind: 'organisation', name: '', description: null, organisationType: null, parentOrganisationId: null, flag: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [] }
         : createMode.kind === 'lore'
-        ? { kind: 'lore', title: '', content: '', tag: null, dateInGame: null, summary: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [], organisationIds: [] }
+        ? { kind: 'lore', title: '', content: '', tags: [], dateInGame: null, summary: null, kingdomIds: [], cityIds: [], placeIds: [], personIds: [], organisationIds: [] }
         : {
             kind: 'person',
             name: '',
@@ -752,7 +753,13 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
     v === null || v === undefined || v === '' ? '' : (v as string | number);
 
   const handleSave = async () => {
-    if (!token || !editState) return;
+    if (!token) {
+      const msg = 'Session expiree. Reconnecte-toi puis reessaie.';
+      setError(msg);
+      push(msg, 'error');
+      return;
+    }
+    if (!editState) return;
     if (!createMode && !loreId && (!point || !point.targetId)) return;
     
     setSaving(true);
@@ -866,7 +873,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
             createdEntity = await createLore(token, {
               title: loreState.title ?? '',
               content: loreState.content ?? '',
-              tag: loreState.tag ?? undefined,
+              tags: loreState.tags ?? [],
               dateInGame: loreState.dateInGame ?? undefined,
               summary: loreState.summary ?? undefined,
               kingdomIds: loreState.kingdomIds ?? [],
@@ -919,7 +926,7 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
         await updateLore(token, loreId, {
           title: loreState.title ?? '',
           content: loreState.content ?? '',
-          tag: loreState.tag ?? undefined,
+          tags: loreState.tags ?? [],
           dateInGame: loreState.dateInGame ?? undefined,
           summary: loreState.summary ?? undefined,
           kingdomIds: loreState.kingdomIds ?? [],
@@ -1106,7 +1113,11 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
         }
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde';
+      const raw = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde';
+      const msg =
+        /token expired|authorization token expired|401/i.test(raw)
+          ? 'Session expiree. Reconnecte-toi puis reessaie.'
+          : raw;
       setError(msg);
       push(msg, 'error');
     } finally {
@@ -1656,9 +1667,10 @@ function createMapPointFromRef(ref: { id: string; name: string }, kind: EntityKi
 function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (loreId: string) => void }) {
   if (!lores || lores.length === 0) return null;
   const [tagFilter, setTagFilter] = useState<string>('__all__');
+  const loreTags = (lore: LoreRef) => Array.from(new Set((lore.tags ?? []).map((t) => t.trim()).filter(Boolean)));
 
   const tags = Array.from(
-    new Set(lores.map((l) => (l.tag ?? '').trim()).filter((t) => t !== '')),
+    new Set(lores.flatMap((l) => loreTags(l))),
   ).sort((a, b) => a.localeCompare(b));
 
   const sorted = [...lores].sort((a, b) => {
@@ -1667,7 +1679,7 @@ function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (l
     return da - db;
   });
 
-  const filtered = tagFilter === '__all__' ? sorted : sorted.filter((l) => (l.tag ?? '').trim() === tagFilter);
+  const filtered = tagFilter === '__all__' ? sorted : sorted.filter((l) => loreTags(l).includes(tagFilter));
 
   return (
     <div className="detail-section lore-section">
@@ -1696,9 +1708,9 @@ function LoreSection({ lores, onOpenLore }: { lores?: LoreRef[]; onOpenLore?: (l
             onClick={() => onOpenLore?.(lore.id)}
           >
             <span style={{ fontWeight: 600 }}>{lore.title}</span>
-            {(lore.tag != null && lore.tag !== '') || lore.dateInGame != null ? (
+            {loreTags(lore).length > 0 || lore.dateInGame != null ? (
               <span style={{ marginLeft: 8, color: '#94a3b8', fontSize: '0.9em' }}>
-                {[lore.tag, lore.dateInGame != null ? String(lore.dateInGame) : ''].filter(Boolean).join(' · ')}
+                {[loreTags(lore).join(', '), lore.dateInGame != null ? String(lore.dateInGame) : ''].filter(Boolean).join(' · ')}
               </span>
             ) : null}
           </li>
@@ -3409,6 +3421,43 @@ function LoreView({
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
 }) {
+  const [tagDraft, setTagDraft] = useState('');
+  const [existingTags, setExistingTags] = useState<string[]>([]);
+  const normalizeTags = (values: string[]) => Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+  const selectedTags = normalizeTags(editState.tags ?? []);
+  const viewTags = normalizeTags(data?.tags ?? []);
+
+  const commitTagsInput = (rawValue: string) => {
+    const parsed = normalizeTags(rawValue.split(','));
+    if (parsed.length === 0) return;
+    onChange('tags', normalizeTags([...selectedTags, ...parsed]));
+    setTagDraft('');
+  };
+
+  useEffect(() => {
+    if (!editMode) setTagDraft('');
+  }, [editMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listLores()
+      .then((lores) => {
+        if (cancelled) return;
+        const tags = Array.from(
+          new Set(
+            lores.flatMap((lore) => (lore.tags ?? []).map((tag) => tag.trim())).filter(Boolean),
+          ),
+        ).sort((a, b) => a.localeCompare(b));
+        setExistingTags(tags);
+      })
+      .catch(() => {
+        if (!cancelled) setExistingTags([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <>
       <div className="detail-item">
@@ -3425,16 +3474,82 @@ function LoreView({
         )}
       </div>
       <div className="detail-item">
-        <span className="detail-label">Tag</span>
+        <span className="detail-label">Tags</span>
         {editMode ? (
-          <input
-            className="detail-input"
-            value={editState.tag ?? ''}
-            onChange={(e) => onChange('tag', e.target.value || null)}
-            placeholder="Tag (optionnel)"
-          />
+          <div className="lore-tags-editor">
+            <div className="tags lore-tags-list">
+              {selectedTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="tag lore-tag-chip"
+                  onClick={() => onChange('tags', selectedTags.filter((value) => value !== tag))}
+                  title={`Retirer le tag ${tag}`}
+                >
+                  {tag} <span aria-hidden="true">×</span>
+                </button>
+              ))}
+            </div>
+            <input
+              className="detail-input lore-tag-input"
+              value={tagDraft}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                  e.preventDefault();
+                  commitTagsInput(tagDraft);
+                } else if (e.key === 'Backspace' && !tagDraft && selectedTags.length > 0) {
+                  onChange('tags', selectedTags.slice(0, -1));
+                }
+              }}
+              onBlur={() => commitTagsInput(tagDraft)}
+              placeholder="Ajouter un tag (Entree ou virgule)"
+            />
+            <span className="detail-hint lore-tags-help">
+              0 a N tags. Tu peux creer un nouveau tag en le saisissant.
+            </span>
+            {existingTags.length > 0 && (
+              <div className="lore-tag-suggestions">
+                <span className="detail-hint lore-tags-help">
+                  Tags existants (cliquer pour ajouter/retirer)
+                </span>
+                <div className="tags lore-tags-suggestions-list">
+                  {existingTags.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        className={`tag lore-tag-chip lore-tag-suggestion ${isSelected ? 'active' : ''}`}
+                        onClick={() =>
+                          onChange(
+                            'tags',
+                            isSelected
+                              ? selectedTags.filter((value) => value !== tag)
+                              : normalizeTags([...selectedTags, tag]),
+                          )
+                        }
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
-          <span className="detail-value">{valueOrDash(data?.tag)}</span>
+          viewTags.length > 0 ? (
+            <div className="tags">
+              {viewTags.map((tag) => (
+                <span key={tag} className="tag">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="detail-value">-</span>
+          )
         )}
       </div>
       <div className="detail-item">

@@ -298,7 +298,7 @@ model Lore {
   id         String   @id @default(uuid())
   title      String
   content    String
-  tag        String?
+  tags       String[] @default([])
   dateInGame Int?
   summary    String?
   isForDM    Boolean  @default(false)

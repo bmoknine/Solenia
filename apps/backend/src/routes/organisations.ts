@@ -36,7 +36,7 @@ export async function organisationRoutes(app: FastifyInstance) {
         },
         lores: {
           include: {
-            lore: { select: { id: true, title: true, tag: true, dateInGame: true } },
+            lore: { select: { id: true, title: true, tags: true, dateInGame: true } },
           },
         },
         parentOrganisation: { select: { id: true, name: true } },
