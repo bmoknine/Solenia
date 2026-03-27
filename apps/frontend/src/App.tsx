@@ -22,7 +22,9 @@ function Content() {
   const [actionError, setActionError] = useState<string | null>(null);
   const canEdit = !!user && user.type !== 'viewer';
   const [editing, setEditing] = useState<ReturnType<typeof useMapPoints>['points'][number] | null>(null);
-  const [filters, setFilters] = useState<Set<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown'>>(new Set(['kingdom', 'city', 'district', 'place', 'person', 'unknown']));
+  const [filters, setFilters] = useState<Set<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation'>>(
+    new Set(['kingdom', 'city', 'district', 'place', 'person', 'unknown', 'organisation']),
+  );
   const [search, setSearch] = useState('');
   const { push } = useToast();
   const [confirm, setConfirm] = useState<{ open: boolean; pointId?: string; kind?: NavigablePoint['kind']; targetId?: string }>({ open: false });
@@ -111,7 +113,7 @@ function Content() {
     return [...mapPointResults, ...organisationResults];
   }, [filteredPoints, organisations, search]);
 
-  const toggleFilter = (k: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown') => {
+  const toggleFilter = (k: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation') => {
     setFilters((prev) => {
       const next = new Set(prev);
       if (next.has(k)) next.delete(k);
@@ -219,7 +221,7 @@ function Content() {
                 await reload();
                 push('Position mise à jour', 'success');
               } : undefined}
-              onDetail={(p) => setDetailPoint(p)}
+              onDetail={(p) => setDetailPoint(p as NavigablePoint)}
             />
           </div>
           <EditDrawer point={editing} onClose={() => setEditing(null)} onSaved={async () => { await reload(); push('Enregistré', 'success'); }} />

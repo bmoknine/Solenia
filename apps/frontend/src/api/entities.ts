@@ -94,6 +94,7 @@ export type DistrictDetail = District & {
   city?: Ref | null;
   places?: Ref[];
   persons?: Ref[];
+  lores?: LoreRef[];
   comments?: CommentRef[];
 };
 
@@ -302,11 +303,11 @@ export async function updatePerson(
 }
 
 export async function createKingdom(token: string, data: Base & { population?: number; dateInGame?: string; color?: string | null; flag?: string | null }) {
-  return withAuth(token).post('/kingdoms', data);
+  return withAuth(token).post<{ id: string }>('/kingdoms', data);
 }
 
 export async function createCity(token: string, data: Base & { kingdomId?: string; iconUrl?: string | null; map?: string | null; flag?: string | null }) {
-  return withAuth(token).post('/cities', data);
+  return withAuth(token).post<{ id: string }>('/cities', data);
 }
 
 export async function createDistrict(
@@ -320,7 +321,7 @@ export async function createDistrict(
     secret?: string;
   },
 ) {
-  return withAuth(token).post('/districts', data);
+  return withAuth(token).post<{ id: string }>('/districts', data);
 }
 
 export async function createPlace(
@@ -335,12 +336,14 @@ export async function createPlace(
     showOnMap?: boolean;
   },
 ) {
-  return withAuth(token).post('/places', data);
+  return withAuth(token).post<{ id: string }>('/places', data);
 }
 
 export async function createPerson(
   token: string,
   data: Base & {
+    breed?: Breed | null;
+    sex?: Sex | null;
     kingdomId?: string;
     cityId?: string;
     districtId?: string;
@@ -358,7 +361,7 @@ export async function createPerson(
     CHA: number;
   },
 ) {
-  return withAuth(token).post('/persons', data);
+  return withAuth(token).post<{ id: string }>('/persons', data);
 }
 
 export async function updatePosition(
@@ -378,7 +381,9 @@ export async function listOrganisations() {
   if (!res.ok) throw new Error('Chargement organisations échoué');
   const data = await res.json();
   return data as Organisation[];
-}export async function getOrganisation(id: string) {
+}
+
+export async function getOrganisation(id: string) {
   const res = await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001') + `/organisations/${id}`);
   if (!res.ok) throw new Error('Chargement organisation échoué');
   return (await res.json()) as OrganisationDetail;
@@ -394,9 +399,9 @@ export async function createOrganisation(
     cityIds?: string[];
     placeIds?: string[];
     personIds?: string[];
-  }
+  },
 ) {
-  return withAuth(token).post('/organisations', data);
+  return withAuth(token).post<{ id: string }>('/organisations', data);
 }
 
 export async function updateOrganisation(
@@ -474,7 +479,7 @@ export type LoreInput = {
 };
 
 export async function createLore(token: string, data: LoreInput) {
-  return withAuth(token).post('/lores', data);
+  return withAuth(token).post<{ id: string }>('/lores', data);
 }
 
 export async function updateLore(token: string, id: string, data: Partial<LoreInput>) {

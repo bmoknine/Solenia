@@ -2,10 +2,9 @@ import { SearchBox } from './SearchBox';
 import { FilterPanel } from './FilterPanel';
 import { PointsList } from './PointsList';
 import type { MapPoint } from '../api/map';
-import type { NavigablePoint } from '../api/map';
 import './Sidebar.css';
 
-type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown';
+type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation';
 
 type OrganisationSearchResult = {
   id: string;

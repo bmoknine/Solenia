@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { organisationInputSchema, idSchema } from '@solenia/shared';
+import { createOrganisationLinks, replaceOrganisationLinks } from '../utils/organisationLinks';
+import { isPrismaUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
 
 export async function organisationRoutes(app: FastifyInstance) {
@@ -58,78 +60,13 @@ export async function organisationRoutes(app: FastifyInstance) {
 
   app.post('/organisations', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const rawData = organisationInputSchema.parse(request.body);
-    console.log('Backend - POST /organisations - Données reçues:', rawData);
     const { kingdomIds, cityIds, placeIds, personIds, ...orgData } = rawData;
-    console.log('Backend - IDs extraits:', { kingdomIds, cityIds, placeIds, personIds });
-    
+
     const flag = orgData.flag === '' || orgData.flag == null ? null : orgData.flag;
     const organisation = await app.prisma.organisation.create({ data: { ...orgData, flag } });
-    
-    // Créer les liens avec les royaumes
-    if (kingdomIds && kingdomIds.length > 0) {
-      await Promise.all(
-        kingdomIds.map((kingdomId) =>
-          app.prisma.organisationKingdom.create({
-            data: { organisationId: organisation.id, kingdomId },
-          }).catch((err: any) => {
-            // Ignorer uniquement les erreurs de doublons (P2002)
-            if (err.code !== 'P2002') {
-              console.error('Erreur lors de la création du lien organisation-kingdom:', err);
-              throw err;
-            }
-          })
-        )
-      );
-    }
-    
-    // Créer les liens avec les villes
-    if (cityIds && cityIds.length > 0) {
-      await Promise.all(
-        cityIds.map((cityId) =>
-          app.prisma.organisationCity.create({
-            data: { organisationId: organisation.id, cityId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              console.error('Erreur lors de la création du lien organisation-city:', err);
-              throw err;
-            }
-          })
-        )
-      );
-    }
-    
-    // Créer les liens avec les lieux
-    if (placeIds && placeIds.length > 0) {
-      await Promise.all(
-        placeIds.map((placeId) =>
-          app.prisma.organisationPlace.create({
-            data: { organisationId: organisation.id, placeId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              console.error('Erreur lors de la création du lien organisation-place:', err);
-              throw err;
-            }
-          })
-        )
-      );
-    }
-    
-    // Créer les liens avec les personnes
-    if (personIds && personIds.length > 0) {
-      await Promise.all(
-        personIds.map((personId) =>
-          app.prisma.organisationMember.create({
-            data: { organisationId: organisation.id, personId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              console.error('Erreur lors de la création du lien organisation-member:', err);
-              throw err;
-            }
-          })
-        )
-      );
-    }
-    
+
+    await createOrganisationLinks(app, organisation.id, { kingdomIds, cityIds, placeIds, personIds });
+
     // Retourner l'organisation avec ses relations
     return app.prisma.organisation.findUnique({
       where: { id: organisation.id },
@@ -172,19 +109,8 @@ export async function organisationRoutes(app: FastifyInstance) {
 
   app.put('/organisations/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const id = idSchema.parse((request.params as any).id);
-    console.log('Backend - PUT /organisations/:id - Données brutes reçues:', { 
-      id, 
-      body: request.body,
-      bodyKeys: Object.keys(request.body || {}),
-      kingdomIds: (request.body as any)?.kingdomIds,
-      cityIds: (request.body as any)?.cityIds,
-    });
-    
-    // Utiliser passthrough() pour ne pas filtrer les champs supplémentaires
     const rawData = organisationInputSchema.partial().passthrough().parse(request.body);
-    console.log('Backend - PUT /organisations/:id - Données parsées:', { id, rawData });
     const { kingdomIds, cityIds, placeIds, personIds, ...orgData } = rawData;
-    console.log('Backend - IDs extraits:', { kingdomIds, cityIds, placeIds, personIds });
     
     const data: Record<string, unknown> = {};
     if ('name' in orgData) data.name = orgData.name;
@@ -199,87 +125,10 @@ export async function organisationRoutes(app: FastifyInstance) {
     }
     if ('flag' in orgData) data.flag = orgData.flag === '' || orgData.flag == null ? null : orgData.flag;
     
-    // Mettre à jour l'organisation
     await app.prisma.organisation.update({ where: { id }, data });
-    
-    // Mettre à jour les liens avec les royaumes
-    if (kingdomIds !== undefined) {
-      // Supprimer tous les liens existants
-      await app.prisma.organisationKingdom.deleteMany({ where: { organisationId: id } });
-      // Créer les nouveaux liens
-      if (kingdomIds.length > 0) {
-        await Promise.all(
-          kingdomIds.map((kingdomId) =>
-            app.prisma.organisationKingdom.create({
-              data: { organisationId: id, kingdomId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                console.error('Erreur lors de la mise à jour du lien organisation-kingdom:', err);
-                throw err;
-              }
-            })
-          )
-        );
-      }
-    }
-    
-    // Mettre à jour les liens avec les villes
-    if (cityIds !== undefined) {
-      await app.prisma.organisationCity.deleteMany({ where: { organisationId: id } });
-      if (cityIds.length > 0) {
-        await Promise.all(
-          cityIds.map((cityId) =>
-            app.prisma.organisationCity.create({
-              data: { organisationId: id, cityId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                console.error('Erreur lors de la mise à jour du lien organisation-city:', err);
-                throw err;
-              }
-            })
-          )
-        );
-      }
-    }
-    
-    // Mettre à jour les liens avec les lieux
-    if (placeIds !== undefined) {
-      await app.prisma.organisationPlace.deleteMany({ where: { organisationId: id } });
-      if (placeIds.length > 0) {
-        await Promise.all(
-          placeIds.map((placeId) =>
-            app.prisma.organisationPlace.create({
-              data: { organisationId: id, placeId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                console.error('Erreur lors de la mise à jour du lien organisation-place:', err);
-                throw err;
-              }
-            })
-          )
-        );
-      }
-    }
-    
-    // Mettre à jour les liens avec les personnes
-    if (personIds !== undefined) {
-      await app.prisma.organisationMember.deleteMany({ where: { organisationId: id } });
-      if (personIds.length > 0) {
-        await Promise.all(
-          personIds.map((personId) =>
-            app.prisma.organisationMember.create({
-              data: { organisationId: id, personId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                console.error('Erreur lors de la mise à jour du lien organisation-member:', err);
-                throw err;
-              }
-            })
-          )
-        );
-      }
-    }
-    
+
+    await replaceOrganisationLinks(app, id, { kingdomIds, cityIds, placeIds, personIds });
+
     // Retourner l'organisation avec ses relations
     const updatedOrg = await app.prisma.organisation.findUnique({
       where: { id },
@@ -310,11 +159,10 @@ export async function organisationRoutes(app: FastifyInstance) {
     });
     
     if (!updatedOrg) {
-      console.log('Backend - Organisation non trouvée après mise à jour');
       return { id };
     }
-    
-    const result = {
+
+    return {
       ...updatedOrg,
       members: updatedOrg.members.map((m) => m.person),
       cities: updatedOrg.cities.map((c) => c.city),
@@ -322,17 +170,6 @@ export async function organisationRoutes(app: FastifyInstance) {
       kingdoms: updatedOrg.kingdoms.map((k) => k.kingdom),
       subOrganisations: updatedOrg.subOrganisations,
     };
-    
-    console.log('Backend - Organisation retournée après mise à jour:', {
-      id: result.id,
-      name: result.name,
-      kingdomsCount: result.kingdoms.length,
-      citiesCount: result.cities.length,
-      placesCount: result.places.length,
-      membersCount: result.members.length,
-    });
-    
-    return result;
   });
 
   app.delete('/organisations/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
@@ -358,8 +195,8 @@ export async function organisationRoutes(app: FastifyInstance) {
           person: { select: { id: true, name: true } },
         },
       });
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (isPrismaUniqueViolation(error)) {
         return reply.conflict('Cette personne est déjà membre de cette organisation');
       }
       throw error;
@@ -395,8 +232,8 @@ export async function organisationRoutes(app: FastifyInstance) {
           city: { select: { id: true, name: true } },
         },
       });
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (isPrismaUniqueViolation(error)) {
         return reply.conflict('Cette ville est déjà associée à cette organisation');
       }
       throw error;
@@ -432,8 +269,8 @@ export async function organisationRoutes(app: FastifyInstance) {
           place: { select: { id: true, name: true } },
         },
       });
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (isPrismaUniqueViolation(error)) {
         return reply.conflict('Ce lieu est déjà associé à cette organisation');
       }
       throw error;
@@ -469,8 +306,8 @@ export async function organisationRoutes(app: FastifyInstance) {
           kingdom: { select: { id: true, name: true } },
         },
       });
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (isPrismaUniqueViolation(error)) {
         return reply.conflict('Ce royaume est déjà associé à cette organisation');
       }
       throw error;

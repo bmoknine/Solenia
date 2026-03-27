@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { idSchema, loreInputSchema } from '@solenia/shared';
+import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
 
 export async function loreRoutes(app: FastifyInstance) {
@@ -88,13 +89,11 @@ export async function loreRoutes(app: FastifyInstance) {
     if (kingdomIds && kingdomIds.length > 0) {
       await Promise.all(
         kingdomIds.map((kingdomId: string) =>
-          app.prisma.loreKingdom.create({
-            data: { loreId: lore.id, kingdomId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              throw err;
-            }
-          }),
+          ignoreUniqueViolation(
+            app.prisma.loreKingdom.create({
+              data: { loreId: lore.id, kingdomId },
+            }),
+          ),
         ),
       );
     }
@@ -102,13 +101,11 @@ export async function loreRoutes(app: FastifyInstance) {
     if (cityIds && cityIds.length > 0) {
       await Promise.all(
         cityIds.map((cityId: string) =>
-          app.prisma.loreCity.create({
-            data: { loreId: lore.id, cityId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              throw err;
-            }
-          }),
+          ignoreUniqueViolation(
+            app.prisma.loreCity.create({
+              data: { loreId: lore.id, cityId },
+            }),
+          ),
         ),
       );
     }
@@ -116,13 +113,11 @@ export async function loreRoutes(app: FastifyInstance) {
     if (placeIds && placeIds.length > 0) {
       await Promise.all(
         placeIds.map((placeId: string) =>
-          app.prisma.lorePlace.create({
-            data: { loreId: lore.id, placeId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              throw err;
-            }
-          }),
+          ignoreUniqueViolation(
+            app.prisma.lorePlace.create({
+              data: { loreId: lore.id, placeId },
+            }),
+          ),
         ),
       );
     }
@@ -130,13 +125,11 @@ export async function loreRoutes(app: FastifyInstance) {
     if (personIds && personIds.length > 0) {
       await Promise.all(
         personIds.map((personId: string) =>
-          app.prisma.lorePerson.create({
-            data: { loreId: lore.id, personId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              throw err;
-            }
-          }),
+          ignoreUniqueViolation(
+            app.prisma.lorePerson.create({
+              data: { loreId: lore.id, personId },
+            }),
+          ),
         ),
       );
     }
@@ -144,13 +137,11 @@ export async function loreRoutes(app: FastifyInstance) {
     if (organisationIds && organisationIds.length > 0) {
       await Promise.all(
         organisationIds.map((organisationId: string) =>
-          app.prisma.loreOrganisation.create({
-            data: { loreId: lore.id, organisationId },
-          }).catch((err: any) => {
-            if (err.code !== 'P2002') {
-              throw err;
-            }
-          }),
+          ignoreUniqueViolation(
+            app.prisma.loreOrganisation.create({
+              data: { loreId: lore.id, organisationId },
+            }),
+          ),
         ),
       );
     }
@@ -174,13 +165,11 @@ export async function loreRoutes(app: FastifyInstance) {
       if (kingdomIds.length > 0) {
         await Promise.all(
           kingdomIds.map((kingdomId: string) =>
-            app.prisma.loreKingdom.create({
-              data: { loreId: id, kingdomId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                throw err;
-              }
-            }),
+            ignoreUniqueViolation(
+              app.prisma.loreKingdom.create({
+                data: { loreId: id, kingdomId },
+              }),
+            ),
           ),
         );
       }
@@ -191,13 +180,11 @@ export async function loreRoutes(app: FastifyInstance) {
       if (cityIds.length > 0) {
         await Promise.all(
           cityIds.map((cityId: string) =>
-            app.prisma.loreCity.create({
-              data: { loreId: id, cityId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                throw err;
-              }
-            }),
+            ignoreUniqueViolation(
+              app.prisma.loreCity.create({
+                data: { loreId: id, cityId },
+              }),
+            ),
           ),
         );
       }
@@ -208,13 +195,11 @@ export async function loreRoutes(app: FastifyInstance) {
       if (placeIds.length > 0) {
         await Promise.all(
           placeIds.map((placeId: string) =>
-            app.prisma.lorePlace.create({
-              data: { loreId: id, placeId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                throw err;
-              }
-            }),
+            ignoreUniqueViolation(
+              app.prisma.lorePlace.create({
+                data: { loreId: id, placeId },
+              }),
+            ),
           ),
         );
       }
@@ -225,13 +210,11 @@ export async function loreRoutes(app: FastifyInstance) {
       if (personIds.length > 0) {
         await Promise.all(
           personIds.map((personId: string) =>
-            app.prisma.lorePerson.create({
-              data: { loreId: id, personId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                throw err;
-              }
-            }),
+            ignoreUniqueViolation(
+              app.prisma.lorePerson.create({
+                data: { loreId: id, personId },
+              }),
+            ),
           ),
         );
       }
@@ -242,13 +225,11 @@ export async function loreRoutes(app: FastifyInstance) {
       if (organisationIds.length > 0) {
         await Promise.all(
           organisationIds.map((organisationId: string) =>
-            app.prisma.loreOrganisation.create({
-              data: { loreId: id, organisationId },
-            }).catch((err: any) => {
-              if (err.code !== 'P2002') {
-                throw err;
-              }
-            }),
+            ignoreUniqueViolation(
+              app.prisma.loreOrganisation.create({
+                data: { loreId: id, organisationId },
+              }),
+            ),
           ),
         );
       }
