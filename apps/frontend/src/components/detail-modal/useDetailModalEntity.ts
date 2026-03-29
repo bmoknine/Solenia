@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { idSchema } from '@solenia/shared';
 import {
   getKingdom,
   getCity,
@@ -172,6 +173,14 @@ export function useDetailModalEntity({
     if (!editState) return;
     if (!createMode && !loreId && (!point || !point.targetId)) return;
 
+    if (editState && 'name' in (editState as object)) {
+      const rawName = (editState as { name?: string }).name;
+      if (!String(rawName ?? '').trim()) {
+        push('Le nom est requis.', 'error');
+        return;
+      }
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -183,7 +192,7 @@ export function useDetailModalEntity({
           case 'kingdom': {
             const kingdomState = editState as KingdomDetail;
             createdEntity = await createKingdom(token, {
-              name: kingdomState.name ?? '',
+              name: (kingdomState.name ?? '').trim(),
               description: kingdomState.description ?? undefined,
               population:
                 kingdomState.population !== undefined && kingdomState.population !== null
@@ -198,19 +207,23 @@ export function useDetailModalEntity({
           case 'city': {
             const cityState = editState as CityDetail;
             createdEntity = await createCity(token, {
-              name: cityState.name ?? '',
+              name: (cityState.name ?? '').trim(),
               description: cityState.description ?? undefined,
               iconUrl: cityState.iconUrl ?? undefined,
               map: cityState.map ?? undefined,
               flag: cityState.flag ?? undefined,
-              kingdomId: cityState.kingdomId ?? undefined,
+              kingdomId: (() => {
+              const k = cityState.kingdomId;
+              if (k == null || k === '') return undefined;
+              return idSchema.safeParse(k).success ? k : undefined;
+            })(),
             });
             break;
           }
           case 'district': {
             const districtState = editState as DistrictDetail;
             createdEntity = await createDistrict(token, {
-              name: districtState.name ?? '',
+              name: (districtState.name ?? '').trim(),
               description: districtState.motto ?? undefined,
               cityId: districtState.cityId,
               motto: districtState.motto ?? undefined,
@@ -224,7 +237,7 @@ export function useDetailModalEntity({
           case 'place': {
             const placeState = editState as PlaceDetail & { organisationIds?: string[] };
             createdEntity = await createPlace(token, {
-              name: placeState.name ?? '',
+              name: (placeState.name ?? '').trim(),
               description: placeState.description ?? undefined,
               map: placeState.map ?? undefined,
               kingdomId: placeState.kingdomId ?? undefined,
@@ -238,7 +251,7 @@ export function useDetailModalEntity({
           case 'person': {
             const personState = editState as PersonDetail;
             createdEntity = await createPerson(token, {
-              name: personState.name ?? '',
+              name: (personState.name ?? '').trim(),
               description: personState.description ?? undefined,
               breed: personState.breed ?? undefined,
               sex: personState.sex ?? undefined,
@@ -263,7 +276,7 @@ export function useDetailModalEntity({
           case 'organisation': {
             const organisationState = editState as OrganisationEditState;
             createdEntity = await createOrganisation(token, {
-              name: organisationState.name ?? '',
+              name: (organisationState.name ?? '').trim(),
               description: organisationState.description ?? undefined,
               organisationType: organisationState.organisationType ?? undefined,
               parentOrganisationId: organisationState.parentOrganisationId ?? undefined,
@@ -372,7 +385,7 @@ export function useDetailModalEntity({
         case 'kingdom': {
           const kingdomState = editState as KingdomDetail;
           await updateKingdom(token, point.targetId, {
-            name: kingdomState.name ?? '',
+            name: (kingdomState.name ?? '').trim(),
             description: kingdomState.description ?? null,
             population:
               kingdomState.population !== undefined && kingdomState.population !== null
@@ -389,19 +402,23 @@ export function useDetailModalEntity({
           const cityIconUrl = cityState.iconUrl;
           const cityFlag = cityState.flag;
           await updateCity(token, point.targetId, {
-            name: cityState.name ?? '',
+            name: (cityState.name ?? '').trim(),
             description: cityState.description ?? null,
             iconUrl: cityIconUrl === '' || cityIconUrl === undefined ? null : cityIconUrl,
             map: cityState.map === '' || cityState.map === undefined ? null : cityState.map,
             flag: cityFlag === '' || cityFlag === undefined ? null : cityFlag,
-            kingdomId: cityState.kingdomId ?? null,
+            kingdomId: (() => {
+              const k = cityState.kingdomId;
+              if (k == null || k === '') return null;
+              return idSchema.safeParse(k).success ? k : null;
+            })(),
           });
           break;
         }
         case 'district': {
           const districtState = editState as DistrictDetail;
           await updateDistrict(token, point.targetId, {
-            name: districtState.name ?? '',
+            name: (districtState.name ?? '').trim(),
             motto: districtState.motto ?? null,
             ambiance: districtState.ambiance ?? null,
             content: districtState.content ?? null,
@@ -414,7 +431,7 @@ export function useDetailModalEntity({
         case 'place': {
           const ps = editState as PlaceDetail & { organisationIds?: string[] };
           await updatePlace(token, point.targetId, {
-            name: ps.name ?? '',
+            name: (ps.name ?? '').trim(),
             description: ps.description ?? null,
             map: ps.map ?? null,
             kingdomId: ps.kingdomId ?? null,
@@ -428,7 +445,7 @@ export function useDetailModalEntity({
         case 'person': {
           const personState = editState as PersonDetail;
           await updatePerson(token, point.targetId, {
-            name: personState.name ?? '',
+            name: (personState.name ?? '').trim(),
             description: personState.description ?? null,
             breed: personState.breed ?? null,
             sex: personState.sex ?? null,
@@ -453,7 +470,7 @@ export function useDetailModalEntity({
         case 'organisation': {
           const organisationState = editState as OrganisationEditState;
           await updateOrganisation(token, point.targetId, {
-            name: organisationState.name ?? '',
+            name: (organisationState.name ?? '').trim(),
             description: organisationState.description ?? null,
             organisationType: organisationState.organisationType ?? null,
             parentOrganisationId: organisationState.parentOrganisationId ?? null,

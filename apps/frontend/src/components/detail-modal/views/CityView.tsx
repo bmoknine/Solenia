@@ -75,9 +75,9 @@ export function CityView({
           <p className="detail-desc">{valueOrDash(data?.description)}</p>
         )}
       </div>
-      <div className="detail-item">
-        <span className="detail-label">Icône</span>
-        {editMode ? (
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Icône</span>
           <select
             className="detail-input"
             value={((editState as CityDetail | null)?.iconUrl as string | undefined | null) ?? ''}
@@ -89,16 +89,8 @@ export function CityView({
             <option value="/Icon/village.png">Village</option>
             <option value="/Icon/fortified-city.png">Ville Fortifiée</option>
           </select>
-        ) : (
-          <span className="detail-value">
-            {data?.iconUrl ? (
-              <img src={data?.iconUrl} alt="Icône" style={{ width: '24px', height: '24px', verticalAlign: 'middle', marginLeft: '8px' }} />
-            ) : (
-              valueOrDash(data?.iconUrl)
-            )}
-          </span>
-        )}
-      </div>
+        </div>
+      )}
       {editMode && (
         <div className="detail-item">
           <span className="detail-label">Drapeau</span>
@@ -106,6 +98,18 @@ export function CityView({
             editMode={editMode}
             value={(editState as CityDetail | null)?.flag ?? data?.flag}
             onChange={(v) => onChange('flag', v)}
+          />
+        </div>
+      )}
+      {editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Carte (image)</span>
+          <input
+            type="url"
+            className="detail-input"
+            placeholder="URL de l’image de carte (ex. /maps/ville.png)"
+            value={((editState as CityDetail | null)?.map as string | undefined | null) ?? ''}
+            onChange={(e) => onChange('map', e.target.value === '' ? null : e.target.value)}
           />
         </div>
       )}

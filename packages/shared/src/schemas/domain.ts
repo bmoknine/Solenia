@@ -21,7 +21,7 @@ export const kingdomInputSchema = z.object({
 
 export const cityInputSchema = z.object({
   name: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   iconUrl: z.string().nullable().optional(),
   map: z.string().nullable().optional(),
   flag: z.string().optional().nullable().or(z.literal('')),

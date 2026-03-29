@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client';
+import { apiGetWithAuth, apiPost, withAuth } from './client';
 
 type LoginResponse = {
   user: {
@@ -16,14 +16,13 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 export async function changePassword(token: string, oldPassword: string, newPassword: string) {
-  return apiPost('/auth/change-password', { oldPassword, newPassword }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  return withAuth(token).post('/auth/change-password', { oldPassword, newPassword });
 }
 
 export async function fetchMe(token: string) {
-  return apiGet<{ user: { id: string; email: string; username: string; type: string } | null }>('/auth/me', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  return apiGetWithAuth<{ user: { id: string; email: string; username: string; type: string } | null }>(
+    '/auth/me',
+    token,
+  );
 }
 
