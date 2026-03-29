@@ -1,7 +1,67 @@
 import type { FastifyInstance } from 'fastify';
-import { cityInputSchema } from '@solenia/shared';
+import { cityInputSchema, idSchema } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
 import { parseRouteUuid } from '../utils/routeParams';
+
+/** Normalise le corps PUT avant Zod (UUID royaume, types texte). */
+function normalizeCityPutBody(body: unknown): Record<string, unknown> {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return {};
+  }
+  const o = { ...(body as Record<string, unknown>) };
+
+  const asStr = (v: unknown): string | null | undefined => {
+    if (v === undefined) return undefined;
+    if (v === null) return null;
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    return undefined;
+  };
+
+  if ('description' in o) {
+    const s = asStr(o.description);
+    if (s === undefined) delete o.description;
+    else o.description = s;
+  }
+  if ('iconUrl' in o) {
+    const s = asStr(o.iconUrl);
+    if (s === undefined) delete o.iconUrl;
+    else o.iconUrl = s;
+  }
+  if ('map' in o) {
+    const s = asStr(o.map);
+    if (s === undefined) delete o.map;
+    else o.map = s;
+  }
+  if ('flag' in o) {
+    const s = asStr(o.flag);
+    if (s === undefined) delete o.flag;
+    else o.flag = s;
+  }
+
+  if ('kingdomId' in o) {
+    const k = o.kingdomId;
+    if (k === '' || k === undefined || k === null) {
+      o.kingdomId = null;
+    } else if (typeof k === 'string') {
+      o.kingdomId = idSchema.safeParse(k).success ? k : null;
+    } else {
+      o.kingdomId = null;
+    }
+  }
+
+  if ('name' in o && typeof o.name === 'string') {
+    o.name = o.name.trim();
+  }
+
+  if ('isForDM' in o && typeof o.isForDM !== 'boolean') {
+    if (o.isForDM === 'true') o.isForDM = true;
+    else if (o.isForDM === 'false') o.isForDM = false;
+    else delete o.isForDM;
+  }
+
+  return o;
+}
 
 export async function cityRoutes(app: FastifyInstance) {
   app.get('/cities', async () => {
@@ -65,15 +125,25 @@ export async function cityRoutes(app: FastifyInstance) {
     return app.prisma.city.create({ data: { ...data, flag, map } });
   });
 
-  app.put('/cities/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
+  app.put('/cities/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
     const id = parseRouteUuid(request);
-    const rawData = cityInputSchema.partial().parse(request.body);
+    const normalized = normalizeCityPutBody(request.body);
+    const parsed = cityInputSchema.partial().safeParse(normalized);
+    if (!parsed.success) {
+      const msg = parsed.error.issues[0]?.message ?? 'Données invalides';
+      return reply.code(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: msg,
+        issues: parsed.error.issues,
+      });
+    }
+    const rawData = parsed.data;
     // Convertir undefined en null pour les champs optionnels qu'on veut mettre à null
     const data: Record<string, unknown> = {};
     if ('name' in rawData) data.name = rawData.name;
     if ('description' in rawData) data.description = rawData.description ?? null;
-    // Pour iconUrl, on utilise directement le body original car Zod peut supprimer le champ
-    const body = request.body as Record<string, unknown>;
+    const body = normalized;
     if ('iconUrl' in body) {
       const iconUrlValue = body.iconUrl;
       // Convertir chaîne vide en null, sinon garder la valeur (string ou null)

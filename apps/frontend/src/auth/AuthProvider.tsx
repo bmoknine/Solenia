@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { changePassword as apiChangePassword, fetchMe, login as apiLogin } from '../api/auth';
+import { AUTH_ACCESS_KEY, AUTH_REFRESH_KEY } from './storageKeys';
 
 type User = {
   id: string;
@@ -19,12 +20,10 @@ type AuthContextShape = {
 
 const AuthContext = createContext<AuthContextShape | undefined>(undefined);
 
-const STORAGE_KEY = 'solenia.token';
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
-  const [loading, setLoading] = useState<boolean>(() => !!localStorage.getItem(STORAGE_KEY));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_ACCESS_KEY));
+  const [loading, setLoading] = useState<boolean>(() => !!localStorage.getItem(AUTH_ACCESS_KEY));
 
   useEffect(() => {
     if (!token) {
@@ -39,7 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setUser(null);
           setToken(null);
-          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(AUTH_ACCESS_KEY);
+          localStorage.removeItem(AUTH_REFRESH_KEY);
         }
       })
       .finally(() => {
@@ -50,31 +50,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [token]);
 
-  // Écouter l'événement de token expiré
   useEffect(() => {
     const handleTokenExpired = () => {
       setUser(null);
       setToken(null);
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(AUTH_ACCESS_KEY);
+      localStorage.removeItem(AUTH_REFRESH_KEY);
     };
-    
+
+    const handleTokenRefreshed = (e: Event) => {
+      const d = (e as CustomEvent<{ accessToken: string; refreshToken: string }>).detail;
+      if (d?.accessToken) {
+        setToken(d.accessToken);
+        localStorage.setItem(AUTH_ACCESS_KEY, d.accessToken);
+        if (d.refreshToken) {
+          localStorage.setItem(AUTH_REFRESH_KEY, d.refreshToken);
+        }
+      }
+    };
+
     window.addEventListener('auth:token-expired', handleTokenExpired);
+    window.addEventListener('auth:token-refreshed', handleTokenRefreshed);
     return () => {
       window.removeEventListener('auth:token-expired', handleTokenExpired);
+      window.removeEventListener('auth:token-refreshed', handleTokenRefreshed);
     };
   }, []);
 
   const handleLogin = useCallback(async (email: string, password: string) => {
     const res = await apiLogin(email, password);
     setToken(res.accessToken);
-    localStorage.setItem(STORAGE_KEY, res.accessToken);
+    localStorage.setItem(AUTH_ACCESS_KEY, res.accessToken);
+    localStorage.setItem(AUTH_REFRESH_KEY, res.refreshToken);
     setUser(res.user);
   }, []);
 
   const handleLogout = useCallback(() => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(AUTH_ACCESS_KEY);
+    localStorage.removeItem(AUTH_REFRESH_KEY);
   }, []);
 
   const handleChangePassword = useCallback(async (oldPassword: string, newPassword: string) => {

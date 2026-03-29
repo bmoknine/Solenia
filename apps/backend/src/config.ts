@@ -4,7 +4,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL ?? '',
   jwtSecret: process.env.JWT_SECRET ?? 'please-change-me',
   refreshSecret: process.env.REFRESH_SECRET ?? 'please-change-me-too',
-  accessTtl: process.env.ACCESS_TTL ?? '15m',
+  accessTtl: process.env.ACCESS_TTL ?? '24h',
   refreshTtl: process.env.REFRESH_TTL ?? '7d',
 };
 
