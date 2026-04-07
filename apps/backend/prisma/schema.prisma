@@ -42,7 +42,7 @@ enum Membership {
   POLITIC
   RELIGEUX
   MARCHAND
-  CCCH
+  MILITAIRE
   CRIMINALITE
   OTHER
 }
@@ -236,6 +236,8 @@ model Organisation {
   name                String
   description         String?
   organisationType    OrganisationType? // cellule ou principal
+  /** Affiliation (politique, religieux, etc.) — même énumération que les personnages. */
+  membership          Membership?
   parentOrganisationId String?
   flag                String?  // URL du drapeau (affiché à la place de l’icône si défini)
   isForDM             Boolean  @default(false)

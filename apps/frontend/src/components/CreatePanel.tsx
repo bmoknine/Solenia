@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import type { City, Kingdom, Place, Breed, Sex, Membership, Language } from '../api/entities';
-import { createCity, createKingdom, createPerson, createPlace, listCities, listKingdoms, listPlaces, updatePosition } from '../api/entities';
-import { BREED_OPTIONS, MEMBERSHIP_OPTIONS, SEX_OPTIONS } from './detail-modal/entityOptions';
-import { formatBreed, formatMembership, formatSex } from './detail-modal/entityFormatters';
+import type { City, Kingdom, Organisation, Place, Breed, Sex, Language } from '../api/entities';
+import {
+  createCity,
+  createKingdom,
+  createPerson,
+  createPlace,
+  listCities,
+  listKingdoms,
+  listOrganisations,
+  listPlaces,
+  updatePosition,
+} from '../api/entities';
+import { BREED_OPTIONS, SEX_OPTIONS } from './detail-modal/entityOptions';
+import { formatBreed, formatSex } from './detail-modal/entityFormatters';
 import { LanguageDropdown } from './detail-modal/LanguageDropdown';
 import './Panel.css';
 
@@ -30,7 +40,7 @@ export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
   const [placeId, setPlaceId] = useState('');
   const [breed, setBreed] = useState<Breed | ''>('');
   const [sex, setSex] = useState<Sex | ''>('');
-  const [membership, setMembership] = useState<Membership | ''>('');
+  const [organisationIds, setOrganisationIds] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([]);
   const [stats, setStats] = useState(defaultStats);
   const [message, setMessage] = useState<string | null>(null);
@@ -39,6 +49,7 @@ export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
+  const [organisations, setOrganisations] = useState<Organisation[]>([]);
 
   useEffect(() => {
     listKingdoms()
@@ -51,6 +62,13 @@ export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
       .then(setPlaces)
       .catch(() => setPlaces([]));
   }, []);
+
+  useEffect(() => {
+    if (kind !== 'person') return;
+    listOrganisations()
+      .then(setOrganisations)
+      .catch(() => setOrganisations([]));
+  }, [kind]);
 
   const isValid = useMemo(() => {
     if (!name.trim()) return 'Nom requis';
@@ -72,7 +90,7 @@ export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
     setPlaceId('');
     setBreed('');
     setSex('');
-    setMembership('');
+    setOrganisationIds([]);
     setSelectedLanguages([]);
     setStats(defaultStats);
   };
@@ -126,7 +144,7 @@ export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
           kingdomId: kingdomId || undefined,
           cityId: cityId || undefined,
           placeId: placeId || undefined,
-          membership: membership || undefined,
+          organisationIds,
           languages: selectedLanguages,
           ...stats,
         });
@@ -267,15 +285,26 @@ export function CreatePanel({ initialPosition, onCreated, onCancel }: Props) {
             </select>
           </label>
           <label>
-            Affiliation
-            <select value={membership} onChange={(e) => setMembership(e.target.value as Membership | '')}>
-              <option value="">Aucune affiliation</option>
-              {MEMBERSHIP_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {formatMembership(opt)}
-                </option>
-              ))}
-            </select>
+            Organisations
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {organisations.map((org) => {
+                const checked = organisationIds.includes(org.id);
+                return (
+                  <label key={org.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setOrganisationIds((prev) =>
+                          checked ? prev.filter((id) => id !== org.id) : [...prev, org.id],
+                        );
+                      }}
+                    />
+                    {org.name}
+                  </label>
+                );
+              })}
+            </div>
           </label>
           <label>
             Langues

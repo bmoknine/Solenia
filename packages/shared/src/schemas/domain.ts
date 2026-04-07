@@ -42,19 +42,6 @@ export const districtInputSchema = z.object({
 export const organisationTypeSchema = z.enum(['CELLULE', 'PRINCIPAL']);
 export type OrganisationType = z.infer<typeof organisationTypeSchema>;
 
-export const organisationInputSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional().nullable(),
-  organisationType: organisationTypeSchema.optional().nullable(),
-  parentOrganisationId: idSchema.optional().nullable(),
-  flag: z.string().optional().nullable().or(z.literal('')),
-  isForDM: z.boolean().optional(),
-  kingdomIds: z.array(idSchema).optional(),
-  cityIds: z.array(idSchema).optional(),
-  placeIds: z.array(idSchema).optional(),
-  personIds: z.array(idSchema).optional(),
-});
-
 export const placeInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
@@ -99,7 +86,21 @@ const breedEnum = z.enum([
 
 const sexEnum = z.enum(['MAN', 'WOMAN', 'OTHER']);
 
-const membershipEnum = z.enum(['POLITIC', 'RELIGEUX', 'MARCHAND', 'CCCH', 'CRIMINALITE', 'OTHER']);
+const membershipEnum = z.enum(['POLITIC', 'RELIGEUX', 'MARCHAND', 'MILITAIRE', 'CRIMINALITE', 'OTHER']);
+
+export const organisationInputSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional().nullable(),
+  organisationType: organisationTypeSchema.optional().nullable(),
+  membership: membershipEnum.nullish(),
+  parentOrganisationId: idSchema.optional().nullable(),
+  flag: z.string().optional().nullable().or(z.literal('')),
+  isForDM: z.boolean().optional(),
+  kingdomIds: z.array(idSchema).optional(),
+  cityIds: z.array(idSchema).optional(),
+  placeIds: z.array(idSchema).optional(),
+  personIds: z.array(idSchema).optional(),
+});
 
 const languageEnum = z.enum([
   'COMMUN',
@@ -149,6 +150,7 @@ export const personInputSchema = z
     cityId: idSchema.nullish(),
     districtId: idSchema.nullish(),
     placeId: idSchema.nullish(),
+    organisationIds: z.array(idSchema).optional(),
   })
   .merge(statsSchema);
 
