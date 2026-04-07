@@ -21,7 +21,7 @@ export function formatMembership(membership: Membership | null | undefined): str
     POLITIC: 'Politique',
     RELIGEUX: 'Religieux',
     MARCHAND: 'Marchand',
-    CCCH: 'CCCH',
+    MILITAIRE: 'Militaire',
     CRIMINALITE: 'Criminalité',
     OTHER: 'Autre',
   };

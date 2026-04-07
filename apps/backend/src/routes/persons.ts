@@ -1,14 +1,32 @@
 import type { FastifyInstance } from 'fastify';
 import type { Prisma } from '@prisma/client';
 import {
+  idSchema,
   personInputSchema,
   PERSON_BREED_VALUES,
   PERSON_LANGUAGE_VALUES,
   PERSON_MEMBERSHIP_VALUES,
   PERSON_SEX_VALUES,
 } from '@solenia/shared';
+import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
 import { parseRouteUuid } from '../utils/routeParams';
+
+async function syncPersonOrganisations(
+  app: FastifyInstance,
+  personId: string,
+  organisationIds: string[] | undefined,
+) {
+  if (organisationIds === undefined) return;
+  await app.prisma.organisationMember.deleteMany({ where: { personId } });
+  for (const organisationId of organisationIds) {
+    await ignoreUniqueViolation(
+      app.prisma.organisationMember.create({
+        data: { personId, organisationId },
+      }),
+    );
+  }
+}
 
 export async function personRoutes(app: FastifyInstance) {
   app.get('/persons', async () => {
@@ -50,8 +68,16 @@ export async function personRoutes(app: FastifyInstance) {
   });
 
   app.post('/persons', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
-    const data = personInputSchema.parse(request.body);
-    return app.prisma.personOfInterest.create({ data });
+    const parsed = personInputSchema.parse(request.body);
+    const { organisationIds, ...createFields } = parsed;
+    const person = await app.prisma.personOfInterest.create({
+      data: createFields as Prisma.PersonOfInterestCreateInput,
+    });
+    await syncPersonOrganisations(app, person.id, organisationIds ?? []);
+    return app.prisma.personOfInterest.findUnique({
+      where: { id: person.id },
+      include: { position: true },
+    });
   });
 
   app.put('/persons/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
@@ -61,6 +87,8 @@ export async function personRoutes(app: FastifyInstance) {
     const rawBody = request.body as Record<string, unknown>;
     
     // Construire l'objet de données en excluant les champs enum et les IDs du parse Zod
+    const organisationIdsInBody = 'organisationIds' in rawBody ? rawBody.organisationIds : undefined;
+
     const bodyWithoutEnums = { ...rawBody };
     delete bodyWithoutEnums.breed;
     delete bodyWithoutEnums.sex;
@@ -69,6 +97,7 @@ export async function personRoutes(app: FastifyInstance) {
     delete bodyWithoutEnums.kingdomId;
     delete bodyWithoutEnums.cityId;
     delete bodyWithoutEnums.placeId;
+    delete bodyWithoutEnums.organisationIds;
     
     // Parser le reste avec Zod
     const parsedData = personInputSchema.partial().parse(bodyWithoutEnums);
@@ -111,11 +140,20 @@ export async function personRoutes(app: FastifyInstance) {
       const v = rawBody.placeId;
       parsedData.placeId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
     }
-    
-    return app.prisma.personOfInterest.update({
+
+    const updated = await app.prisma.personOfInterest.update({
       where: { id },
       data: parsedData as Prisma.PersonOfInterestUpdateInput,
     });
+
+    if ('organisationIds' in rawBody) {
+      const ids = Array.isArray(organisationIdsInBody)
+        ? organisationIdsInBody.filter((x): x is string => typeof x === 'string' && idSchema.safeParse(x).success)
+        : [];
+      await syncPersonOrganisations(app, id, ids);
+    }
+
+    return updated;
   });
 
   app.delete('/persons/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
-import type { Breed, City, Kingdom, Membership, PersonDetail, Place, Sex } from '../../../api/entities';
-import { listCities, listKingdoms, listPlaces } from '../../../api/entities';
+import type { Breed, City, Kingdom, Organisation, PersonDetail, Place, Sex } from '../../../api/entities';
+import { listCities, listKingdoms, listOrganisations, listPlaces } from '../../../api/entities';
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { SearchableSelect } from '../SearchableSelect';
 import { LanguageDropdown } from '../LanguageDropdown';
-import { BREED_OPTIONS, MEMBERSHIP_OPTIONS, SEX_OPTIONS } from '../entityOptions';
-import { formatBreed, formatLanguage, formatMembership, formatSex } from '../entityFormatters';
+import { BREED_OPTIONS, SEX_OPTIONS } from '../entityOptions';
+import { formatBreed, formatLanguage, formatSex } from '../entityFormatters';
 import type { EditState, PersonEditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
 
@@ -31,21 +31,31 @@ export function PersonView({
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
+  const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
+
+  const personEdit = editState as PersonEditState;
 
   useEffect(() => {
     if (editMode) {
       const loadLists = async () => {
         setLoadingLists(true);
         try {
-          const [kingdomsData, citiesData, placesData] = await Promise.all([listKingdoms(), listCities(), listPlaces()]);
+          const [kingdomsData, citiesData, placesData, orgsData] = await Promise.all([
+            listKingdoms(),
+            listCities(),
+            listPlaces(),
+            listOrganisations(),
+          ]);
           setKingdoms(kingdomsData);
           setCities(citiesData);
           setPlaces(placesData);
+          setOrganisations(orgsData);
         } catch {
           setKingdoms([]);
           setCities([]);
           setPlaces([]);
+          setOrganisations([]);
         } finally {
           setLoadingLists(false);
         }
@@ -70,7 +80,7 @@ export function PersonView({
         {editMode ? (
           <input
             className="detail-input"
-            value={(editState as PersonEditState)?.name ?? ''}
+            value={personEdit?.name ?? ''}
             onChange={(e) => onChange('name', e.target.value)}
             placeholder="Nom du personnage"
           />
@@ -79,30 +89,11 @@ export function PersonView({
         )}
       </div>
       <div className="detail-item">
-        <span className="detail-label">Affiliation</span>
-        {editMode ? (
-          <select
-            className="detail-input"
-            value={(editState as PersonDetail | null)?.membership ?? ''}
-            onChange={(e) => onChange('membership', (e.target.value || null) as Membership | null)}
-          >
-            <option value="">Aucune affiliation</option>
-            {MEMBERSHIP_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {formatMembership(opt)}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span className="detail-value">{valueOrDash(formatMembership(data?.membership))}</span>
-        )}
-      </div>
-      <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
           <textarea
             className="detail-textarea"
-            value={(editState as PersonEditState)?.description ?? ''}
+            value={personEdit?.description ?? ''}
             onChange={(e) => onChange('description', e.target.value)}
             placeholder="Description du personnage"
           />
@@ -112,25 +103,53 @@ export function PersonView({
       </div>
 
       <div className="detail-section">
-        <h3>Statistiques</h3>
-        <div className="stats-grid">
-          {stats.map((s) => (
-            <div key={s.label} className="stat-item">
-              <span className="stat-label">{s.label}</span>
-              {editMode ? (
-                <input
-                  className="detail-input stat-input"
-                  type="number"
-                  value={s.value ?? ''}
-                  onChange={(e) => onChange(s.key, e.target.value === '' ? undefined : Number(e.target.value))}
-                />
-              ) : (
-                <span className="stat-value">{valueOrDash(s.value)}</span>
-              )}
+        <h3>Organisations</h3>
+        {editMode ? (
+          loadingLists ? (
+            <span className="detail-value">Chargement...</span>
+          ) : (
+            <div className="detail-checkbox-list">
+              {organisations.map((org) => {
+                const ids = personEdit.organisationIds ?? [];
+                const checked = ids.includes(org.id);
+                return (
+                  <label key={org.id} className="detail-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const next = checked ? ids.filter((i) => i !== org.id) : [...ids, org.id];
+                        onChange('organisationIds', next);
+                      }}
+                    />
+                    {org.name}
+                  </label>
+                );
+              })}
             </div>
-          ))}
-        </div>
-        <div className="stats-grid" style={{ marginTop: '12px', gap: '12px' }}>
+          )
+        ) : (data?.organisations?.length ?? 0) > 0 ? (
+          <ul className="detail-list">
+            {(data?.organisations ?? []).map((org) => (
+              <li
+                key={org.id}
+                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
+                onClick={() => {
+                  if (onNavigate) onNavigate(organisationRefToNavPoint(org));
+                }}
+              >
+                {org.name}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span className="detail-value">{valueOrDash(null)}</span>
+        )}
+      </div>
+
+      <div className="detail-section">
+        <h3>Statistiques</h3>
+        <div className="stats-grid" style={{ marginBottom: '12px', gap: '12px' }}>
           <div className="stat-item">
             <span className="stat-label">PV</span>
             {editMode ? (
@@ -161,6 +180,23 @@ export function PersonView({
               <span className="stat-value">{valueOrDash((data as PersonDetail)?.ca)}</span>
             )}
           </div>
+        </div>
+        <div className="stats-grid">
+          {stats.map((s) => (
+            <div key={s.label} className="stat-item">
+              <span className="stat-label">{s.label}</span>
+              {editMode ? (
+                <input
+                  className="detail-input stat-input"
+                  type="number"
+                  value={s.value ?? ''}
+                  onChange={(e) => onChange(s.key, e.target.value === '' ? undefined : Number(e.target.value))}
+                />
+              ) : (
+                <span className="stat-value">{valueOrDash(s.value)}</span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -257,9 +293,7 @@ export function PersonView({
               <SearchableSelect
                 items={kingdoms}
                 selectedId={
-                  (editState as PersonEditState)?.kingdomId !== undefined
-                    ? (editState as PersonEditState).kingdomId
-                    : data?.kingdom?.id
+                  personEdit?.kingdomId !== undefined ? personEdit.kingdomId : data?.kingdom?.id
                 }
                 onSelect={(id) => onChange('kingdomId', id)}
                 placeholder="Sélectionner un royaume"
@@ -290,7 +324,7 @@ export function PersonView({
               <SearchableSelect
                 items={cities}
                 selectedId={
-                  (editState as PersonEditState)?.cityId !== undefined ? (editState as PersonEditState).cityId : data?.city?.id
+                  personEdit?.cityId !== undefined ? personEdit.cityId : data?.city?.id
                 }
                 onSelect={(id) => onChange('cityId', id)}
                 placeholder="Sélectionner une ville"
@@ -321,7 +355,7 @@ export function PersonView({
               <SearchableSelect
                 items={places}
                 selectedId={
-                  (editState as PersonEditState)?.placeId !== undefined ? (editState as PersonEditState).placeId : data?.place?.id
+                  personEdit?.placeId !== undefined ? personEdit.placeId : data?.place?.id
                 }
                 onSelect={(id) => onChange('placeId', id)}
                 placeholder="Sélectionner un lieu"
@@ -345,24 +379,6 @@ export function PersonView({
         </div>
       </div>
 
-      {data?.organisations && data.organisations.length > 0 && (
-        <div className="detail-section">
-          <h3 className="section-title">Organisations :</h3>
-          <ul className="detail-list">
-            {data?.organisations.map((org) => (
-              <li
-                key={org.id}
-                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => {
-                  if (onNavigate) onNavigate(organisationRefToNavPoint(org));
-                }}
-              >
-                {org.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
       <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
       <CommentsSection comments={data?.comments} />
     </>

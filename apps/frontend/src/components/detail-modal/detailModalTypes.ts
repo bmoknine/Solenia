@@ -55,6 +55,7 @@ export type PersonEditState = Partial<PersonDetail> & {
   cityId?: string | null;
   districtId?: string | null;
   placeId?: string | null;
+  organisationIds?: string[];
 };
 
 export type DistrictEditState = Partial<DistrictDetail> & {

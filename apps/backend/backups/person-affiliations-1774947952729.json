@@ -1,0 +1,66 @@
+{
+  "exportedAt": "2026-03-31T09:05:52.729Z",
+  "note": "Sauvegarde membership + liens OrganisationMember avant changements UI personnages.",
+  "persons": [
+    {
+      "id": "7decf0c5-b84f-4a4b-b666-c9d820a104dc",
+      "name": "Aegeard Blanks",
+      "membership": null,
+      "organisationIds": []
+    },
+    {
+      "id": "a50188f9-724b-4ba6-b62b-0a1a0f43bf97",
+      "name": "Brakk “l’Enclume”",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "5e8db395-6054-40e6-bd92-ef809166fa15",
+      "name": "Hommes de Main du Syndicat (x5)",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "88682d84-12ec-48fa-8ede-98a13e027b9f",
+      "name": "Les Marteaux (x3) – Exécuteurs du conseil d'acier",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "ac73eee3-4844-4da5-acb9-9b01d92162a7",
+      "name": "Lysa “Cendre-rose”",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "3ffea450-a1d7-4505-8008-5fd47e93abb5",
+      "name": "Melrilvaethor Quifaren",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "38e8071e-b2f2-4f88-ac70-4e3e80fd6f7d",
+      "name": "Mirell “la Silencieuse”",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "7411def3-6e81-4808-96ef-b66596714505",
+      "name": "Raskel “Langue-Cendre”",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "3511d7a5-70d7-4985-9012-a6682b351ce8",
+      "name": "Vael Korshen",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    },
+    {
+      "id": "d45b4ef2-160c-4676-bdf4-cefd20ae05b3",
+      "name": "Vyn Keller",
+      "membership": "CRIMINALITE",
+      "organisationIds": []
+    }
+  ]
+}

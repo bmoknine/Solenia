@@ -27,7 +27,6 @@ import {
   type CityDetail,
   type DistrictDetail,
   type PlaceDetail,
-  type PersonDetail,
 } from '../../api/entities';
 import type { LoreEditState } from './loreTypes';
 import type { DetailModalProps, EditState, EntityData, OrganisationEditState, PersonEditState } from './detailModalTypes';
@@ -249,27 +248,27 @@ export function useDetailModalEntity({
             break;
           }
           case 'person': {
-            const personState = editState as PersonDetail;
+            const personState = editState as PersonEditState;
             createdEntity = await createPerson(token, {
               name: (personState.name ?? '').trim(),
               description: personState.description ?? undefined,
               breed: personState.breed ?? undefined,
               sex: personState.sex ?? undefined,
-              membership: personState.membership ?? undefined,
               languages: personState.languages ?? [],
-              kingdomId: (personState as PersonEditState).kingdomId ?? undefined,
-              cityId: (personState as PersonEditState).cityId ?? undefined,
-              districtId: (personState as PersonEditState).districtId ?? undefined,
-              placeId: (personState as PersonEditState).placeId ?? undefined,
+              kingdomId: personState.kingdomId ?? undefined,
+              cityId: personState.cityId ?? undefined,
+              districtId: personState.districtId ?? undefined,
+              placeId: personState.placeId ?? undefined,
+              organisationIds: personState.organisationIds ?? [],
               pv: personState.pv ?? null,
               ca: personState.ca ?? null,
               showOnMap: personState.showOnMap ?? true,
-              STR: personState.STR,
-              DEX: personState.DEX,
-              CON: personState.CON,
-              INT: personState.INT,
-              WIS: personState.WIS,
-              CHA: personState.CHA,
+              STR: personState.STR ?? 10,
+              DEX: personState.DEX ?? 10,
+              CON: personState.CON ?? 10,
+              INT: personState.INT ?? 10,
+              WIS: personState.WIS ?? 10,
+              CHA: personState.CHA ?? 10,
             });
             break;
           }
@@ -279,6 +278,7 @@ export function useDetailModalEntity({
               name: (organisationState.name ?? '').trim(),
               description: organisationState.description ?? undefined,
               organisationType: organisationState.organisationType ?? undefined,
+              membership: organisationState.membership ?? undefined,
               parentOrganisationId: organisationState.parentOrganisationId ?? undefined,
               flag: organisationState.flag ?? undefined,
               kingdomIds: organisationState.kingdomIds || [],
@@ -443,18 +443,18 @@ export function useDetailModalEntity({
           break;
         }
         case 'person': {
-          const personState = editState as PersonDetail;
+          const personState = editState as PersonEditState;
           await updatePerson(token, point.targetId, {
             name: (personState.name ?? '').trim(),
             description: personState.description ?? null,
             breed: personState.breed ?? null,
             sex: personState.sex ?? null,
-            membership: personState.membership ?? null,
             languages: personState.languages ?? [],
-            kingdomId: (personState as PersonEditState).kingdomId ?? null,
-            cityId: (personState as PersonEditState).cityId ?? null,
-            districtId: (personState as PersonEditState).districtId ?? null,
-            placeId: (personState as PersonEditState).placeId ?? null,
+            kingdomId: personState.kingdomId ?? null,
+            cityId: personState.cityId ?? null,
+            districtId: personState.districtId ?? null,
+            placeId: personState.placeId ?? null,
+            organisationIds: personState.organisationIds ?? [],
             pv: personState.pv ?? null,
             ca: personState.ca ?? null,
             showOnMap: personState.showOnMap ?? true,
@@ -473,6 +473,7 @@ export function useDetailModalEntity({
             name: (organisationState.name ?? '').trim(),
             description: organisationState.description ?? null,
             organisationType: organisationState.organisationType ?? null,
+            membership: organisationState.membership ?? null,
             parentOrganisationId: organisationState.parentOrganisationId ?? null,
             flag: organisationState.flag ?? null,
             kingdomIds: organisationState.kingdomIds ?? [],

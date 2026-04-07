@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import type { MapPoint } from '../api/map';
-import { getKingdom, getPerson } from '../api/entities';
-import type { Language, Membership, Person } from '../api/entities';
+import { getKingdom, getPerson, listOrganisations, type Language, type Organisation, type PersonDetail } from '../api/entities';
 import { updateCity, updateKingdom, updatePerson, updatePlace } from '../api/update';
-import { MEMBERSHIP_OPTIONS } from './detail-modal/entityOptions';
-import { formatMembership } from './detail-modal/entityFormatters';
 import { LanguageDropdown } from './detail-modal/LanguageDropdown';
 import './Panel.css';
 
@@ -21,7 +18,8 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
   const [description, setDescription] = useState('');
   const [population, setPopulation] = useState<number | ''>('');
   const [dateInGame, setDateInGame] = useState('');
-  const [membership, setMembership] = useState<Membership | ''>('');
+  const [organisationIds, setOrganisationIds] = useState<string[]>([]);
+  const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<Language[]>([]);
   const [stats, setStats] = useState({ STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 });
   const [message, setMessage] = useState<string | null>(null);
@@ -55,17 +53,19 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
         }
       } else if (point.kind === 'person' && point.targetId) {
         try {
-          const p: Person = await getPerson(point.targetId);
+          const [p, orgs] = await Promise.all([getPerson(point.targetId), listOrganisations()]);
           if (!mounted) return;
-          setMembership((p.membership as Membership | null) ?? '');
-          setSelectedLanguages(p.languages ?? []);
+          const pd = p as PersonDetail;
+          setOrganisations(orgs);
+          setOrganisationIds(pd.organisations?.map((o) => o.id) ?? []);
+          setSelectedLanguages(pd.languages ?? []);
           setStats({
-            STR: p.STR,
-            DEX: p.DEX,
-            CON: p.CON,
-            INT: p.INT,
-            WIS: p.WIS,
-            CHA: p.CHA,
+            STR: pd.STR,
+            DEX: pd.DEX,
+            CON: pd.CON,
+            INT: pd.INT,
+            WIS: pd.WIS,
+            CHA: pd.CHA,
           });
         } catch {
           /* ignore */
@@ -109,7 +109,7 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
         await updatePerson(token, point.targetId, {
           name,
           description: description || undefined,
-          membership: membership || undefined,
+          organisationIds,
           languages: selectedLanguages,
           ...stats,
         });
@@ -160,15 +160,26 @@ export function EditDrawer({ point, onClose, onSaved }: Props) {
       {point.kind === 'person' && (
         <>
           <label>
-            Affiliation
-            <select value={membership} onChange={(e) => setMembership(e.target.value as Membership | '')}>
-              <option value="">—</option>
-              {MEMBERSHIP_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {formatMembership(opt)}
-                </option>
-              ))}
-            </select>
+            Organisations
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {organisations.map((org) => {
+                const checked = organisationIds.includes(org.id);
+                return (
+                  <label key={org.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setOrganisationIds((prev) =>
+                          checked ? prev.filter((id) => id !== org.id) : [...prev, org.id],
+                        );
+                      }}
+                    />
+                    {org.name}
+                  </label>
+                );
+              })}
+            </div>
           </label>
           <label>
             Langues

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
-import type { City, Kingdom, Organisation, OrganisationDetail, Person, Place } from '../../../api/entities';
+import type { City, Kingdom, Membership, Organisation, OrganisationDetail, Person, Place } from '../../../api/entities';
 import { listCities, listKingdoms, listOrganisations, listPersons, listPlaces } from '../../../api/entities';
 import { LoreSection } from '../LoreSection';
 import { FlagSelect } from '../FlagSelect';
 import { SearchableSelect } from '../SearchableSelect';
+import { MEMBERSHIP_OPTIONS } from '../entityOptions';
+import { formatMembership } from '../entityFormatters';
 import type { EditState, OrganisationEditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
 
@@ -110,6 +112,27 @@ export function OrganisationView({
                 ? 'Cellule'
                 : valueOrDash(null)}
           </span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Affiliation</span>
+        {editMode ? (
+          <select
+            className="detail-input"
+            value={((editState as OrganisationDetail)?.membership as string) ?? ''}
+            onChange={(e) =>
+              onChange('membership', e.target.value === '' ? null : (e.target.value as Membership))
+            }
+          >
+            <option value="">Aucune affiliation</option>
+            {MEMBERSHIP_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {formatMembership(opt)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="detail-value">{valueOrDash(formatMembership(data?.membership))}</span>
         )}
       </div>
       {editMode && (

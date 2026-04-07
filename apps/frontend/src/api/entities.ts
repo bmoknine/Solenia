@@ -16,10 +16,19 @@ export type District = {
 };
 export type Place = { id: string; name: string; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; showOnMap?: boolean; isForDM?: boolean };
 export type OrganisationType = 'CELLULE' | 'PRINCIPAL';
-export type Organisation = { id: string; name: string; description?: string | null; organisationType?: OrganisationType | null; parentOrganisationId?: string | null; flag?: string | null; isForDM?: boolean };
+export type Membership = 'POLITIC' | 'RELIGEUX' | 'MARCHAND' | 'MILITAIRE' | 'CRIMINALITE' | 'OTHER';
+export type Organisation = {
+  id: string;
+  name: string;
+  description?: string | null;
+  organisationType?: OrganisationType | null;
+  membership?: Membership | null;
+  parentOrganisationId?: string | null;
+  flag?: string | null;
+  isForDM?: boolean;
+};
 export type Breed = 'ELFE' | 'HALFELIN' | 'HUMAIN' | 'NAIN' | 'DEMI_ELFE' | 'DEMI_ORC' | 'DRAKEIDE' | 'GNOME' | 'TIEFFELIN' | 'AASIMAR' | 'GENASIAIR' | 'GENASITERRE' | 'GENASIFEUR' | 'GENASIEAU' | 'GOLIATH' | 'OTHER';
 export type Sex = 'MAN' | 'WOMAN' | 'OTHER';
-export type Membership = 'POLITIC' | 'RELIGEUX' | 'MARCHAND' | 'CCCH' | 'CRIMINALITE' | 'OTHER';
 export type Language = 'COMMUN' | 'NAIN' | 'ELFIQUE' | 'GNOME' | 'HALFELIN' | 'ORC' | 'GOBELIN' | 'GEANT' | 'DRACONIQUE' | 'SYLVESTRE' | 'INFERNAL' | 'ABYSSAL' | 'CELESTE' | 'PRIMORDIAL' | 'AQUAN' | 'AURAN' | 'IGNAN' | 'TERRAN' | 'PROFOND' | 'SLAADI' | 'TELEPATHIQUE' | 'ARGOT_VOLEUR';
 
 export type Person = {
@@ -289,6 +298,7 @@ export async function updatePerson(
     cityId?: string | null;
     districtId?: string | null;
     placeId?: string | null;
+    organisationIds?: string[];
   }>,
 ) {
   return withAuth(token).put(`/persons/${id}`, data);
@@ -341,6 +351,7 @@ export async function createPerson(
     districtId?: string;
     placeId?: string;
     membership?: string;
+    organisationIds?: string[];
     languages?: string[];
     pv?: number | null;
     ca?: number | null;
@@ -380,6 +391,7 @@ export async function createOrganisation(
   token: string,
   data: Base & {
     organisationType?: OrganisationType | null;
+    membership?: Membership | null;
     parentOrganisationId?: string;
     flag?: string | null;
     kingdomIds?: string[];
@@ -394,10 +406,11 @@ export async function createOrganisation(
 export async function updateOrganisation(
   token: string,
   id: string,
-  data: Partial<{ 
-    name: string; 
-    description: string | null; 
+  data: Partial<{
+    name: string;
+    description: string | null;
     organisationType: OrganisationType | null;
+    membership: Membership | null;
     parentOrganisationId: string | null;
     flag: string | null;
     kingdomIds?: string[];

@@ -1,9 +1,13 @@
 import type { FastifyInstance } from 'fastify';
-import { idSchema, organisationInputSchema } from '@solenia/shared';
+import type { Prisma } from '@prisma/client';
+import { idSchema, organisationInputSchema, PERSON_MEMBERSHIP_VALUES } from '@solenia/shared';
 import { createOrganisationLinks, replaceOrganisationLinks } from '../utils/organisationLinks';
 import { isPrismaUniqueViolation } from '../utils/prisma';
 import { parseRouteUuid } from '../utils/routeParams';
 import { requireRole } from '../utils/rbac';
+
+const includesMembership = (v: string): v is (typeof PERSON_MEMBERSHIP_VALUES)[number] =>
+  (PERSON_MEMBERSHIP_VALUES as readonly string[]).includes(v);
 
 export async function organisationRoutes(app: FastifyInstance) {
   app.get('/organisations', async () => {
@@ -64,7 +68,22 @@ export async function organisationRoutes(app: FastifyInstance) {
     const { kingdomIds, cityIds, placeIds, personIds, ...orgData } = rawData;
 
     const flag = orgData.flag === '' || orgData.flag == null ? null : orgData.flag;
-    const organisation = await app.prisma.organisation.create({ data: { ...orgData, flag } });
+    const membership =
+      orgData.membership === null || orgData.membership === undefined
+        ? null
+        : includesMembership(orgData.membership)
+          ? orgData.membership
+          : null;
+    const createData: Prisma.OrganisationUncheckedCreateInput = {
+      name: orgData.name,
+      description: orgData.description ?? null,
+      organisationType: orgData.organisationType ?? null,
+      membership,
+      parentOrganisationId: orgData.parentOrganisationId ?? null,
+      flag,
+      isForDM: orgData.isForDM ?? false,
+    };
+    const organisation = await app.prisma.organisation.create({ data: createData });
 
     await createOrganisationLinks(app, organisation.id, { kingdomIds, cityIds, placeIds, personIds });
 
@@ -112,20 +131,30 @@ export async function organisationRoutes(app: FastifyInstance) {
     const id = parseRouteUuid(request);
     const rawData = organisationInputSchema.partial().passthrough().parse(request.body);
     const { kingdomIds, cityIds, placeIds, personIds, ...orgData } = rawData;
-    
-    const data: Record<string, unknown> = {};
+
+    /** UncheckedUpdateInput : obligatoire dès qu’on met `parentOrganisationId` (sinon Prisma résout mal le XOR avec `Record<string, unknown>` et rejette les enums). */
+    const data: Prisma.OrganisationUncheckedUpdateInput = {};
     if ('name' in orgData) data.name = orgData.name;
     if ('description' in orgData) data.description = orgData.description ?? null;
     if ('organisationType' in orgData) data.organisationType = orgData.organisationType ?? null;
+    if ('membership' in orgData) {
+      const m = orgData.membership;
+      data.membership =
+        m === null || m === undefined
+          ? null
+          : typeof m === 'string' && includesMembership(m)
+            ? m
+            : null;
+    }
     if ('parentOrganisationId' in orgData) {
       data.parentOrganisationId = orgData.parentOrganisationId ?? null;
-      // Empêcher une organisation d'être son propre parent
       if (orgData.parentOrganisationId === id) {
         throw new Error('Une organisation ne peut pas être son propre parent');
       }
     }
     if ('flag' in orgData) data.flag = orgData.flag === '' || orgData.flag == null ? null : orgData.flag;
-    
+    if ('isForDM' in orgData && typeof orgData.isForDM === 'boolean') data.isForDM = orgData.isForDM;
+
     await app.prisma.organisation.update({ where: { id }, data });
 
     await replaceOrganisationLinks(app, id, { kingdomIds, cityIds, placeIds, personIds });

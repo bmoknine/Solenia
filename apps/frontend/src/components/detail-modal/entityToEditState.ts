@@ -42,6 +42,7 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
       name: '',
       description: null,
       organisationType: null,
+      membership: null,
       parentOrganisationId: null,
       flag: null,
       kingdomIds: [],
@@ -71,12 +72,12 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
     description: null,
     breed: null,
     sex: null,
-    membership: null,
     languages: [],
     kingdomId: null,
     cityId: null,
     districtId: null,
     placeId: null,
+    organisationIds: [],
     pv: null,
     ca: null,
     showOnMap: true,
@@ -93,12 +94,14 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
 export function buildEditStateFromFetchedEntity(kind: MapEntityKind, result: EntityData): EditState | null {
   if (!result) return null;
   if (kind === 'person') {
+    const pr = result as PersonDetail;
     return {
       kind: 'person' as const,
       ...result,
-      kingdomId: (result as PersonDetail).kingdom?.id ?? null,
-      cityId: (result as PersonDetail).city?.id ?? null,
-      placeId: (result as PersonDetail).place?.id ?? null,
+      kingdomId: pr.kingdom?.id ?? null,
+      cityId: pr.city?.id ?? null,
+      placeId: pr.place?.id ?? null,
+      organisationIds: pr.organisations?.map((o) => o.id) ?? [],
     } as PersonEditState;
   }
   if (kind === 'organisation') {
@@ -147,12 +150,14 @@ export function buildEditStateFromFetchedEntity(kind: MapEntityKind, result: Ent
 /** Reconstruit l’état d’édition après une sauvegarde et un re-fetch. */
 export function buildEditStateAfterSaveRefetch(kind: MapEntityKind, refreshed: EntityData): EditState {
   if (kind === 'person') {
+    const pr = refreshed as PersonDetail;
     return {
       kind: 'person' as const,
       ...refreshed,
-      kingdomId: (refreshed as PersonDetail).kingdom?.id ?? null,
-      cityId: (refreshed as PersonDetail).city?.id ?? null,
-      placeId: (refreshed as PersonDetail).place?.id ?? null,
+      kingdomId: pr.kingdom?.id ?? null,
+      cityId: pr.city?.id ?? null,
+      placeId: pr.place?.id ?? null,
+      organisationIds: pr.organisations?.map((o) => o.id) ?? [],
     } as PersonEditState;
   }
   if (kind === 'organisation') {
