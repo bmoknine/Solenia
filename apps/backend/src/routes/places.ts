@@ -21,14 +21,18 @@ async function syncPlaceOrganisations(
   }
 }
 
-/** Lieu lié à une ville ou un quartier : pas de position carte (suppression si existante). */
+/**
+ * Lieu lié à une ville/quartier avec showOnMap = true : supprime la position carte.
+ * Les lieux avec showOnMap = false (ex. importés) conservent leur position.
+ */
 async function syncEmbeddedPlacePosition(
   app: FastifyInstance,
   placeId: string,
   cityId: string | null,
   districtId: string | null,
+  showOnMap: boolean,
 ) {
-  if (cityId || districtId) {
+  if (showOnMap && (cityId || districtId)) {
     await app.prisma.position.deleteMany({ where: { placeId } });
   }
 }
@@ -133,7 +137,7 @@ export async function placeRoutes(app: FastifyInstance) {
       },
     });
     await syncPlaceOrganisations(app, place.id, organisationIds);
-    await syncEmbeddedPlacePosition(app, place.id, place.cityId, place.districtId);
+    await syncEmbeddedPlacePosition(app, place.id, place.cityId, place.districtId, normalized.showOnMap ?? true);
     return place;
   });
 
@@ -175,7 +179,7 @@ export async function placeRoutes(app: FastifyInstance) {
 
     const updated = await app.prisma.place.update({ where: { id }, data: data as Prisma.PlaceUpdateInput });
     await syncPlaceOrganisations(app, id, organisationIds);
-    await syncEmbeddedPlacePosition(app, id, updated.cityId, updated.districtId);
+    await syncEmbeddedPlacePosition(app, id, updated.cityId, updated.districtId, updated.showOnMap);
     return updated;
   });
 

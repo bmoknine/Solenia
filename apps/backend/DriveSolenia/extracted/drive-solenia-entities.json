@@ -1,0 +1,1093 @@
+{
+  "meta": {
+    "version": "2.0",
+    "description": "Entités extraites des docx DriveSolenia — lieux, personnages, organisations.",
+    "sources": [
+      "Cité Libre/Alagir.docx",
+      "Cité Libre/Huriya.docx",
+      "Dominion de L_Antre/Généralité.docx",
+      "Dominion de L_Antre/Liste des clans.docx",
+      "Duchés des Dolomite/Généralité.docx",
+      "La Reinaume de la mère de pierre/La Dynastie de la mère de pierre.docx",
+      "Le Royaume d_Alberan/Le Royaume d_Alberan.docx",
+      "Le Royaume de Gandorènne/Le Royaume de Gandorènne.docx",
+      "Le Saint-Empire Momoritanien/Kalanos.docx",
+      "Le Saint-Empire Momoritanien/Le Saint-Empire Momoritanien.docx",
+      "Le Sultanat de Sandarane/Le Sultanat de Sandarane.docx"
+    ]
+  },
+
+  "kingdoms": [
+    { "key": "cite-libre",     "name": "Cités libres" },
+    { "key": "antre",          "name": "Dominion de L'Antre" },
+    { "key": "dolomite",       "name": "Duchés des Dolomite" },
+    { "key": "mere-de-pierre", "name": "La Reinaume de la mère de pierre" },
+    { "key": "alberan",        "name": "Le Royaume d'Alberan" },
+    { "key": "gandorenne",     "name": "Le Royaume de Gandorènne" },
+    { "key": "saint-empire",   "name": "Le Saint-Empire Momoritanien" },
+    { "key": "sandarane",      "name": "Le Sultanat de Sandarane" }
+  ],
+
+  "cities": [
+    { "key": "alagir",       "name": "Alagir",      "kingdomKey": "cite-libre" },
+    { "key": "huriya",       "name": "Huriya",      "kingdomKey": "cite-libre" },
+    { "key": "brodnica",     "name": "Brodnica",    "kingdomKey": "antre" },
+    { "key": "karni",        "name": "Karni",       "kingdomKey": "antre" },
+    { "key": "morag",        "name": "Morag",       "kingdomKey": "antre" },
+    { "key": "orneta",       "name": "Orneta",      "kingdomKey": "antre" },
+    { "key": "calteri",      "name": "Calteri",     "kingdomKey": "dolomite" },
+    { "key": "arrezo",       "name": "Arrezo",      "kingdomKey": "dolomite" },
+    { "key": "stiffe",       "name": "Stiffe",      "kingdomKey": "dolomite" },
+    { "key": "raino",        "name": "Raino",       "kingdomKey": "dolomite" },
+    { "key": "russolio",     "name": "Russolio",    "kingdomKey": "dolomite" },
+    { "key": "volturo",      "name": "Volturo",     "kingdomKey": "dolomite" },
+    { "key": "iserna",       "name": "Iserna",      "kingdomKey": "dolomite" },
+    { "key": "dugh-maral",   "name": "Dugh Maral",  "kingdomKey": "mere-de-pierre" },
+    { "key": "gandor",       "name": "Gandor",      "kingdomKey": "gandorenne" },
+    { "key": "momoritania",  "name": "Momoritania", "kingdomKey": "saint-empire" },
+    { "key": "kalanos",      "name": "Kalanos",     "kingdomKey": "saint-empire" },
+    { "key": "sandarane",    "name": "Sandarane",   "kingdomKey": "sandarane" }
+  ],
+
+  "places": [
+    {
+      "key": "chateau-de-verre",
+      "name": "Château de Verre",
+      "description": "Forteresse d'Alagir célèbre pour son colossal vitrail. Siège du pouvoir royal, ses reflets colorés illuminent la ville la nuit.",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "geodes-pourprees",
+      "name": "Géodes Pourprées",
+      "description": "Carrières de marbre pourpre d'Alagir, uniques au monde. Labyrinthe de galeries mi-naturelles, mi-taillées, résonant du martèlement des outils Tovalis.",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "arene-goulet-ecarlate",
+      "name": "Arène du Goulet Écarlate",
+      "description": "Arène clandestine d'Alagir, lieu de tournois illicites et de combats souterrains.",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "temple-tal-aesir-scelle",
+      "name": "Temple de Tal Aesir (scellé)",
+      "description": "Temple oublié de Tal Aesir, dieu ancien de la Désolation, enfoui sous les fondations d'Alagir. Dormant et scellé depuis des siècles.",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "palais-des-ententes",
+      "name": "Palais des Ententes",
+      "description": "Bâtiment diplomatique de Huriya accueillant des délégations de tous les royaumes. Symbole de la neutralité de la cité.",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "grande-arene-huriya",
+      "name": "Grande arène de Huriya",
+      "description": "Arène officielle de la cité de Huriya, théâtre de combats et spectacles.",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "monocle-du-diable",
+      "name": "Le Monocle du Diable",
+      "description": "Taverne massive en brique sombre, repaire officieux du Conseil d'Acier à Huriya. Arène de combat clandestine en sous-sol. Tenu par Ernil Sultaasar, elfe des bois.",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "frappe-brillante",
+      "name": "La Frappe Brillante",
+      "description": "Fonderie privée de Huriya, spécialisée dans la frappe de monnaie pour les deux empires contigus. Dirigée par Lierin Lorial.",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "sanctuaire-dragon-antre",
+      "name": "Sanctuaire au dragon",
+      "description": "Sanctuaire drakonien taillé à même la montagne de l'Antre, chef-d'œuvre de l'architecture locale. Lieu de culte de Tiamat.",
+      "kingdomKey": "antre"
+    },
+    {
+      "key": "les-cendres-brodnica",
+      "name": "Les Cendres",
+      "description": "Immense cratère causé par une bombe gnome qui mit fin à la résistance de l'Antre. Lieu mémorial intact depuis l'explosion, où des cadavres seraient encore cristallisés.",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "necrole-brodnica",
+      "name": "Nécrole (École de Nécromancie)",
+      "description": "Dernière école de magie de nécromancie de Solenia, dissimulée sous le quartier des Trois Cafards à Brodnica. Dirigée par Ayas Sarwens.",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "temple-noir-iserna",
+      "name": "Temple Noir",
+      "description": "Plus grand bâtiment d'Iserna, dédié à l'art de l'enchantement. La croyance populaire y voit d'un mauvais œil ce lieu où l'on manipule les esprits.",
+      "cityKey": "iserna"
+    },
+    {
+      "key": "palais-elvaltis",
+      "name": "Palais d'Elvaltis",
+      "description": "Résidence officielle de la famille Elvaltis, gouverneurs de Kalanos. Bâtiment en marbre et ardoise orné de fresques représentant l'histoire de la ville.",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "temple-tal-odius",
+      "name": "Temple de Tal Odius",
+      "description": "Principal lieu de culte de Kalanos, façade ornée de statues en ardoise blanche. Centre spirituel de la ville tenu par la grande prêtresse Elivara Tanis.",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "carrieres-ardoise-blanche",
+      "name": "Carrières de l'Ardoise Blanche",
+      "description": "Exploitation principale de Kalanos, surveillée par des gardes impériaux. Dégagement de carrières ayant mis au jour une immense caverne aux ruines de l'âge de sérénité.",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "ruines-age-serenite",
+      "name": "Ruines de l'Âge de Sérénité",
+      "description": "Caverne souterraine sous Kalanos contenant les ruines d'une ville de l'âge de sérénité, découverte lors des excavations d'ardoise. Découpée en trois zones explorées par Maeltor Elvaltis.",
+      "cityKey": "kalanos"
+    }
+  ],
+
+  "persons": [
+    {
+      "key": "pelfort-vanguard",
+      "name": "Pelfort Vanguard",
+      "role": "Roi d'Alagir",
+      "notes": "Monarque de la Cité Pourpre depuis cinq ans, suite à une mort royale suspecte. Centralise le pouvoir, réforme les impôts, surveille tout via le Soleil Pourpre.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "guetel-vanguard",
+      "name": "Guetel",
+      "role": "Reine d'Alagir",
+      "notes": "Épouse du roi Pelfort Vanguard.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "ekenon-tracx",
+      "name": "Ékénon Tracx",
+      "role": "Capitaine de la garde personnelle",
+      "notes": "Tieffelin, capitaine et garde personnel du roi Pelfort Vanguard à Alagir.",
+      "sex": "M",
+      "breed": "TIEFFELIN",
+      "membership": "MILITAIRE",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "lierin-lorial-alagir",
+      "name": "Lierin Lorial",
+      "role": "Prévôt bancaire",
+      "notes": "Prévôt bancaire d'Alagir, influent dans le réseau financier de la cité.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "faith-alagir",
+      "name": "Faith",
+      "role": "Meneuse du Syndicat",
+      "notes": "Meneuse de l'organisation criminelle du Syndicat à Alagir.",
+      "sex": "F",
+      "membership": "CRIMINALITE",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "rany-mullimax-alagir",
+      "name": "Rany Mullimax",
+      "role": "Agent du Conseil d'Acier",
+      "notes": "Membre du Conseil d'Acier opérant à Alagir.",
+      "sex": "M",
+      "membership": "CRIMINALITE",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "jillian-riverpipe-alagir",
+      "name": "Jillian Riverpipe",
+      "role": "Courtière",
+      "notes": "Courtière d'Alagir, pivot dans les cercles d'affaires et d'influence de la ville.",
+      "sex": "F",
+      "membership": "MARCHAND",
+      "cityKey": "alagir"
+    },
+    {
+      "key": "aimon-ivelis",
+      "name": "Aimon Ivelis",
+      "role": "Dirigeant de Huriya",
+      "notes": "Chef de la famille Ivelis, famille dirigeante de Huriya.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "sana-ivelis",
+      "name": "Sana Ivelis",
+      "role": "Co-dirigeante de Huriya",
+      "notes": "Épouse d'Aimon Ivelis, co-dirige la cité libre de Huriya.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "volodar-ivelis",
+      "name": "Volodar Ivelis",
+      "role": "Famille Ivelis",
+      "notes": "Membre de la famille dirigeante Ivelis de Huriya.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "akkar-ivelis",
+      "name": "Akkar Ivelis",
+      "role": "Famille Ivelis",
+      "notes": "Fils de la famille Ivelis.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "ilrune-ivelis",
+      "name": "Ilrune Ivelis",
+      "role": "Famille Ivelis",
+      "notes": "Fils de la famille Ivelis, associé à la compagnie de transport Rigart & fils (fondée par le père d'Illevas).",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "galya-ivelis",
+      "name": "Galya Ivelis",
+      "role": "Famille Ivelis",
+      "notes": "Fille de la famille Ivelis.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "keerla-ivelis",
+      "name": "Keerla Ivelis",
+      "role": "Famille Ivelis",
+      "notes": "Fille de la famille Ivelis.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "lierin-lorial-huriya",
+      "name": "Lierin Lorial",
+      "role": "Dirigeant de La Frappe Brillante",
+      "notes": "Dirige la fonderie privée La Frappe Brillante à Huriya, frappe de monnaie pour les deux empires.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "ery-seel",
+      "name": "Ery Seel",
+      "role": "Assistant de La Frappe Brillante",
+      "notes": "Assistant de Lierin Lorial à la fonderie La Frappe Brillante de Huriya.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "faith-huriya",
+      "name": "Faith",
+      "role": "Alliance des Veines",
+      "notes": "Cadre supérieur de l'Alliance des Veines à Huriya, organisation criminelle.",
+      "sex": "F",
+      "membership": "CRIMINALITE",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "rany-mullimax-huriya",
+      "name": "Rany Mullimax",
+      "role": "Dirigeant Voiliers d'Éther",
+      "notes": "Cadre de la Compagnie des Voiliers d'Éther à Huriya, transport fluvial.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "jillian-riverpipe-huriya",
+      "name": "Jillian Riverpipe",
+      "role": "Alliance des Veines",
+      "notes": "Assistante dans l'Alliance des Veines à Huriya.",
+      "sex": "F",
+      "membership": "CRIMINALITE",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "ernil-sultaasar",
+      "name": "Ernil Sultaasar",
+      "role": "Aubergiste du Monocle du Diable",
+      "notes": "Elfe des bois costaud tenant le Monocle du Diable à Huriya. Visage carré, cheveux bruns bouclés, yeux bruns calculateurs. Voit tout, parle peu.",
+      "sex": "M",
+      "breed": "ELFE",
+      "membership": "OTHER",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "vael-korshen",
+      "name": "Vael Korshen",
+      "role": "Agent Conseil d'Acier / Œil Pourpre",
+      "notes": "Agent criminel du Conseil d'Acier opérant à Huriya, lié à la cellule locale.",
+      "sex": "M",
+      "membership": "CRIMINALITE",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "brakk-enclume",
+      "name": "Brakk «l'Enclume»",
+      "role": "Champion de l'arène illicite",
+      "notes": "Demi-orc, combattant de l'arène clandestine du Monocle du Diable à Huriya.",
+      "sex": "M",
+      "breed": "DEMI_ORC",
+      "membership": "CRIMINALITE",
+      "cityKey": "huriya"
+    },
+    {
+      "key": "tonur-elurra",
+      "name": "Tonur Elurra",
+      "role": "Roi du Dominion de L'Antre",
+      "notes": "17e du nom. Drakonien, transmet le trône de père en fils en prenant le nom de Tonur. Fils de Teit Elurra et Drifa Mendia.",
+      "sex": "M",
+      "breed": "DRAKEIDE",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "erlea-gerlaria",
+      "name": "Erlea Gerlaria",
+      "role": "Reine de l'Antre (décédée)",
+      "notes": "Épouse du roi Tonur Elurra. Décédée. Fille d'Ornulf Gerlaria et Eydis Gerlaria.",
+      "sex": "F",
+      "breed": "DRAKEIDE",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "aner-elurra",
+      "name": "Aner Elurra",
+      "role": "Prince de l'Antre",
+      "notes": "Fils du roi Tonur Elurra et d'Erlea Gerlaria.",
+      "sex": "M",
+      "breed": "DRAKEIDE",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "asdis-elurra",
+      "name": "Asdis Elurra",
+      "role": "Princesse de l'Antre",
+      "notes": "Fille du roi Tonur Elurra et d'Erlea Gerlaria.",
+      "sex": "F",
+      "breed": "DRAKEIDE",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "ornolf-elurra",
+      "name": "Ornolf Elurra",
+      "role": "Prince de l'Antre (captif)",
+      "notes": "Fils du roi Tonur Elurra, actuellement captif.",
+      "sex": "M",
+      "breed": "DRAKEIDE",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "esebio-tomasio",
+      "name": "Esebio Tomasio",
+      "role": "Comte des Dolomites à Brodnica",
+      "notes": "Représentant du gouvernement des Duchés des Dolomite à Brodnica. Réside au palais du comte.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "belina-tomasio",
+      "name": "Belina Tomasio",
+      "role": "Comtesse des Dolomites à Brodnica",
+      "notes": "Épouse d'Esebio Tomasio.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "vanessa-tomasio",
+      "name": "Vanessa Tomasio",
+      "role": "Fille du Comte Tomasio (jumelle)",
+      "notes": "Jumelle de Vanda Tomasio, fille d'Esebio et Belina.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "vanda-tomasio",
+      "name": "Vanda Tomasio",
+      "role": "Fille du Comte Tomasio (jumelle)",
+      "notes": "Jumelle de Vanessa Tomasio, fille d'Esebio et Belina.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "taral-de-lest",
+      "name": "Taral de l'Est",
+      "role": "Garde du corps des jumelles Tomasio",
+      "notes": "Guerrier de niveau 9, garde du corps personnel des jumelles Vanessa et Vanda Tomasio à Brodnica.",
+      "sex": "M",
+      "membership": "MILITAIRE",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "ayas-sarwens",
+      "name": "Ayas Sarwens",
+      "role": "Directeur de la Nécrole",
+      "notes": "Directeur de l'école de nécromancie clandestine (Nécrole) sous Brodnica. Niveau 12.",
+      "sex": "M",
+      "membership": "RELIGEUX",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "malriho-uzuth",
+      "name": "Malriho Uzuth",
+      "role": "Professeur de nécromancie",
+      "notes": "Drow, professeur à la Nécrole de Brodnica.",
+      "sex": "M",
+      "breed": "DROW",
+      "membership": "RELIGEUX",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "afa-noirmaree",
+      "name": "Afa NoirMarée",
+      "role": "Professeure de nécromancie",
+      "notes": "Génasi de terre, professeure à la Nécrole de Brodnica.",
+      "sex": "F",
+      "breed": "GENASITERRE",
+      "membership": "RELIGEUX",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "vedast-bolger",
+      "name": "Vedast Bolger",
+      "role": "Professeur de nécromancie",
+      "notes": "Halfelin, professeur à la Nécrole de Brodnica.",
+      "sex": "M",
+      "breed": "HALFELIN",
+      "membership": "RELIGEUX",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "immiq-ammi",
+      "name": "Immiq Ammi",
+      "role": "Professeur de nécromancie",
+      "notes": "Tieffelin, professeur à la Nécrole de Brodnica.",
+      "sex": "M",
+      "breed": "TIEFFELIN",
+      "membership": "RELIGEUX",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "norgac-delsarane",
+      "name": "Norgac Delsarane",
+      "role": "Administratif de Brodnica",
+      "notes": "Responsable administratif de la ville de Brodnica.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "fulrad-longue-riviere",
+      "name": "Fulrad Longue-Rivière",
+      "role": "Directeur de la C.C.C.H à Brodnica",
+      "notes": "Directeur de la cellule de la Chambre de Commerce Clandestine et Honnête (C.C.C.H) à Brodnica.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "gilly-fortpied",
+      "name": "Gilly FortPied",
+      "role": "Responsable Opérationnel C.C.C.H",
+      "notes": "Responsable opérationnel de la C.C.C.H à Brodnica.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "snakha",
+      "name": "Snakha",
+      "role": "Chef du Syndicat/Conseil d'Acier à l'Antre",
+      "notes": "Représentant du Conseil d'Acier pour l'île de l'Antre. Chef local du Syndicat.",
+      "sex": "M",
+      "membership": "CRIMINALITE",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "zulban-gardebarbe",
+      "name": "Zulban GardeBarbe",
+      "role": "Mage rapproché de Snakha",
+      "notes": "Mage personnel de Snakha, chef du Syndicat à Brodnica.",
+      "sex": "M",
+      "membership": "CRIMINALITE",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "fortegriffe",
+      "name": "ForteGriffe",
+      "role": "Barbare garde du corps de Snakha",
+      "notes": "Garde du corps barbare de Snakha à Brodnica.",
+      "sex": "M",
+      "breed": "DRAKEIDE",
+      "membership": "CRIMINALITE",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "triosz",
+      "name": "Triosz",
+      "role": "Assassin attitré du Conseil d'Acier",
+      "notes": "Sniper et assassin attitré pour éliminer les problèmes du Conseil d'Acier à Brodnica.",
+      "sex": "M",
+      "membership": "CRIMINALITE",
+      "cityKey": "brodnica"
+    },
+    {
+      "key": "sheli-doxe",
+      "name": "Sheli Doxe",
+      "role": "Maire de Karni",
+      "notes": "Maire de la ville portuaire de Karni dans le Dominion de L'Antre.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "karni"
+    },
+    {
+      "key": "symma-turen",
+      "name": "Symma Turen",
+      "role": "Archimage d'Iserna",
+      "notes": "Archimage et représentante d'Iserna au Magisterium des Duchés des Dolomite. École d'enchantement.",
+      "sex": "F",
+      "breed": "GNOME",
+      "membership": "RELIGEUX",
+      "cityKey": "iserna"
+    },
+    {
+      "key": "akara-thrahak",
+      "name": "Akara du clan Thrahak",
+      "role": "Cavalier 2 — Œil Pourpre Iserna",
+      "notes": "Naine du clan Thrahak, rang Cavalier 2 de la cellule de l'Œil Pourpre à Iserna.",
+      "sex": "F",
+      "breed": "NAIN",
+      "membership": "CRIMINALITE",
+      "cityKey": "iserna"
+    },
+    {
+      "key": "cumpen-horcus",
+      "name": "Cumpen Horcus",
+      "role": "Fou 2 — Œil Pourpre Iserna",
+      "notes": "Gnome, rang Fou 2 de la cellule de l'Œil Pourpre à Iserna.",
+      "sex": "M",
+      "breed": "GNOME",
+      "membership": "CRIMINALITE",
+      "cityKey": "iserna"
+    },
+    {
+      "key": "frouse-fiddlefen",
+      "name": "Frouse Fiddlefen",
+      "role": "Pion 9 — Œil Pourpre Iserna",
+      "notes": "Gnome, pion de la cellule de l'Œil Pourpre à Iserna.",
+      "sex": "M",
+      "breed": "GNOME",
+      "membership": "CRIMINALITE",
+      "cityKey": "iserna"
+    },
+    {
+      "key": "boddynock-folkor",
+      "name": "Boddynock Folkor",
+      "role": "Pion 10 — Œil Pourpre Iserna",
+      "notes": "Gnome, pion de la cellule de l'Œil Pourpre à Iserna.",
+      "sex": "M",
+      "breed": "GNOME",
+      "membership": "CRIMINALITE",
+      "cityKey": "iserna"
+    },
+    {
+      "key": "qualen-pilwicken",
+      "name": "Qualen Pilwicken",
+      "role": "Archimage de Russolio",
+      "notes": "Archimage et représentant de Russolio au Magisterium. École d'invocation. Gère une ville lourdement armée avec commerce d'esclaves drakonides.",
+      "sex": "M",
+      "breed": "GNOME",
+      "membership": "POLITIC",
+      "cityKey": "russolio"
+    },
+    {
+      "key": "kerrhylon-fax",
+      "name": "Kerrhylon Fax",
+      "role": "Tours 2 — Œil Pourpre Russolio",
+      "notes": "Drakéide, rang Tours 2 de la cellule de l'Œil Pourpre à Russolio.",
+      "sex": "M",
+      "breed": "DRAKEIDE",
+      "membership": "CRIMINALITE",
+      "cityKey": "russolio"
+    },
+    {
+      "key": "aurore-grandpont",
+      "name": "Aurore Grandpont",
+      "role": "Pion — Œil Pourpre Russolio",
+      "notes": "Humaine, pion de la cellule de l'Œil Pourpre à Russolio.",
+      "sex": "F",
+      "breed": "HUMAIN",
+      "membership": "CRIMINALITE",
+      "cityKey": "russolio"
+    },
+    {
+      "key": "crampernap-scheppen",
+      "name": "Crampernap Scheppen",
+      "role": "Pion — Œil Pourpre Russolio",
+      "notes": "Gnome, pion de la cellule de l'Œil Pourpre à Russolio.",
+      "sex": "M",
+      "breed": "GNOME",
+      "membership": "CRIMINALITE",
+      "cityKey": "russolio"
+    },
+    {
+      "key": "david-iv",
+      "name": "David IV",
+      "role": "Monarque du Royaume de Gandorènne",
+      "notes": "Dirigeant de Gandorènne d'une main de fer. Fondé il y a 100 ans par David III. Actuellement en guerre froide avec le Saint-Empire Momoritanien.",
+      "sex": "M",
+      "breed": "HUMAIN",
+      "membership": "POLITIC",
+      "cityKey": "gandor"
+    },
+    {
+      "key": "geani-gandorenne",
+      "name": "Geani",
+      "role": "Épouse de David IV",
+      "notes": "Nouvelle épouse du roi David IV de Gandorènne.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "gandor"
+    },
+    {
+      "key": "aedran-elvaltis",
+      "name": "Aedran Elvaltis",
+      "role": "Gouverneur de Kalanos",
+      "notes": "Gouverneur de Kalanos, 45 ans, homme imposant aux cheveux noirs grisonnants. Diplomate pragmatique contrôlant strictement les carrières. Soucieux de l'ordre impérial.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "nyssara-elvaltis",
+      "name": "Nyssara Elvaltis",
+      "role": "Épouse du Gouverneur de Kalanos",
+      "notes": "42 ans, cheveux auburn, gère les affaires sociales et religieuses. Dévouée à Ral Nagor. Manipulatrice habile dans les cercles influents.",
+      "sex": "F",
+      "membership": "RELIGEUX",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "maeltor-elvaltis",
+      "name": "Maeltor Elvaltis",
+      "role": "Héritier du Gouverneur de Kalanos",
+      "notes": "23 ans, fils aîné d'Aedran. Mince mais musclé, regard vif. Désinvolture cachant une ambition féroce. S'aventure dans les ruines souterraines.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "lyris-elvaltis",
+      "name": "Lyris Elvaltis",
+      "role": "Fille du Gouverneur de Kalanos",
+      "notes": "18 ans, fille cadette d'Aedran. Érudite passionnée d'architecture et d'histoire ancienne. Cheveux châtain clair, toujours entourée de parchemins.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "tharim-dastren",
+      "name": "Tharim Dastren",
+      "role": "Maître des Carrières de Kalanos",
+      "notes": "Homme robuste, barbe rousse, mains calleuses. Expert du sous-sol, fidèle allié des Elvaltis, parfois en désaccord avec leur gestion.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "elivara-tanis",
+      "name": "Elivara Tanis",
+      "role": "Haute prêtresse du Temple de Tal Odius",
+      "notes": "Grande et imposante, cheveux argentés, voix douce mais ferme. Conscience spirituelle de Kalanos, médiatrice entre les factions.",
+      "sex": "F",
+      "membership": "RELIGEUX",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "darven-krest",
+      "name": "Darven Krest",
+      "role": "Capitaine de la Garde impériale à Kalanos",
+      "notes": "Peau sombre, cheveux ras. Efficacité militaire et loyauté sans faille envers l'Empire. Maintient l'ordre dans les quartiers populaires.",
+      "sex": "M",
+      "membership": "MILITAIRE",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "hirvel-soran",
+      "name": "Hirvel Soran",
+      "role": "Chef du Consortium de l'Ardoise",
+      "notes": "Principal financier de Kalanos, homme sournois et corpulent en robes luxueuses. Nombreuses connexions avec marchands d'autres cités.",
+      "sex": "M",
+      "membership": "MARCHAND",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "arienna-zandris",
+      "name": "Arienna Zandris",
+      "role": "Propriétaire de la Fonderie Lumiforge",
+      "notes": "Petite et énergique, cheveux noirs en chignon. Figure influente du commerce local spécialisée dans les ornements en pierre précieuse.",
+      "sex": "F",
+      "membership": "MARCHAND",
+      "cityKey": "kalanos"
+    },
+    {
+      "key": "rhendom-kinemor",
+      "name": "Rhendom Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor du Saint-Empire Momoritanien.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "taripica-kinemor",
+      "name": "Taripica Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor du Saint-Empire Momoritanien.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "calison-kinemor",
+      "name": "Calison Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "norima-kinemor",
+      "name": "Norima Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "limor-kinemor",
+      "name": "Limor Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "lauc-kinemor",
+      "name": "Lauc Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "tenabis-kinemor",
+      "name": "Tenabis Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "almenia-kinemor",
+      "name": "Alménia Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "F",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "ymal-kinemor",
+      "name": "Ymal Kinemor",
+      "role": "Famille royale Kinemor",
+      "notes": "Membre de la famille royale Kinemor.",
+      "sex": "M",
+      "membership": "POLITIC",
+      "cityKey": "momoritania"
+    },
+    {
+      "key": "sultan-alym",
+      "name": "Alym",
+      "role": "Sultan de Sandarane",
+      "notes": "Famille régnante du Sultanat de Sandarane depuis plus de 400 ans. Siège à Sandarane.",
+      "sex": "M",
+      "breed": "HUMAIN",
+      "membership": "POLITIC",
+      "cityKey": "sandarane"
+    },
+    {
+      "key": "moite-le-juste",
+      "name": "Moite le juste",
+      "role": "Souverain actuel de Sandarane",
+      "notes": "Règne actuellement depuis Sandarane la capitale. Siège au Cœur Vert du Sultanat.",
+      "sex": "M",
+      "breed": "HUMAIN",
+      "membership": "POLITIC",
+      "cityKey": "sandarane"
+    }
+  ],
+
+  "organisations": [
+    {
+      "key": "maison-tovalis",
+      "name": "Maison Tovalis",
+      "description": "Grande famille marchande d'Alagir spécialisée dans le commerce du marbre pourpre et la taille de pierre. L'une des trois familles fondatrices de la cité libre.",
+      "kind": "FAMILLE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["alagir"]
+    },
+    {
+      "key": "maison-palhindile",
+      "name": "Maison Palhindile",
+      "description": "Grande famille diplomatique d'Alagir, spécialisée dans le soufflage de verre et les halls diplomatiques. Fondatrice de la cité libre.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["alagir"]
+    },
+    {
+      "key": "maison-cilovard",
+      "name": "Maison Cilovard",
+      "description": "Grande famille bancaire d'Alagir, spécialisée dans les dorures et la finance. Fondatrice de la cité libre.",
+      "kind": "FAMILLE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["alagir"]
+    },
+    {
+      "key": "soleil-pourpre",
+      "name": "Soleil Pourpre",
+      "description": "Milice mercenaire maintenant l'ordre à Alagir, excellant dans l'entraînement de ses recrues. Patrouille partout depuis le renforcement du pouvoir royal.",
+      "kind": "ARMEE",
+      "membership": "MILITAIRE",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["alagir"]
+    },
+    {
+      "key": "couronne-de-platine",
+      "name": "Couronne de Platine",
+      "description": "Première banque d'État d'Alagir, symbole de la puissance financière de la cité. Née des réfugiés fuyant Gandorènne il y a plus de 100 ans.",
+      "kind": "GUILDE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["alagir"]
+    },
+    {
+      "key": "caisse-richesses-cachees",
+      "name": "Caisse des Richesses Cachées",
+      "description": "Banque influente d'Alagir, l'une des deux grandes institutions financières de la cité aux côtés de la Couronne de Platine.",
+      "kind": "GUILDE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["alagir"]
+    },
+    {
+      "key": "ecus-dor",
+      "name": "Écus d'Or",
+      "description": "Cohorte de mercenaires assurant la sécurité de Huriya. Connue pour son excellence dans la formation de ses recrues.",
+      "kind": "ARMEE",
+      "membership": "MILITAIRE",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["huriya"]
+    },
+    {
+      "key": "voiliers-dether",
+      "name": "Compagnie des Voiliers d'Éther",
+      "description": "Compagnie de transport fluvial de Huriya dirigée par Rany Mullimax. L'un des grands opérateurs logistiques de la cité.",
+      "kind": "GUILDE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["huriya"]
+    },
+    {
+      "key": "alliance-des-veines",
+      "name": "Alliance des Veines",
+      "description": "Organisation criminelle de Huriya dirigée par Faith, avec Jillian Riverpipe comme assistante.",
+      "kind": "GUILDE",
+      "membership": "CRIMINALITE",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["huriya"]
+    },
+    {
+      "key": "famille-ivelis",
+      "name": "Famille Ivelis",
+      "description": "Famille dirigeante de la cité libre de Huriya. Comprend Aimon, Sana, Volodar, Akkar, Ilrune, Galya et Keerla Ivelis.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["cite-libre"],
+      "cityKeys": ["huriya"]
+    },
+    {
+      "key": "conseil-dacier",
+      "name": "Conseil d'Acier",
+      "description": "Organisation criminelle majeure opérant dans plusieurs régions de Solenia. Coordonne le Syndicat et les cellules de l'Œil Pourpre.",
+      "kind": "SECTE",
+      "membership": "CRIMINALITE",
+      "kingdomKeys": ["cite-libre", "antre", "dolomite"]
+    },
+    {
+      "key": "syndicat",
+      "name": "Syndicat",
+      "description": "Réseau criminel opérant dans les cités libres et le Dominion de L'Antre, sous influence du Conseil d'Acier.",
+      "kind": "GUILDE",
+      "membership": "CRIMINALITE",
+      "kingdomKeys": ["cite-libre", "antre"],
+      "parentKey": "conseil-dacier"
+    },
+    {
+      "key": "ccch",
+      "name": "C.C.C.H",
+      "description": "Chambre de Commerce Clandestine et Honnête. Organisation marchande opérant dans l'ombre à Brodnica et Iserna, avec des connexions dans plusieurs régions.",
+      "kind": "GUILDE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["antre", "dolomite"]
+    },
+    {
+      "key": "clan-elurra",
+      "name": "Clan Elurra",
+      "description": "Clan drakonien de la neige, l'un des 4 clans majeurs du Dominion de L'Antre. Famille royale du Roi Tonur.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["antre"],
+      "cityKeys": ["brodnica"]
+    },
+    {
+      "key": "clan-mendia",
+      "name": "Clan Mendia",
+      "description": "Clan drakonien de la montagne, l'un des 4 clans majeurs du Dominion de L'Antre.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["antre"],
+      "cityKeys": ["brodnica"]
+    },
+    {
+      "key": "clan-itsasoa",
+      "name": "Clan Itsasoa",
+      "description": "Clan drakonien de la mer, l'un des 4 clans majeurs du Dominion de L'Antre.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["antre"],
+      "cityKeys": ["brodnica"]
+    },
+    {
+      "key": "clan-gerlaria",
+      "name": "Clan Gerlaria",
+      "description": "Clan drakonien du guerrier, l'un des 4 clans majeurs du Dominion de L'Antre.",
+      "kind": "FAMILLE",
+      "membership": "MILITAIRE",
+      "kingdomKeys": ["antre"],
+      "cityKeys": ["brodnica"]
+    },
+    {
+      "key": "culte-tiamat",
+      "name": "Culte de Tiamat",
+      "description": "Culte religieux dominant du Dominion de L'Antre vénérant Tiamat le dieu dragon. Espoir d'un jour réveiller Tiamat et unir les dragons.",
+      "kind": "SECTE",
+      "membership": "RELIGEUX",
+      "kingdomKeys": ["antre"]
+    },
+    {
+      "key": "magisterium",
+      "name": "Magisterium",
+      "description": "Conseil des mages gouvernant les Duchés des Dolomite. Composé d'un représentant par ville, élit le Roi Archimage pour 20 ans.",
+      "kind": "CONSEIL",
+      "membership": "POLITIC",
+      "kingdomKeys": ["dolomite"]
+    },
+    {
+      "key": "oeil-pourpre",
+      "name": "Œil Pourpre",
+      "description": "Organisation criminelle de renseignement et d'espionnage, façade du Soleil Pourpre. Opère des cellules à Iserna et Russolio, sous le Conseil d'Acier.",
+      "kind": "SECTE",
+      "membership": "CRIMINALITE",
+      "kingdomKeys": ["dolomite"],
+      "parentKey": "conseil-dacier"
+    },
+    {
+      "key": "famille-elvaltis",
+      "name": "Famille Elvaltis",
+      "description": "Famille noble du Saint-Empire Momoritanien envoyée gérer Kalanos. Comprend Aedran (gouverneur), Nyssara, Maeltor et Lyris.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["saint-empire"],
+      "cityKeys": ["kalanos"]
+    },
+    {
+      "key": "consortium-ardoise",
+      "name": "Consortium de l'Ardoise",
+      "description": "Organisation marchande de Kalanos contrôlant le commerce de l'ardoise blanche. Dirigé par Hirvel Soran.",
+      "kind": "GUILDE",
+      "membership": "MARCHAND",
+      "kingdomKeys": ["saint-empire"],
+      "cityKeys": ["kalanos"]
+    },
+    {
+      "key": "main-du-silence",
+      "name": "La Main du Silence",
+      "description": "Organisation secrète du Saint-Empire Momoritanien. Nature et activités gardées confidentielles.",
+      "kind": "SECTE",
+      "membership": "OTHER",
+      "kingdomKeys": ["saint-empire"]
+    },
+    {
+      "key": "famille-kinemor",
+      "name": "Famille Kinemor",
+      "description": "Famille royale du Saint-Empire Momoritanien, siégeant à Momoritania la capitale.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["saint-empire"],
+      "cityKeys": ["momoritania"]
+    },
+    {
+      "key": "famille-alym",
+      "name": "Famille Alym",
+      "description": "Famille royale du Sultanat de Sandarane, au pouvoir depuis plus de 400 ans. Pratique le sacrifice du premier jumeau né pour éviter les guerres de succession.",
+      "kind": "FAMILLE",
+      "membership": "POLITIC",
+      "kingdomKeys": ["sandarane"],
+      "cityKeys": ["sandarane"]
+    },
+    {
+      "key": "etreinte-du-vent",
+      "name": "L'Étreinte du Vent",
+      "description": "Grande organisation d'assassins fanatiques basée au sud du Sultanat de Sandarane. Siège de l'étreinte du vent.",
+      "kind": "SECTE",
+      "membership": "CRIMINALITE",
+      "kingdomKeys": ["sandarane"]
+    }
+  ]
+}

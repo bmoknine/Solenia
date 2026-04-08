@@ -21,6 +21,9 @@
     "clean-orphans": "tsx scripts/clean-orphans.ts",
     "wipe-data": "tsx scripts/wipe-all-except-users.ts",
     "db:backup": "mkdir -p backups && (set -a && . ./.env 2>/dev/null; set +a; pg_dump \"$DATABASE_URL\" -F p -f \"backups/solenia_$(date +%Y%m%d_%H%M%S).sql\" && echo \"Sauvegarde créée dans backups/\")",
+    "db:snapshot": "bash scripts/db-snapshot-for-rollback.sh",
+    "db:restore": "bash scripts/db-restore-from-snapshot.sh",
+    "db:import-drive-solenia": "tsx scripts/import-drive-solenia.ts",
     "backup:person-affiliations": "tsx scripts/backup-person-affiliations.ts"
   },
   "keywords": [],
