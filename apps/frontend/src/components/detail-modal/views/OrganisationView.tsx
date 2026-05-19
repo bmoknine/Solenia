@@ -5,6 +5,7 @@ import { listCities, listKingdoms, listOrganisations, listPersons, listPlaces } 
 import { LoreSection } from '../LoreSection';
 import { FlagSelect } from '../FlagSelect';
 import { SearchableSelect } from '../SearchableSelect';
+import { SearchableMultiSelect } from '../SearchableMultiSelect';
 import { MEMBERSHIP_OPTIONS } from '../entityOptions';
 import { formatMembership } from '../entityFormatters';
 import type { EditState, OrganisationEditState } from '../detailModalTypes';
@@ -186,9 +187,7 @@ export function OrganisationView({
               <li
                 key={subOrg.id}
                 style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => {
-                  if (onNavigate) onNavigate(organisationRefToNavPoint(subOrg));
-                }}
+                onClick={() => { if (onNavigate) onNavigate(organisationRefToNavPoint(subOrg)); }}
               >
                 {subOrg.name}
               </li>
@@ -196,194 +195,112 @@ export function OrganisationView({
           </ul>
         </div>
       )}
-      {data?.members && data.members.length > 0 && (
-        <div className="detail-section">
-          <h3 className="section-title">Membres :</h3>
-          <ul className="detail-list">
-            {data?.members.map((m) => (
-              <li
-                key={m.id}
-                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => onNavigate && onNavigate(createMapPointFromRef(m, 'person'))}
-              >
-                {m.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {data?.cities && data.cities.length > 0 && (
-        <div className="detail-section">
-          <h3 className="section-title">Villes :</h3>
-          <ul className="detail-list">
-            {data?.cities.map((c) => (
-              <li
-                key={c.id}
-                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => onNavigate && onNavigate(createMapPointFromRef(c, 'city'))}
-              >
-                {c.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {data?.places && data.places.length > 0 && (
-        <div className="detail-section">
-          <h3 className="section-title">Lieux :</h3>
-          <ul className="detail-list">
-            {data?.places.map((p) => (
-              <li
-                key={p.id}
-                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => onNavigate && onNavigate(createMapPointFromRef(p, 'place'))}
-              >
-                {p.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {data?.kingdoms && data.kingdoms.length > 0 && (
-        <div className="detail-section">
-          <h3 className="section-title">Royaumes :</h3>
-          <ul className="detail-list">
-            {data?.kingdoms.map((k) => (
-              <li
-                key={k.id}
-                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => onNavigate && onNavigate(createMapPointFromRef(k, 'kingdom'))}
-              >
-                {k.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {editMode && (
-        <>
-          <div className="detail-item">
-            <span className="detail-label">Royaumes</span>
-            {loadingLists ? (
+      <div className="detail-grid">
+        <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+          <span className="detail-label">Royaumes</span>
+          {editMode ? (
+            loadingLists ? (
               <span className="detail-value">Chargement...</span>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                {kingdoms.map((kingdom) => {
-                  const orgState = editState as OrganisationEditState;
-                  const selectedIds = orgState?.kingdomIds || data?.kingdoms?.map((k) => k.id) || [];
-                  const isSelected = selectedIds.includes(kingdom.id);
-                  return (
-                    <label key={kingdom.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const currentIds = orgState?.kingdomIds || data?.kingdoms?.map((k) => k.id) || [];
-                          const newIds = e.target.checked
-                            ? [...currentIds, kingdom.id]
-                            : currentIds.filter((id) => id !== kingdom.id);
-                          onChange('kingdomIds', newIds);
-                        }}
-                      />
-                      <span>{kingdom.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Villes</span>
-            {loadingLists ? (
+              <SearchableMultiSelect
+                items={kingdoms}
+                selectedIds={(editState as OrganisationEditState)?.kingdomIds ?? data?.kingdoms?.map((k) => k.id) ?? []}
+                onChange={(ids) => onChange('kingdomIds', ids)}
+                placeholder="Ajouter un royaume..."
+              />
+            )
+          ) : (data?.kingdoms?.length ?? 0) > 0 ? (
+            <div className="tags">
+              {(data?.kingdoms ?? []).map((k) => (
+                <span key={k.id} className="tag" style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                  onClick={() => onNavigate && onNavigate(createMapPointFromRef(k, 'kingdom'))}>
+                  {k.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="detail-value">—</span>
+          )}
+        </div>
+        <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+          <span className="detail-label">Villes</span>
+          {editMode ? (
+            loadingLists ? (
               <span className="detail-value">Chargement...</span>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                {cities.map((city) => {
-                  const orgState = editState as OrganisationEditState;
-                  const selectedIds = orgState?.cityIds || data?.cities?.map((c) => c.id) || [];
-                  const isSelected = selectedIds.includes(city.id);
-                  return (
-                    <label key={city.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const currentIds = orgState?.cityIds || data?.cities?.map((c) => c.id) || [];
-                          const newIds = e.target.checked
-                            ? [...currentIds, city.id]
-                            : currentIds.filter((id) => id !== city.id);
-                          onChange('cityIds', newIds);
-                        }}
-                      />
-                      <span>{city.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Lieux</span>
-            {loadingLists ? (
+              <SearchableMultiSelect
+                items={cities}
+                selectedIds={(editState as OrganisationEditState)?.cityIds ?? data?.cities?.map((c) => c.id) ?? []}
+                onChange={(ids) => onChange('cityIds', ids)}
+                placeholder="Ajouter une ville..."
+              />
+            )
+          ) : (data?.cities?.length ?? 0) > 0 ? (
+            <div className="tags">
+              {(data?.cities ?? []).map((c) => (
+                <span key={c.id} className="tag" style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                  onClick={() => onNavigate && onNavigate(createMapPointFromRef(c, 'city'))}>
+                  {c.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="detail-value">—</span>
+          )}
+        </div>
+        <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+          <span className="detail-label">Lieux</span>
+          {editMode ? (
+            loadingLists ? (
               <span className="detail-value">Chargement...</span>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                {places.map((place) => {
-                  const orgState = editState as OrganisationEditState;
-                  const selectedIds = orgState?.placeIds || data?.places?.map((p) => p.id) || [];
-                  const isSelected = selectedIds.includes(place.id);
-                  return (
-                    <label key={place.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const currentIds = orgState?.placeIds || data?.places?.map((p) => p.id) || [];
-                          const newIds = e.target.checked
-                            ? [...currentIds, place.id]
-                            : currentIds.filter((id) => id !== place.id);
-                          onChange('placeIds', newIds);
-                        }}
-                      />
-                      <span>{place.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Personnes</span>
-            {loadingLists ? (
+              <SearchableMultiSelect
+                items={places}
+                selectedIds={(editState as OrganisationEditState)?.placeIds ?? data?.places?.map((p) => p.id) ?? []}
+                onChange={(ids) => onChange('placeIds', ids)}
+                placeholder="Ajouter un lieu..."
+              />
+            )
+          ) : (data?.places?.length ?? 0) > 0 ? (
+            <div className="tags">
+              {(data?.places ?? []).map((p) => (
+                <span key={p.id} className="tag" style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                  onClick={() => onNavigate && onNavigate(createMapPointFromRef(p, 'place'))}>
+                  {p.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="detail-value">—</span>
+          )}
+        </div>
+        <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+          <span className="detail-label">Membres</span>
+          {editMode ? (
+            loadingLists ? (
               <span className="detail-value">Chargement...</span>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                {persons.map((person) => {
-                  const orgState = editState as OrganisationEditState;
-                  const selectedIds = orgState?.personIds || data?.members?.map((m) => m.id) || [];
-                  const isSelected = selectedIds.includes(person.id);
-                  return (
-                    <label key={person.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          const currentIds = orgState?.personIds || data?.members?.map((m) => m.id) || [];
-                          const newIds = e.target.checked
-                            ? [...currentIds, person.id]
-                            : currentIds.filter((id) => id !== person.id);
-                          onChange('personIds', newIds);
-                        }}
-                      />
-                      <span>{person.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </>
-      )}
+              <SearchableMultiSelect
+                items={persons}
+                selectedIds={(editState as OrganisationEditState)?.personIds ?? data?.members?.map((m) => m.id) ?? []}
+                onChange={(ids) => onChange('personIds', ids)}
+                placeholder="Ajouter un personnage..."
+              />
+            )
+          ) : (data?.members?.length ?? 0) > 0 ? (
+            <div className="tags">
+              {(data?.members ?? []).map((m) => (
+                <span key={m.id} className="tag" style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                  onClick={() => onNavigate && onNavigate(createMapPointFromRef(m, 'person'))}>
+                  {m.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="detail-value">—</span>
+          )}
+        </div>
+      </div>
       <LoreSection lores={data?.lores} onOpenLore={onOpenLore} />
     </>
   );

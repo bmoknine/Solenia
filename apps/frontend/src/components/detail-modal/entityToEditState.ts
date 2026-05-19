@@ -29,6 +29,7 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
       name: '',
       description: null,
       map: null,
+      placeType: 'AUTRE' as const,
       kingdomId: null,
       cityId: null,
       districtId: null,

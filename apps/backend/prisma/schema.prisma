@@ -136,17 +136,26 @@ model District {
   persons  PersonOfInterest[]
 }
 
+enum PlaceType {
+  MAGASIN
+  TAVERNE_AUBERGE
+  MAGASIN_MAGIE
+  HERBORISTE_APOTHICAIRE
+  AUTRE
+}
+
 model Place {
-  id          String    @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
   description String?
   iconUrl     String?
   map         String?
+  placeType   PlaceType  @default(AUTRE)
   kingdomId   String?
   cityId      String?
   districtId  String?
-  showOnMap   Boolean   @default(true) // Afficher sur la carte
-  isForDM     Boolean   @default(false)
+  showOnMap   Boolean    @default(true)
+  isForDM     Boolean    @default(false)
 
   kingdom  Kingdom?  @relation(fields: [kingdomId], references: [id])
   city     City?     @relation(fields: [cityId], references: [id])
