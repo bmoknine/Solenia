@@ -42,11 +42,22 @@ export const districtInputSchema = z.object({
 export const organisationTypeSchema = z.enum(['CELLULE', 'PRINCIPAL']);
 export type OrganisationType = z.infer<typeof organisationTypeSchema>;
 
+export const placeTypeEnum = z.enum([
+  'MAGASIN',
+  'TAVERNE_AUBERGE',
+  'MAGASIN_MAGIE',
+  'HERBORISTE_APOTHICAIRE',
+  'AUTRE',
+]);
+export type PlaceType = z.infer<typeof placeTypeEnum>;
+export const PLACE_TYPE_VALUES = placeTypeEnum.options;
+
 export const placeInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   iconUrl: z.string().nullable().optional(),
   map: z.string().nullable().optional(),
+  placeType: placeTypeEnum.optional(),
   kingdomId: idSchema.nullable().optional(),
   cityId: idSchema.nullable().optional(),
   districtId: idSchema.nullable().optional(),

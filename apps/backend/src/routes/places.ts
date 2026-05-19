@@ -42,6 +42,7 @@ type PlaceCreateFields = {
   description?: string | null;
   iconUrl?: string | null;
   map?: string | null;
+  placeType?: string;
   kingdomId?: string | null;
   cityId?: string | null;
   districtId?: string | null;
@@ -129,6 +130,7 @@ export async function placeRoutes(app: FastifyInstance) {
         description: normalized.description ?? undefined,
         iconUrl: normalized.iconUrl ?? '/Icon/place.png',
         map: normalized.map,
+        placeType: (rest.placeType as import('@prisma/client').PlaceType | undefined) ?? 'AUTRE',
         kingdomId: normalized.kingdomId,
         cityId: normalized.cityId,
         districtId: normalized.districtId,
@@ -171,6 +173,7 @@ export async function placeRoutes(app: FastifyInstance) {
     if ('name' in rawRest) data.name = rawRest.name;
     if ('description' in rawRest) data.description = rawRest.description ?? null;
     if ('map' in rawRest) data.map = rawRest.map ?? null;
+    if ('placeType' in rawRest) data.placeType = rawRest.placeType ?? 'AUTRE';
     if ('isForDM' in rawRest) data.isForDM = rawRest.isForDM;
     if ('showOnMap' in rawRest) data.showOnMap = rawRest.showOnMap ?? true;
     data.kingdomId = merged.kingdomId;

@@ -14,7 +14,8 @@ export type District = {
   rumors?: string | null;
   secret?: string | null;
 };
-export type Place = { id: string; name: string; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; showOnMap?: boolean; isForDM?: boolean };
+export type PlaceType = 'MAGASIN' | 'TAVERNE_AUBERGE' | 'MAGASIN_MAGIE' | 'HERBORISTE_APOTHICAIRE' | 'AUTRE';
+export type Place = { id: string; name: string; placeType?: PlaceType; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; showOnMap?: boolean; isForDM?: boolean };
 export type OrganisationType = 'CELLULE' | 'PRINCIPAL';
 export type Membership = 'POLITIC' | 'RELIGEUX' | 'MARCHAND' | 'MILITAIRE' | 'CRIMINALITE' | 'OTHER';
 export type Organisation = {
@@ -265,6 +266,7 @@ export async function updatePlace(
     description: string | null;
     iconUrl?: string | null;
     map?: string | null;
+    placeType?: PlaceType;
     kingdomId?: string | null;
     cityId?: string | null;
     districtId?: string | null;
@@ -331,6 +333,7 @@ export async function createPlace(
   data: Base & {
     iconUrl?: string;
     map?: string | null;
+    placeType?: PlaceType;
     kingdomId?: string;
     cityId?: string;
     districtId?: string;

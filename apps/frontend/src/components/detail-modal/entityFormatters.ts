@@ -1,4 +1,4 @@
-import type { Breed, Sex, Membership, Language } from '../../api/entities';
+import type { Breed, Sex, Membership, Language, PlaceType } from '../../api/entities';
 
 export function formatBreed(breed: Breed | null | undefined): string {
   if (!breed) return '-';
@@ -26,6 +26,18 @@ export function formatMembership(membership: Membership | null | undefined): str
     OTHER: 'Autre',
   };
   return map[membership] || membership;
+}
+
+export function formatPlaceType(placeType: PlaceType | null | undefined): string {
+  if (!placeType) return 'Autre';
+  const map: Record<PlaceType, string> = {
+    MAGASIN: 'Magasin',
+    TAVERNE_AUBERGE: 'Taverne / Auberge',
+    MAGASIN_MAGIE: 'Magasin de magie',
+    HERBORISTE_APOTHICAIRE: 'Herboriste / Apothicaire',
+    AUTRE: 'Autre',
+  };
+  return map[placeType] ?? placeType;
 }
 
 export function formatLanguage(lang: Language): string {

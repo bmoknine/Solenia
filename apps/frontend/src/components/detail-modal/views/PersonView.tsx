@@ -5,6 +5,7 @@ import { listCities, listKingdoms, listOrganisations, listPlaces } from '../../.
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { SearchableSelect } from '../SearchableSelect';
+import { SearchableMultiSelect } from '../SearchableMultiSelect';
 import { LanguageDropdown } from '../LanguageDropdown';
 import { BREED_OPTIONS, SEX_OPTIONS } from '../entityOptions';
 import { formatBreed, formatLanguage, formatSex } from '../entityFormatters';
@@ -99,51 +100,6 @@ export function PersonView({
           />
         ) : (
           <p className="detail-desc">{valueOrDash(data?.description)}</p>
-        )}
-      </div>
-
-      <div className="detail-section">
-        <h3>Organisations</h3>
-        {editMode ? (
-          loadingLists ? (
-            <span className="detail-value">Chargement...</span>
-          ) : (
-            <div className="detail-checkbox-list">
-              {organisations.map((org) => {
-                const ids = personEdit.organisationIds ?? [];
-                const checked = ids.includes(org.id);
-                return (
-                  <label key={org.id} className="detail-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => {
-                        const next = checked ? ids.filter((i) => i !== org.id) : [...ids, org.id];
-                        onChange('organisationIds', next);
-                      }}
-                    />
-                    {org.name}
-                  </label>
-                );
-              })}
-            </div>
-          )
-        ) : (data?.organisations?.length ?? 0) > 0 ? (
-          <ul className="detail-list">
-            {(data?.organisations ?? []).map((org) => (
-              <li
-                key={org.id}
-                style={{ cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none' }}
-                onClick={() => {
-                  if (onNavigate) onNavigate(organisationRefToNavPoint(org));
-                }}
-              >
-                {org.name}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <span className="detail-value">{valueOrDash(null)}</span>
         )}
       </div>
 
@@ -375,6 +331,38 @@ export function PersonView({
             </span>
           ) : (
             <span className="detail-value">{valueOrDash((data?.place as { name: string } | null | undefined)?.name)}</span>
+          )}
+        </div>
+        <div className="detail-item" style={{ gridColumn: '1 / -1' }}>
+          <span className="detail-label">Organisations</span>
+          {editMode ? (
+            loadingLists ? (
+              <span className="detail-value">Chargement...</span>
+            ) : (
+              <SearchableMultiSelect
+                items={organisations}
+                selectedIds={personEdit.organisationIds ?? []}
+                onChange={(ids) => onChange('organisationIds', ids)}
+                placeholder="Ajouter une organisation..."
+              />
+            )
+          ) : (data?.organisations?.length ?? 0) > 0 ? (
+            <div className="tags">
+              {(data?.organisations ?? []).map((org) => (
+                <span
+                  key={org.id}
+                  className="tag"
+                  style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                  onClick={() => {
+                    if (onNavigate) onNavigate(organisationRefToNavPoint(org));
+                  }}
+                >
+                  {org.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="detail-value">{valueOrDash(null)}</span>
           )}
         </div>
       </div>
