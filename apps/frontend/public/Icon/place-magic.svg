@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#6c3483" stroke="#4a235a" stroke-width="2"/>
+  <!-- Magic wand -->
+  <line x1="20" y1="44" x2="44" y2="20" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <rect x="40" y="14" width="10" height="10" rx="2" fill="#f9e79f" transform="rotate(45 45 19)"/>
+  <!-- Stars -->
+  <polygon points="14,18 15.5,22 20,22 16.5,25 18,29 14,26 10,29 11.5,25 8,22 12.5,22" fill="#f9e79f"/>
+  <polygon points="46,40 47,43 50,43 47.5,45 48.5,48 46,46 43.5,48 44.5,45 42,43 45,43" fill="#f9e79f"/>
+  <circle cx="52" cy="24" r="3" fill="#bb8fce"/>
+  <circle cx="18" cy="46" r="2" fill="#bb8fce"/>
+</svg>

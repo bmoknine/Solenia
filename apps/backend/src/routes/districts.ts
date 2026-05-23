@@ -19,7 +19,7 @@ export async function districtRoutes(app: FastifyInstance) {
       where: { id },
       include: {
         city: { select: { id: true, name: true } },
-        places: { select: { id: true, name: true } },
+        places: { select: { id: true, name: true, iconUrl: true, placeType: true } },
         persons: { select: { id: true, name: true } },
         comments: { select: { id: true, description: true, dateInGame: true } },
       },

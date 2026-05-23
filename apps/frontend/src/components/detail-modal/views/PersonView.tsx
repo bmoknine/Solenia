@@ -7,7 +7,7 @@ import { CommentsSection } from '../CommentsSection';
 import { SearchableSelect } from '../SearchableSelect';
 import { SearchableMultiSelect } from '../SearchableMultiSelect';
 import { LanguageDropdown } from '../LanguageDropdown';
-import { BREED_OPTIONS, SEX_OPTIONS } from '../entityOptions';
+import { BREED_OPTIONS, FP_FRACTION_OPTIONS, FP_INTEGER_OPTIONS, SEX_OPTIONS } from '../entityOptions';
 import { formatBreed, formatLanguage, formatSex } from '../entityFormatters';
 import type { EditState, PersonEditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
@@ -134,6 +134,34 @@ export function PersonView({
               />
             ) : (
               <span className="stat-value">{valueOrDash((data as PersonDetail)?.ca)}</span>
+            )}
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">FP</span>
+            {editMode ? (
+              <select
+                className="detail-input stat-input"
+                value={(editState as PersonDetail | null)?.fp ?? ''}
+                onChange={(e) => onChange('fp', e.target.value === '' ? null : e.target.value)}
+              >
+                <option value="">—</option>
+                <optgroup label="Fractions">
+                  {FP_FRACTION_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Entiers (1–30)">
+                  {FP_INTEGER_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            ) : (
+              <span className="stat-value">{valueOrDash((data as PersonDetail)?.fp)}</span>
             )}
           </div>
         </div>

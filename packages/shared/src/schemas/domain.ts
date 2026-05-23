@@ -138,6 +138,21 @@ const languageEnum = z.enum([
   'ARGOT_VOLEUR',
 ]);
 
+/** Facteur de puissance : fractions 1/8, 1/4, 1/2 puis entiers 1–30. */
+export const PERSON_FP_FRACTION_VALUES = ['1/8', '1/4', '1/2'] as const;
+export const PERSON_FP_INTEGER_VALUES = Array.from({ length: 30 }, (_, i) => String(i + 1));
+export const PERSON_FP_VALUES = [...PERSON_FP_FRACTION_VALUES, ...PERSON_FP_INTEGER_VALUES] as const;
+export type PersonFp = (typeof PERSON_FP_VALUES)[number];
+
+export function isValidPersonFp(value: string): value is PersonFp {
+  return (PERSON_FP_VALUES as readonly string[]).includes(value);
+}
+
+const personFpSchema = z
+  .string()
+  .refine(isValidPersonFp, { message: 'FP invalide : 1/8, 1/4, 1/2 ou entier de 1 à 30.' })
+  .nullish();
+
 /** Listes dérivées des schémas Zod — source unique pour API, backend et UI. */
 export const PERSON_BREED_VALUES = breedEnum.options;
 export const PERSON_SEX_VALUES = sexEnum.options;
@@ -155,6 +170,7 @@ export const personInputSchema = z
     languages: z.array(languageEnum).default([]),
     pv: z.number().int().nonnegative().nullable().optional(),
     ca: z.number().int().nonnegative().nullable().optional(),
+    fp: personFpSchema.optional(),
     showOnMap: z.boolean().optional(),
     isForDM: z.boolean().optional(),
     kingdomId: idSchema.nullish(),

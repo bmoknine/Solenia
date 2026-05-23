@@ -48,12 +48,14 @@ export type Person = {
   CHA: number;
   pv?: number | null;
   ca?: number | null;
+  fp?: string | null;
   showOnMap?: boolean;
   isForDM?: boolean;
 };
 
 // Types de base pour les références
 type Ref = { id: string; name: string };
+type PlaceRef = { id: string; name: string; iconUrl?: string | null; placeType?: PlaceType | null };
 type CommentRef = { id: string; description: string; dateInGame?: string | null };
 
 // Lore
@@ -76,7 +78,7 @@ export type KingdomDetail = Kingdom & {
   flag?: string | null;
   isForDM?: boolean;
   cities?: Ref[];
-  places?: Ref[];
+  places?: PlaceRef[];
   persons?: Ref[];
   organisations?: Ref[];
   lores?: LoreRef[];
@@ -91,9 +93,9 @@ export type CityDetail = City & {
   isForDM?: boolean;
   kingdom?: Ref | null;
   /** Quartiers avec lieux / personnages rattachés (GET ville enrichi) */
-  districts?: Array<Ref & { places?: Ref[]; persons?: Ref[] }>;
+  districts?: Array<Ref & { places?: PlaceRef[]; persons?: Ref[] }>;
   /** Lieux directement rattachés à la ville (sans quartier) */
-  places?: Ref[];
+  places?: PlaceRef[];
   persons?: Ref[];
   comments?: CommentRef[];
   organisations?: Ref[];
@@ -102,7 +104,7 @@ export type CityDetail = City & {
 
 export type DistrictDetail = District & {
   city?: Ref | null;
-  places?: Ref[];
+  places?: PlaceRef[];
   persons?: Ref[];
   lores?: LoreRef[];
   comments?: CommentRef[];
@@ -289,6 +291,7 @@ export async function updatePerson(
     languages?: Language[];
     pv?: number | null;
     ca?: number | null;
+    fp?: string | null;
     showOnMap?: boolean;
     STR?: number;
     DEX?: number;
@@ -358,6 +361,7 @@ export async function createPerson(
     languages?: string[];
     pv?: number | null;
     ca?: number | null;
+    fp?: string | null;
     showOnMap?: boolean;
     STR: number;
     DEX: number;

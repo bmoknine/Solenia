@@ -40,6 +40,18 @@ export function formatPlaceType(placeType: PlaceType | null | undefined): string
   return map[placeType] ?? placeType;
 }
 
+export function iconForPlaceType(placeType: PlaceType | null | undefined): string {
+  const map: Record<PlaceType, string> = {
+    MAGASIN: '/Icon/place-shop.svg',
+    TAVERNE_AUBERGE: '/Icon/place-tavern.svg',
+    MAGASIN_MAGIE: '/Icon/place-magic.svg',
+    HERBORISTE_APOTHICAIRE: '/Icon/place-herb.svg',
+    AUTRE: '/Icon/place.png',
+  };
+  if (!placeType) return '/Icon/place.png';
+  return map[placeType] ?? '/Icon/place.png';
+}
+
 export function formatLanguage(lang: Language): string {
   const map: Record<Language, string> = {
     COMMUN: 'Commun',
