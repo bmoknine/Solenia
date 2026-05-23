@@ -81,6 +81,7 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
     organisationIds: [],
     pv: null,
     ca: null,
+    fp: null,
     showOnMap: true,
     STR: 10,
     DEX: 10,

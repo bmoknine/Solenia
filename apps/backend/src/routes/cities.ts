@@ -81,13 +81,13 @@ export async function cityRoutes(app: FastifyInstance) {
         districts: {
           orderBy: { name: 'asc' },
           include: {
-            places: { select: { id: true, name: true }, orderBy: { name: 'asc' } },
+            places: { select: { id: true, name: true, iconUrl: true, placeType: true }, orderBy: { name: 'asc' } },
             persons: { select: { id: true, name: true }, orderBy: { name: 'asc' } },
           },
         },
         places: {
           where: { districtId: null },
-          select: { id: true, name: true },
+          select: { id: true, name: true, iconUrl: true, placeType: true },
           orderBy: { name: 'asc' },
         },
         persons: {

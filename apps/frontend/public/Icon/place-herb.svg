@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e8449" stroke="#145a32" stroke-width="2"/>
+  <!-- Flask body -->
+  <path d="M26 20 L26 34 L18 46 Q16 50 20 50 L44 50 Q48 50 46 46 L38 34 L38 20 Z" fill="#abebc6" stroke="#1e8449" stroke-width="1.5"/>
+  <!-- Flask neck/mouth -->
+  <rect x="24" y="14" width="16" height="8" rx="3" fill="#d5f5e3" stroke="#1e8449" stroke-width="1.5"/>
+  <!-- Liquid inside -->
+  <path d="M20 44 L18 46 Q16 50 20 50 L44 50 Q48 50 46 46 L44 44 Z" fill="#58d68d"/>
+  <!-- Bubbles -->
+  <circle cx="28" cy="42" r="2.5" fill="white" opacity="0.6"/>
+  <circle cx="36" cy="44" r="1.8" fill="white" opacity="0.6"/>
+  <!-- Leaf on side -->
+  <path d="M40 30 Q50 22 50 14 Q42 14 40 30Z" fill="#27ae60"/>
+  <line x1="40" y1="30" x2="48" y2="16" stroke="#145a32" stroke-width="1" stroke-linecap="round"/>
+  <!-- Cork -->
+  <rect x="26" y="12" width="12" height="4" rx="2" fill="#d4ac0d"/>
+</svg>

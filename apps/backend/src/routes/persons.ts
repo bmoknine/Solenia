@@ -7,6 +7,7 @@ import {
   PERSON_LANGUAGE_VALUES,
   PERSON_MEMBERSHIP_VALUES,
   PERSON_SEX_VALUES,
+  isValidPersonFp,
 } from '@solenia/shared';
 import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
@@ -27,6 +28,9 @@ async function syncPersonOrganisations(
     );
   }
 }
+
+const includes = <T extends readonly string[]>(allowed: T, v: string): v is T[number] =>
+  (allowed as readonly string[]).includes(v);
 
 export async function personRoutes(app: FastifyInstance) {
   app.get('/persons', async () => {
@@ -59,7 +63,6 @@ export async function personRoutes(app: FastifyInstance) {
       },
     });
     if (!person) return reply.notFound();
-    // Transformer les données pour un format plus simple
     return {
       ...person,
       organisations: person.organisations.map((om) => om.organisation),
@@ -69,10 +72,34 @@ export async function personRoutes(app: FastifyInstance) {
 
   app.post('/persons', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const parsed = personInputSchema.parse(request.body);
-    const { organisationIds, ...createFields } = parsed;
-    const person = await app.prisma.personOfInterest.create({
-      data: createFields as Prisma.PersonOfInterestCreateInput,
-    });
+    const { organisationIds, ...fields } = parsed;
+
+    const createData: Prisma.PersonOfInterestUncheckedCreateInput = {
+      name: fields.name,
+      description: fields.description ?? null,
+      imageUrl: fields.imageUrl ?? null,
+      breed: fields.breed ?? null,
+      sex: fields.sex ?? null,
+      membership: fields.membership ?? null,
+      languages: fields.languages ?? [],
+      STR: fields.STR,
+      DEX: fields.DEX,
+      CON: fields.CON,
+      INT: fields.INT,
+      WIS: fields.WIS,
+      CHA: fields.CHA,
+      pv: fields.pv ?? null,
+      ca: fields.ca ?? null,
+      fp: fields.fp ?? null,
+      showOnMap: fields.showOnMap ?? true,
+      isForDM: fields.isForDM ?? false,
+      kingdomId: fields.kingdomId ?? null,
+      cityId: fields.cityId ?? null,
+      districtId: fields.districtId ?? null,
+      placeId: fields.placeId ?? null,
+    };
+
+    const person = await app.prisma.personOfInterest.create({ data: createData });
     await syncPersonOrganisations(app, person.id, organisationIds ?? []);
     return app.prisma.personOfInterest.findUnique({
       where: { id: person.id },
@@ -82,11 +109,7 @@ export async function personRoutes(app: FastifyInstance) {
 
   app.put('/persons/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const id = parseRouteUuid(request);
-
-    // Gérer explicitement les champs enum pour éviter qu'ils soient filtrés par Zod
     const rawBody = request.body as Record<string, unknown>;
-    
-    // Construire l'objet de données en excluant les champs enum et les IDs du parse Zod
     const organisationIdsInBody = 'organisationIds' in rawBody ? rawBody.organisationIds : undefined;
 
     const bodyWithoutEnums = { ...rawBody };
@@ -96,55 +119,77 @@ export async function personRoutes(app: FastifyInstance) {
     delete bodyWithoutEnums.languages;
     delete bodyWithoutEnums.kingdomId;
     delete bodyWithoutEnums.cityId;
+    delete bodyWithoutEnums.districtId;
     delete bodyWithoutEnums.placeId;
     delete bodyWithoutEnums.organisationIds;
-    
-    // Parser le reste avec Zod
-    const parsedData = personInputSchema.partial().parse(bodyWithoutEnums);
-    
-    // Ajouter les champs enum manuellement avec validation
-    const includes = <T extends readonly string[]>(allowed: T, v: string): v is T[number] =>
-      (allowed as readonly string[]).includes(v);
+
+    const parsed = personInputSchema.partial().parse(bodyWithoutEnums);
+
+    /** UncheckedUpdateInput : champs scalaires + FK (kingdomId, districtId, fp, …). */
+    const data: Prisma.PersonOfInterestUncheckedUpdateInput = {};
+
+    if ('name' in rawBody && parsed.name !== undefined) data.name = parsed.name;
+    if ('description' in rawBody) data.description = parsed.description ?? null;
+    if ('imageUrl' in rawBody) data.imageUrl = parsed.imageUrl ?? null;
+    if ('pv' in rawBody) data.pv = parsed.pv ?? null;
+    if ('ca' in rawBody) data.ca = parsed.ca ?? null;
+    if ('showOnMap' in rawBody && typeof parsed.showOnMap === 'boolean') data.showOnMap = parsed.showOnMap;
+    if ('isForDM' in rawBody && typeof parsed.isForDM === 'boolean') data.isForDM = parsed.isForDM;
+    if ('STR' in rawBody && parsed.STR !== undefined) data.STR = parsed.STR;
+    if ('DEX' in rawBody && parsed.DEX !== undefined) data.DEX = parsed.DEX;
+    if ('CON' in rawBody && parsed.CON !== undefined) data.CON = parsed.CON;
+    if ('INT' in rawBody && parsed.INT !== undefined) data.INT = parsed.INT;
+    if ('WIS' in rawBody && parsed.WIS !== undefined) data.WIS = parsed.WIS;
+    if ('CHA' in rawBody && parsed.CHA !== undefined) data.CHA = parsed.CHA;
 
     if ('breed' in rawBody) {
       const b = rawBody.breed;
-      parsedData.breed =
+      data.breed =
         b === '' || b === null ? null : typeof b === 'string' && includes(PERSON_BREED_VALUES, b) ? b : null;
     }
     if ('sex' in rawBody) {
       const s = rawBody.sex;
-      parsedData.sex =
+      data.sex =
         s === '' || s === null ? null : typeof s === 'string' && includes(PERSON_SEX_VALUES, s) ? s : null;
     }
     if ('membership' in rawBody) {
       const m = rawBody.membership;
-      parsedData.membership =
+      data.membership =
         m === '' || m === null ? null : typeof m === 'string' && includes(PERSON_MEMBERSHIP_VALUES, m) ? m : null;
     }
     if ('languages' in rawBody && Array.isArray(rawBody.languages)) {
-      parsedData.languages = rawBody.languages.filter(
+      data.languages = rawBody.languages.filter(
         (lang): lang is (typeof PERSON_LANGUAGE_VALUES)[number] =>
           typeof lang === 'string' && includes(PERSON_LANGUAGE_VALUES, lang),
       );
     }
-
     if ('kingdomId' in rawBody) {
       const v = rawBody.kingdomId;
-      parsedData.kingdomId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
+      data.kingdomId = v === '' || v === null ? null : typeof v === 'string' ? v : null;
     }
     if ('cityId' in rawBody) {
       const v = rawBody.cityId;
-      parsedData.cityId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
+      data.cityId = v === '' || v === null ? null : typeof v === 'string' ? v : null;
+    }
+    if ('districtId' in rawBody) {
+      const v = rawBody.districtId;
+      data.districtId = v === '' || v === null ? null : typeof v === 'string' ? v : null;
     }
     if ('placeId' in rawBody) {
       const v = rawBody.placeId;
-      parsedData.placeId = v === '' || v === null ? null : typeof v === 'string' ? v : undefined;
+      data.placeId = v === '' || v === null ? null : typeof v === 'string' ? v : null;
+    }
+    if ('fp' in rawBody) {
+      const f = rawBody.fp;
+      data.fp =
+        f === '' || f === null || f === undefined
+          ? null
+          : typeof f === 'string' && isValidPersonFp(f)
+            ? f
+            : null;
     }
 
-    const updated = await app.prisma.personOfInterest.update({
-      where: { id },
-      data: parsedData as Prisma.PersonOfInterestUpdateInput,
-    });
+    const updated = await app.prisma.personOfInterest.update({ where: { id }, data });
 
     if ('organisationIds' in rawBody) {
       const ids = Array.isArray(organisationIdsInBody)
@@ -158,10 +203,8 @@ export async function personRoutes(app: FastifyInstance) {
 
   app.delete('/persons/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
     const id = parseRouteUuid(request);
-    // Supprimer la position associée si elle existe
     await app.prisma.position.deleteMany({ where: { personOfInterestId: id } });
     await app.prisma.personOfInterest.delete({ where: { id } });
     reply.code(204);
   });
 }
-

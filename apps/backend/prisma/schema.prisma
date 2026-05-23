@@ -184,6 +184,7 @@ model PersonOfInterest {
   CHA         Int
   pv          Int?        // Points de vie
   ca          Int?        // Classe d'armure
+  fp          String?     // Facteur de puissance : 1/8, 1/4, 1/2 ou 1–30
   showOnMap   Boolean     @default(true) // Afficher sur la carte
   isForDM     Boolean     @default(false)
   kingdomId   String?

@@ -1,9 +1,22 @@
 import type { FastifyInstance } from 'fastify';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, PlaceType } from '@prisma/client';
 import { placeInputSchema } from '@solenia/shared';
 import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
 import { parseRouteUuid } from '../utils/routeParams';
+
+const PLACE_TYPE_ICONS: Record<PlaceType, string> = {
+  MAGASIN: '/Icon/place-shop.svg',
+  TAVERNE_AUBERGE: '/Icon/place-tavern.svg',
+  MAGASIN_MAGIE: '/Icon/place-magic.svg',
+  HERBORISTE_APOTHICAIRE: '/Icon/place-herb.svg',
+  AUTRE: '/Icon/place.png',
+};
+
+function defaultIconForPlaceType(placeType: PlaceType | null | undefined): string {
+  if (!placeType) return '/Icon/place.png';
+  return PLACE_TYPE_ICONS[placeType] ?? '/Icon/place.png';
+}
 
 async function syncPlaceOrganisations(
   app: FastifyInstance,
@@ -113,10 +126,11 @@ export async function placeRoutes(app: FastifyInstance) {
   app.post('/places', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const rawData = placeInputSchema.parse(request.body);
     const { organisationIds, ...rest } = rawData;
+    const resolvedPlaceType = (rest.placeType as PlaceType | undefined) ?? 'AUTRE';
     const normalized = await normalizePlaceGeo(app, {
       name: rest.name,
       description: rest.description ?? null,
-      iconUrl: rest.iconUrl ?? '/Icon/place.png',
+      iconUrl: rest.iconUrl ?? defaultIconForPlaceType(resolvedPlaceType),
       map: rest.map === '' || rest.map == null ? null : rest.map,
       kingdomId: rest.kingdomId ?? null,
       cityId: rest.cityId ?? null,
@@ -128,9 +142,9 @@ export async function placeRoutes(app: FastifyInstance) {
       data: {
         name: normalized.name,
         description: normalized.description ?? undefined,
-        iconUrl: normalized.iconUrl ?? '/Icon/place.png',
+        iconUrl: normalized.iconUrl ?? defaultIconForPlaceType(resolvedPlaceType),
         map: normalized.map,
-        placeType: (rest.placeType as import('@prisma/client').PlaceType | undefined) ?? 'AUTRE',
+        placeType: resolvedPlaceType,
         kingdomId: normalized.kingdomId,
         cityId: normalized.cityId,
         districtId: normalized.districtId,
@@ -173,7 +187,17 @@ export async function placeRoutes(app: FastifyInstance) {
     if ('name' in rawRest) data.name = rawRest.name;
     if ('description' in rawRest) data.description = rawRest.description ?? null;
     if ('map' in rawRest) data.map = rawRest.map ?? null;
-    if ('placeType' in rawRest) data.placeType = rawRest.placeType ?? 'AUTRE';
+    if ('placeType' in rawRest) {
+      const newType = (rawRest.placeType as PlaceType | undefined) ?? 'AUTRE';
+      data.placeType = newType;
+      // Auto-mettre à jour l'icône si elle correspond encore à une icône de type par défaut
+      const currentIcon = existing.iconUrl ?? '';
+      const isDefaultIcon = Object.values(PLACE_TYPE_ICONS).includes(currentIcon) || currentIcon === '/Icon/place.png';
+      if (!('iconUrl' in rawRest) && isDefaultIcon) {
+        data.iconUrl = defaultIconForPlaceType(newType);
+      }
+    }
+    if ('iconUrl' in rawRest) data.iconUrl = rawRest.iconUrl ?? defaultIconForPlaceType((data.placeType as PlaceType | undefined) ?? existing.placeType ?? 'AUTRE');
     if ('isForDM' in rawRest) data.isForDM = rawRest.isForDM;
     if ('showOnMap' in rawRest) data.showOnMap = rawRest.showOnMap ?? true;
     data.kingdomId = merged.kingdomId;

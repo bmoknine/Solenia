@@ -9,7 +9,7 @@ import { SearchableMultiSelect } from '../SearchableMultiSelect';
 import type { EditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
 import { PLACE_TYPE_OPTIONS } from '../entityOptions';
-import { formatPlaceType } from '../entityFormatters';
+import { formatPlaceType, iconForPlaceType } from '../entityFormatters';
 
 export function PlaceView({
   data,
@@ -98,30 +98,38 @@ export function PlaceView({
       <div className="detail-item">
         <span className="detail-label">Type de lieu</span>
         {editMode ? (
-          <select
-            className="detail-input"
-            value={(editState as Partial<PlaceDetail> & { kind: 'place' })?.placeType ?? 'AUTRE'}
-            onChange={(e) => onChange('placeType', e.target.value as PlaceType)}
-          >
-            {PLACE_TYPE_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {formatPlaceType(opt)}
-              </option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img
+              src={iconForPlaceType((editState as Partial<PlaceDetail>)?.placeType)}
+              alt="Icône du type"
+              style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0 }}
+            />
+            <select
+              className="detail-input"
+              value={(editState as Partial<PlaceDetail> & { kind: 'place' })?.placeType ?? 'AUTRE'}
+              onChange={(e) => {
+                const newType = e.target.value as PlaceType;
+                onChange('placeType', newType);
+                onChange('iconUrl', iconForPlaceType(newType));
+              }}
+            >
+              {PLACE_TYPE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {formatPlaceType(opt)}
+                </option>
+              ))}
+            </select>
+          </div>
         ) : (
-          <span className="detail-value">{formatPlaceType(data?.placeType)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img
+              src={iconForPlaceType(data?.placeType)}
+              alt="Icône du type"
+              style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+            />
+            <span className="detail-value">{formatPlaceType(data?.placeType)}</span>
+          </div>
         )}
-      </div>
-      <div className="detail-item">
-        <span className="detail-label">Icône</span>
-        <span className="detail-value">
-          {data?.iconUrl ? (
-            <img src={data.iconUrl} alt="Icône" style={{ width: '24px', height: '24px', verticalAlign: 'middle', marginLeft: '8px' }} />
-          ) : (
-            valueOrDash(data?.iconUrl)
-          )}
-        </span>
       </div>
       <p className="detail-hint" style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#94a3b8' }}>
         Rattachement : royaume, ville, quartier et/ou organisations. Un lieu lié à une ville ou un quartier partage sa position sur la carte avec cette ville (pas de marqueur séparé).
