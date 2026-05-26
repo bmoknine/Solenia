@@ -7,6 +7,8 @@ import { FlagSelect } from '../FlagSelect';
 import { SearchableSelect } from '../SearchableSelect';
 import type { EditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
+import { ImageLightbox, MapThumbnail } from '../ImageLightbox';
+import { MapFilePicker } from '../MapFilePicker';
 
 export function CityView({
   data,
@@ -31,6 +33,7 @@ export function CityView({
 }) {
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (editMode) {
@@ -101,18 +104,20 @@ export function CityView({
           />
         </div>
       )}
-      {editMode && (
-        <div className="detail-item">
-          <span className="detail-label">Carte (image)</span>
-          <input
-            type="url"
-            className="detail-input"
-            placeholder="URL de l’image de carte (ex. /maps/ville.png)"
-            value={((editState as CityDetail | null)?.map as string | undefined | null) ?? ''}
-            onChange={(e) => onChange('map', e.target.value === '' ? null : e.target.value)}
+            <div className="detail-item">
+        <span className="detail-label">Carte (image)</span>
+        {editMode ? (
+          <MapFilePicker
+            value={(editState as CityDetail | null)?.map}
+            onChange={(url) => onChange('map', url)}
           />
-        </div>
-      )}
+        ) : data?.map ? (
+          <MapThumbnail src={data.map} alt={`Carte de ${data.name ?? 'cette ville'}`} onClick={() => setLightboxSrc(data.map!)} />
+        ) : (
+          <span className="detail-value">-</span>
+        )}
+      </div>
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} alt={`Carte de ${data?.name ?? 'cette ville'}`} onClose={() => setLightboxSrc(null)} />}
       <div className="detail-item">
         <span className="detail-label">Royaume</span>
         {editMode ? (

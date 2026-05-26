@@ -10,6 +10,7 @@ const PLACE_TYPE_ICONS: Record<PlaceType, string> = {
   TAVERNE_AUBERGE: '/Icon/place-tavern.svg',
   MAGASIN_MAGIE: '/Icon/place-magic.svg',
   HERBORISTE_APOTHICAIRE: '/Icon/place-herb.svg',
+  DONJON_CAVERNE: '/Icon/place-dungeon.svg',
   AUTRE: '/Icon/place.png',
 };
 

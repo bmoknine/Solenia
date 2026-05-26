@@ -35,6 +35,7 @@ export function formatPlaceType(placeType: PlaceType | null | undefined): string
     TAVERNE_AUBERGE: 'Taverne / Auberge',
     MAGASIN_MAGIE: 'Magasin de magie',
     HERBORISTE_APOTHICAIRE: 'Herboriste / Apothicaire',
+    DONJON_CAVERNE: 'Donjon / Caverne',
     AUTRE: 'Autre',
   };
   return map[placeType] ?? placeType;
@@ -46,6 +47,7 @@ export function iconForPlaceType(placeType: PlaceType | null | undefined): strin
     TAVERNE_AUBERGE: '/Icon/place-tavern.svg',
     MAGASIN_MAGIE: '/Icon/place-magic.svg',
     HERBORISTE_APOTHICAIRE: '/Icon/place-herb.svg',
+    DONJON_CAVERNE: '/Icon/place-dungeon.svg',
     AUTRE: '/Icon/place.png',
   };
   if (!placeType) return '/Icon/place.png';

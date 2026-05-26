@@ -17,6 +17,7 @@ import { mapRoutes } from './routes/map';
 import { organisationRoutes } from './routes/organisations';
 import { loreRoutes } from './routes/lores';
 import { flagRoutes } from './routes/flags';
+import { uploadRoutes } from './routes/upload';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ export const buildServer = () => {
   app.register(organisationRoutes);
   app.register(loreRoutes);
   app.register(flagRoutes);
+  app.register(uploadRoutes);
 
   return app;
 };
