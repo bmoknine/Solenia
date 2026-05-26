@@ -47,6 +47,7 @@ export const placeTypeEnum = z.enum([
   'TAVERNE_AUBERGE',
   'MAGASIN_MAGIE',
   'HERBORISTE_APOTHICAIRE',
+  'DONJON_CAVERNE',
   'AUTRE',
 ]);
 export type PlaceType = z.infer<typeof placeTypeEnum>;

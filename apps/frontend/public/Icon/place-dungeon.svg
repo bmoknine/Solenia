@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#4a2545" stroke="#2d1530" stroke-width="2"/>
+  <rect x="20" y="28" width="24" height="22" rx="2" fill="#1a0f1e"/>
+  <path d="M20 28 Q20 16 32 16 Q44 16 44 28 Z" fill="#1a0f1e"/>
+  <rect x="12" y="28" width="8" height="5" rx="1" fill="#6b4c7a" opacity="0.8"/>
+  <rect x="12" y="34" width="8" height="5" rx="1" fill="#5a3d68" opacity="0.8"/>
+  <rect x="12" y="40" width="8" height="5" rx="1" fill="#6b4c7a" opacity="0.8"/>
+  <rect x="12" y="46" width="8" height="4" rx="1" fill="#5a3d68" opacity="0.8"/>
+  <rect x="44" y="28" width="8" height="5" rx="1" fill="#6b4c7a" opacity="0.8"/>
+  <rect x="44" y="34" width="8" height="5" rx="1" fill="#5a3d68" opacity="0.8"/>
+  <rect x="44" y="40" width="8" height="5" rx="1" fill="#6b4c7a" opacity="0.8"/>
+  <rect x="44" y="46" width="8" height="4" rx="1" fill="#5a3d68" opacity="0.8"/>
+  <rect x="24" y="28" width="2.5" height="22" rx="1" fill="#8b6914" opacity="0.9"/>
+  <rect x="30.5" y="28" width="2.5" height="22" rx="1" fill="#8b6914" opacity="0.9"/>
+  <rect x="37" y="28" width="2.5" height="22" rx="1" fill="#8b6914" opacity="0.9"/>
+  <rect x="20" y="36" width="24" height="2.5" rx="1" fill="#8b6914" opacity="0.9"/>
+  <rect x="20" y="42" width="24" height="2.5" rx="1" fill="#8b6914" opacity="0.9"/>
+  <path d="M20 28 Q20 16 32 16 Q44 16 44 28 Z" fill="#e8630a" opacity="0.15"/>
+  <ellipse cx="32" cy="32" rx="8" ry="6" fill="#e8630a" opacity="0.08"/>
+  <rect x="15" y="22" width="3" height="7" rx="1" fill="#7c5c2a"/>
+  <ellipse cx="16.5" cy="21" rx="3" ry="4" fill="#f97316" opacity="0.9"/>
+  <ellipse cx="16.5" cy="20" rx="1.5" ry="2.5" fill="#fef08a" opacity="0.8"/>
+  <rect x="46" y="22" width="3" height="7" rx="1" fill="#7c5c2a"/>
+  <ellipse cx="47.5" cy="21" rx="3" ry="4" fill="#f97316" opacity="0.9"/>
+  <ellipse cx="47.5" cy="20" rx="1.5" ry="2.5" fill="#fef08a" opacity="0.8"/>
+  <circle cx="32" cy="13" r="4" fill="#e2e8f0" opacity="0.6"/>
+  <rect x="30" y="16" width="4" height="2" rx="1" fill="#e2e8f0" opacity="0.5"/>
+  <circle cx="30.5" cy="12.5" r="0.8" fill="#1a0f1e"/>
+  <circle cx="33.5" cy="12.5" r="0.8" fill="#1a0f1e"/>
+</svg>

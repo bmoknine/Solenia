@@ -10,6 +10,8 @@ import type { EditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
 import { PLACE_TYPE_OPTIONS } from '../entityOptions';
 import { formatPlaceType, iconForPlaceType } from '../entityFormatters';
+import { ImageLightbox, MapThumbnail } from '../ImageLightbox';
+import { MapFilePicker } from '../MapFilePicker';
 
 export function PlaceView({
   data,
@@ -33,6 +35,7 @@ export function PlaceView({
   const [districts, setDistricts] = useState<District[]>([]);
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const placeEdit = editState as PlaceDetail & { organisationIds?: string[] };
   const selectedCityId =
@@ -131,6 +134,22 @@ export function PlaceView({
           </div>
         )}
       </div>
+      {/* Carte (image) */}
+      <div className="detail-item">
+        <span className="detail-label">Carte (image)</span>
+        {editMode ? (
+          <MapFilePicker
+            value={(editState as Partial<PlaceDetail>)?.map}
+            onChange={(url) => onChange('map', url)}
+          />
+        ) : data?.map ? (
+          <MapThumbnail src={data.map} alt={`Carte de ${data.name ?? 'ce lieu'}`} onClick={() => setLightboxSrc(data.map!)} />
+        ) : (
+          <span className="detail-value">-</span>
+        )}
+      </div>
+      {lightboxSrc && <ImageLightbox src={lightboxSrc} alt={`Carte de ${data?.name ?? 'ce lieu'}`} onClose={() => setLightboxSrc(null)} />}
+
       <p className="detail-hint" style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#94a3b8' }}>
         Rattachement : royaume, ville, quartier et/ou organisations. Un lieu lié à une ville ou un quartier partage sa position sur la carte avec cette ville (pas de marqueur séparé).
       </p>

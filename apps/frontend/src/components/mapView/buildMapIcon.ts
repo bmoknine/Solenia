@@ -123,14 +123,29 @@ export function buildMapIcon(
   }
 
   if (kind === 'place' && iconUrl) {
-    const baseSize = 12;
-    const maxSize = 150;
+    const baseSize = 8;
+    const maxSize = 72;
     const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+    const showLabel = name && scaleFactor > 0.35;
+    const fontSize = Math.max(8, Math.round(size * 0.28));
+    const labelMaxW = Math.round(size * 2.8);
+    const label = showLabel
+      ? `<span class="map-place-label" style="font-size:${fontSize}px;max-width:${labelMaxW}px;">${escapeHtml(name)}</span>`
+      : '';
+    const labelGap = 2;
+    const labelZoneH = showLabel ? fontSize * 2.6 : 0;
+    const totalH = size + (showLabel ? labelZoneH + labelGap : 0);
+    const wrapW = Math.max(size, showLabel ? labelMaxW : 0);
     return L.divIcon({
-      className: 'map-pin-icon',
-      html: `<img src="${iconUrl}" alt="Place icon" style="width: ${size}px; height: ${size}px; object-fit: contain; transition: all 0.3s ease;" />`,
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
+      className: 'map-pin-icon map-pin-place',
+      html: `<div class="map-pin-place-wrap" style="width:${wrapW}px;">
+        <div style="width:${size}px;margin:0 auto;">
+          <img src="${iconUrl}" alt="Place icon" style="width:${size}px;height:${size}px;object-fit:contain;transition:all 0.3s ease;display:block;" />
+        </div>
+        ${label}
+      </div>`,
+      iconSize: [wrapW, totalH],
+      iconAnchor: [wrapW / 2, size / 2],
     });
   }
 
