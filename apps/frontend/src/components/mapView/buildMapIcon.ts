@@ -27,6 +27,7 @@ const KIND_COLORS: Record<MapIconKind, string> = {
   place: '#34a853',
   person: '#d93025',
   organisation: '#7c4dff',
+  playerCharacter: '#ff9800',
   unknown: '#9aa0a6',
 };
 
@@ -193,6 +194,34 @@ export function buildMapIcon(
     });
   }
 
+  if (kind === 'playerCharacter') {
+    const baseSize = 5;
+    const maxSize = 65;
+    const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
+    const showLabel = name && scaleFactor > 0.35;
+    const fontSize = Math.max(8, Math.round(size * 0.25));
+    const labelMaxW = Math.round(size * 2.8);
+    const label = showLabel
+      ? `<span class="map-place-label" style="font-size:${fontSize}px;max-width:${labelMaxW}px;color:#ff9800;">${escapeHtml(name)}</span>`
+      : '';
+    const labelGap = 2;
+    const labelZoneH = showLabel ? fontSize * 2.6 : 0;
+    const totalH = size + (showLabel ? labelZoneH + labelGap : 0);
+    const wrapW = Math.max(size, showLabel ? labelMaxW : 0);
+    const imgSrc = iconUrl ?? '/Icon/person.png';
+    return L.divIcon({
+      className: 'map-pin-icon map-pin-place',
+      html: `<div class="map-pin-place-wrap" style="width:${wrapW}px;">
+        <div style="width:${size}px;margin:0 auto;border-radius:50%;border:2px solid #ff9800;overflow:hidden;">
+          <img src="${imgSrc}" alt="PC" style="width:${size}px;height:${size}px;object-fit:cover;transition:all 0.3s ease;display:block;" />
+        </div>
+        ${label}
+      </div>`,
+      iconSize: [wrapW, totalH],
+      iconAnchor: [wrapW / 2, size / 2],
+    });
+  }
+
   const baseSize = 6;
   const maxSize = 90;
   const size = Math.round(baseSize + (maxSize - baseSize) * scaleFactor);
@@ -217,6 +246,8 @@ export function zIndexOffsetForKind(kind: MapIconKind): number {
       return 100;
     case 'organisation':
       return 150;
+    case 'playerCharacter':
+      return 120;
     default:
       return 0;
   }

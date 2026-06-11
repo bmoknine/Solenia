@@ -35,6 +35,23 @@ async function syncPlaceOrganisations(
   }
 }
 
+async function syncPlacePlayerCharacters(
+  app: FastifyInstance,
+  placeId: string,
+  playerCharacterIds: string[] | undefined,
+) {
+  if (playerCharacterIds === undefined) return;
+  // Délie tous les PCs actuellement rattachés à ce lieu
+  await app.prisma.playerCharacter.updateMany({ where: { placeId }, data: { placeId: null } });
+  // Lie les nouveaux PCs sélectionnés
+  if (playerCharacterIds.length > 0) {
+    await app.prisma.playerCharacter.updateMany({
+      where: { id: { in: playerCharacterIds } },
+      data: { placeId },
+    });
+  }
+}
+
 /**
  * Lieu lié à une ville/quartier avec showOnMap = true : supprime la position carte.
  * Les lieux avec showOnMap = false (ex. importés) conservent leur position.
@@ -103,6 +120,7 @@ export async function placeRoutes(app: FastifyInstance) {
         city: { select: { id: true, name: true } },
         district: { select: { id: true, name: true } },
         persons: { select: { id: true, name: true } },
+        playerCharacters: { select: { id: true, name: true } },
         comments: { select: { id: true, description: true, dateInGame: true } },
         organisations: {
           include: {
@@ -126,7 +144,7 @@ export async function placeRoutes(app: FastifyInstance) {
 
   app.post('/places', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const rawData = placeInputSchema.parse(request.body);
-    const { organisationIds, ...rest } = rawData;
+    const { organisationIds, playerCharacterIds, ...rest } = rawData;
     const resolvedPlaceType = (rest.placeType as PlaceType | undefined) ?? 'AUTRE';
     const normalized = await normalizePlaceGeo(app, {
       name: rest.name,
@@ -154,6 +172,7 @@ export async function placeRoutes(app: FastifyInstance) {
       },
     });
     await syncPlaceOrganisations(app, place.id, organisationIds);
+    await syncPlacePlayerCharacters(app, place.id, playerCharacterIds);
     await syncEmbeddedPlacePosition(app, place.id, place.cityId, place.districtId, normalized.showOnMap ?? true);
     return place;
   });
@@ -161,7 +180,7 @@ export async function placeRoutes(app: FastifyInstance) {
   app.put('/places/:id', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request, reply) => {
     const id = parseRouteUuid(request);
     const rawData = placeInputSchema.partial().parse(request.body);
-    const { organisationIds, ...rawRest } = rawData;
+    const { organisationIds, playerCharacterIds, ...rawRest } = rawData;
 
     const existing = await app.prisma.place.findUnique({ where: { id } });
     if (!existing) return reply.notFound();
@@ -207,6 +226,7 @@ export async function placeRoutes(app: FastifyInstance) {
 
     const updated = await app.prisma.place.update({ where: { id }, data: data as Prisma.PlaceUpdateInput });
     await syncPlaceOrganisations(app, id, organisationIds);
+    await syncPlacePlayerCharacters(app, id, playerCharacterIds);
     await syncEmbeddedPlacePosition(app, id, updated.cityId, updated.districtId, updated.showOnMap);
     return updated;
   });

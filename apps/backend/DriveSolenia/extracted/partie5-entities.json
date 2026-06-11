@@ -1,0 +1,950 @@
+{
+  "source": "Partie 5.md",
+  "persons": [
+    {
+      "name": "Lady Velena Cilovard",
+      "context": "Architecture, ambiance du port, odeur   Estrade sur lequel se trouve **Lady Velena Cilovard** et le fils Rigart Eldric:    Velena s’avance, drapée dans un manteau de soie bleu sombre, brodé du sceau de sa maison. Sa voix claire s’élève au-dessus du brouhaha du port, appuyée par un sourire mesuré."
+    },
+    {
+      "name": "Arkhal le Premier",
+      "context": " Plus haut, les ouvriers se fondent littéralement à la roche — leurs bras deviennent piliers, leurs visages surgissent des veines de marbre.    Au centre, **Arkhal le Premier**, couronné d’ardoise, brandit un marteau runique planté dans la roche : *“Par la main qui frappe, la pierre se souvient.”*    Autour de lui, douze figures agenouillées pèsent des blocs identiques sur une balance : symbole de"
+    },
+    {
+      "name": "Inflexible (2/jour)",
+      "context": "**Puissance** 9 (5000 PX)     **Bonus de maîtrise** \\+4   ***Inflexible (2/jour)***. Le champion relance un jet de sauvegarde raté.  Actions"
+    },
+    {
+      "name": "Attaques multiples",
+      "context": " ***Attaques multiples***. Le champion effectue trois attaques avec son épée à deux mains ou son arc court.   ***Épée à deux mains***. *Attaque au corps à corps avec une arme* : \\+9 au toucher, allonge 1,50 m, une cible. *Touché* : 12 (2d6 \\+ 5\\) dégâts tranchants, plus 7 (2d6) dégâts tranchants si le champion possède encore plus de la moitié de ses points de vie.   ***Arc court***. *Attaque à dis"
+    },
+    {
+      "name": "Épée à deux mains",
+      "context": "***Attaques multiples***. Le champion effectue trois attaques avec son épée à deux mains ou son arc court.   ***Épée à deux mains***. *Attaque au corps à corps avec une arme* : \\+9 au toucher, allonge 1,50 m, une cible. *Touché* : 12 (2d6 \\+ 5\\) dégâts tranchants, plus 7 (2d6) dégâts tranchants si le champion possède encore plus de la moitié de ses points de vie.   ***Arc court***. *Attaque à dist"
+    },
+    {
+      "name": "Arc court",
+      "context": "***Épée à deux mains***. *Attaque au corps à corps avec une arme* : \\+9 au toucher, allonge 1,50 m, une cible. *Touché* : 12 (2d6 \\+ 5\\) dégâts tranchants, plus 7 (2d6) dégâts tranchants si le champion possède encore plus de la moitié de ses points de vie.   ***Arc court***. *Attaque à distance avec une arme* : \\+6 au toucher, portée 24/96 m, une cible. *Touché* : 5 (1d6 \\+ 2\\) dégâts perforants, "
+    },
+    {
+      "name": "Regalio Regani",
+      "context": " **Regalio Regani** (ton flagorneur) : Bonjour Mirdobas, comment allez-vous ? J’espère que la soirée est à votre convenance.  **Radius Ignis Mirdobas** *(d’un ton sec)*  "
+    },
+    {
+      "name": "Citadelle Rouge",
+      "context": "**Régalio Regani**    « Vos équipes de discipline savent très bien gérer ce genre de remous et le sous-sol de la **Citadelle Rouge** et bien loin de tout ça.    Mais parlons de ce qui nous amène ici. » "
+    },
+    {
+      "name": "Contexte :",
+      "context": "*“Sous la pierre, la montagne parle.”*   **Contexte :**    Les Tovalis ont fermé en urgence une galerie secondaire des **Carrières Écarlates**.    Les mineurs affirment qu’à chaque coup de pioche, la roche **hurle comme un être vivant** — et que certains outils se mettent à vibrer seuls.  "
+    },
+    {
+      "name": "Carrières Écarlates",
+      "context": "**Contexte :**    Les Tovalis ont fermé en urgence une galerie secondaire des **Carrières Écarlates**.    Les mineurs affirment qu’à chaque coup de pioche, la roche **hurle comme un être vivant** — et que certains outils se mettent à vibrer seuls.    Les contremaîtres, trop superstitieux pour continuer, demandent de l’aide discrète avant que le chantier ne soit abandonné.  "
+    },
+    {
+      "name": "Déroulement :",
+      "context": " Les contremaîtres, trop superstitieux pour continuer, demandent de l’aide discrète avant que le chantier ne soit abandonné.   **Déroulement :**  * En explorant, les PJ découvrent une **veine de marbre pourpre luminescent**, traversée d’impulsions sonores.  "
+    },
+    {
+      "name": "Dilemme / Révélation :",
+      "context": " **Dilemme / Révélation :**    Cette “voix” est un **fragment dormant de Tal Odius**, un esprit tellurique emprisonné depuis des siècles.    Le libérer pourrait apaiser la montagne… ou réveiller un séisme d’ampleur divine.  "
+    },
+    {
+      "name": "Récompenses :",
+      "context": " Les Tovalis y voient un sacrilège, les érudits Palehindile une bénédiction à étudier.   **Récompenses :**  * Amulette de pierre pulsante (donne *Protection contre l’effroi* 1/jour).  "
+    },
+    {
+      "name": "Ral Zitris",
+      "context": "*“Quand tout se pèse, rien n’a plus de valeur.”*   Chaque année, les citadins célèbrent **Ral Zitris**, dieu de la chance et du juste risque.    Les balances publiques sont sorties sur les places, et chacun vient **offrir un objet de valeur** pour “rééquilibrer la fortune”.    Des concours de calcul mental, des lancers de dés géants et des tirages au sort animent la journée.  "
+    },
+    {
+      "name": "Effets possibles :",
+      "context": " **Effets possibles :**  * Les PJ peuvent enquêter sur l’enfant (manifestation divine ? esprit farceur ? expérience magique Cilovard ?).  "
+    },
+    {
+      "name": "Note MJ :",
+      "context": " **Note MJ :**    Le déséquilibre est dû à un **éclat ancien de Ral Zitris** qui refait surface dans une balance sacrée, altérant temporairement la “loi du risque” dans la ville. "
+    },
+    {
+      "name": "Laguna Temper",
+      "context": " ***Laguna Temper***   est une sorcière gnome des forêts âgée de 158 ans (niveau 4).   Elle a les cheveux roux coupés courts et raides, rasés sur le côté gauche, et les yeux noirs.  "
+    },
+    {
+      "name": "Folduin Xyrlana",
+      "context": " Elle vous demandera d'aller récupérer une somme qu’un client (une magnifique statue de lui) ne lui à pas payer : 300 Po (**Folduin Xyrlana** clerc de Zitris et Usurier)  Dans le quartier de la Porte pourpre, une belle échoppe cossue avec une façade avec des charpentes apparentes. À l'intérieur, un escalier sur la gauche monte à l'étage, 2 hommes en armes y sont négligemment assis. Devant vous, vo"
+    },
+    {
+      "name": "Consignes générales pour la MJ",
+      "context": " ## **Consignes générales pour la MJ**  * **Thème** : l’exploration d’un laboratoire d’alchimie et de magie des cristaux. Il doit être oppressant : les murs transpirent le passé et la folie de celui qui a conçu cet endroit.  "
+    },
+    {
+      "name": "Environnement inflammable",
+      "context": "* **Ambiance** : sombre, froide, silence quasi permanent, seulement troublé par un bourdonnement provenant des insectes cristallins et le bruissement des cristaux qui poussent. La lumière provient des cristaux incrustés et de petites lanternes abandonnées.   * **Environnement inflammable** : Amiro Léovine travaillait avec des produits chimiques extrêmement volatils. Les vapeurs et liquides encore "
+    },
+    {
+      "name": "Échos de Valdris",
+      "context": "* **Environnement inflammable** : Amiro Léovine travaillait avec des produits chimiques extrêmement volatils. Les vapeurs et liquides encore présents dans les cuves et les flaques sont hautement inflammables. **Toute utilisation de feu ouvert, de torches ou de sorts de feu** dans les salles II à VI déclenche un risque d’explosion ou d’incendie (DD 14 pour éviter 4d6 dégâts de feu et déclencher un "
+    },
+    {
+      "name": "Modifications d’Elerÿna",
+      "context": "* **Échos de Valdris** : de temps en temps, faites entendre à Elerÿna (et seulement à elle) des chuchotements draconiques, des visions fugaces de ce lieu lorsqu’il était en activité, ou des images de l’ancêtre Miralyn. Ces visions peuvent aider dans les puzzles ou servir de mise en garde.   * **Modifications d’Elerÿna** : la joueuse peut ressentir des picotements ou une chaleur dans sa main de cri"
+    },
+    {
+      "name": "Éléments clés :",
+      "context": " **Éléments clés :**  * **Trap de détection** : une aura de détection non alignée subsiste. Dès l’entrée, une rune cachée scanne les intrus. Si Elerÿna se tient au centre de la pièce, un cristal incrusté dans le plafond émet un faisceau sur elle : la rune reconnaît en partie son lien draconique et désactive les pièges. Sans cela, quatre carreaux de cristal jaillissent des murs pour viser les intru"
+    },
+    {
+      "name": "Trap de détection",
+      "context": " * **Trap de détection** : une aura de détection non alignée subsiste. Dès l’entrée, une rune cachée scanne les intrus. Si Elerÿna se tient au centre de la pièce, un cristal incrusté dans le plafond émet un faisceau sur elle : la rune reconnaît en partie son lien draconique et désactive les pièges. Sans cela, quatre carreaux de cristal jaillissent des murs pour viser les intrus (jet de Dextérité D"
+    },
+    {
+      "name": "Insectes cristallins",
+      "context": "* **Trap de détection** : une aura de détection non alignée subsiste. Dès l’entrée, une rune cachée scanne les intrus. Si Elerÿna se tient au centre de la pièce, un cristal incrusté dans le plafond émet un faisceau sur elle : la rune reconnaît en partie son lien draconique et désactive les pièges. Sans cela, quatre carreaux de cristal jaillissent des murs pour viser les intrus (jet de Dextérité DD"
+    },
+    {
+      "name": "Éléments de jeu :",
+      "context": " **Éléments de jeu :**  * **Eau infusée et hautement inflammable** : l’eau est saturée de magie des cristaux et de composants alchimiques volatils. Quiconque entre en contact doit réussir un test de Constitution DD 14\\. En cas d’échec, il subit 1d10 dégâts de poison et a des hallucinations de murmures draconiques pendant 1 minute (désavantage aux tests de Sagesse). En cas de réussite, il perçoit b"
+    },
+    {
+      "name": "Eau infusée et hautement inflammable",
+      "context": " * **Eau infusée et hautement inflammable** : l’eau est saturée de magie des cristaux et de composants alchimiques volatils. Quiconque entre en contact doit réussir un test de Constitution DD 14\\. En cas d’échec, il subit 1d10 dégâts de poison et a des hallucinations de murmures draconiques pendant 1 minute (désavantage aux tests de Sagesse). En cas de réussite, il perçoit brièvement un souvenir d"
+    },
+    {
+      "name": "Pont piégé",
+      "context": " * **Pont piégé** : le ponton a été piégé pour repousser les intrus. Le troisième panneau est un faux : si l’on ne détecte pas le mécanisme (Perception DD 13), il cède sous le poids (jet de Dextérité DD 15 pour ne pas tomber). Tomber dans le bassin déclenche l’effet ci‑dessus.  * **Absence de monstres** : cette pièce ne comporte pas de combat majeur ; l’ambiance oppressante et le risque d’explosio"
+    },
+    {
+      "name": "Absence de monstres",
+      "context": " * **Absence de monstres** : cette pièce ne comporte pas de combat majeur ; l’ambiance oppressante et le risque d’explosion suffisent à susciter la tension.  **Sorties** : une porte à l’ouest mène à la salle I (entrée), tandis qu’un couloir étroit au nord conduit à la salle III."
+    },
+    {
+      "name": "Puzzle de résonance :",
+      "context": " **Puzzle de résonance :**  * **Activation** : la pierre centrale est un **résonateur**. Elle vibre lorsque quelqu’un avec du sang draconique (ou un cristal de Valdris) la touche. Si Elerÿna pose sa main cristalline dessus, elle déclenche un mécanisme."
+    },
+    {
+      "name": "Attention au feu :",
+      "context": " **Attention au feu :** la plupart des fioles et produits ici sont des dérivés alchimiques. Ils sont facilement inflammables ; renverser l’une d’elles et utiliser du feu pourrait déclencher un incendie inattendu.  **Sortie** : un couloir mène vers la salle V."
+    },
+    {
+      "name": "Lac de larves",
+      "context": " 1. **Lac de larves** : l’un des bassins est rempli d’une solution alchimique visqueuse et de quelques créatures larvaires translucides qui se nourrissent de magie. Le liquide est **hautement inflammable**. Si quelqu’un plonge la main ou un objet dans le bassin, une ou deux **larves cristallines** (utilisez des statistiques d’une **Limace noire** réduite à 2 PV) se jettent dessus et tentent de dra"
+    },
+    {
+      "name": "Limace noire",
+      "context": " 1. **Lac de larves** : l’un des bassins est rempli d’une solution alchimique visqueuse et de quelques créatures larvaires translucides qui se nourrissent de magie. Le liquide est **hautement inflammable**. Si quelqu’un plonge la main ou un objet dans le bassin, une ou deux **larves cristallines** (utilisez des statistiques d’une **Limace noire** réduite à 2 PV) se jettent dessus et tentent de dra"
+    },
+    {
+      "name": "Cristal doré",
+      "context": "2. **Effondrement** : le sol a été fragilisé par des excavations. Un test de Perception DD 15 permet de détecter une zone instable au centre. En cas d’échec, le sol s’effondre, entraînant la créature dans une fosse de 3 m, infligeant 2d6 dégâts contondants. Il faudra ensuite escalader pour remonter (Athlétisme DD 10).   3. **Cristal doré** : sur l’autel brisé repose un petit cristal doré facetté. "
+    },
+    {
+      "name": "Porte de guilde",
+      "context": "2. **Effondrement** : le sol a été fragilisé par des excavations. Un test de Perception DD 15 permet de détecter une zone instable au centre. En cas d’échec, le sol s’effondre, entraînant la créature dans une fosse de 3 m, infligeant 2d6 dégâts contondants. Il faudra ensuite escalader pour remonter (Athlétisme DD 10).   3. **Cristal doré** : sur l’autel brisé repose un petit cristal doré facetté. "
+    },
+    {
+      "name": "Attention :",
+      "context": "     **Attention :** le cristal doré est posé dans une flaque d’un produit huileux inflammable. Toucher le cristal en utilisant du feu ou une étincelle déclenche une explosion (4d6 dégâts de feu dans un rayon de 3 m).  **Indices** :"
+    },
+    {
+      "name": "Elerÿna cristalline (clone raté)",
+      "context": " * **Elerÿna cristalline (clone raté)** : la silhouette dans la cuve intacte est un clone d’Elerÿna entièrement composé de cristal vivant. Lorsque les PJ entrent dans la pièce ou si l’on touche aux cuves, la cuve se brise et la créature attaque dans une folie meurtrière.    * **Statistiques suggérées** : utilisez comme base un **Golem de pierre** de niveau approprié, mais transformez les dégâts en"
+    },
+    {
+      "name": "Statistiques suggérées",
+      "context": "   * **Statistiques suggérées** : utilisez comme base un **Golem de pierre** de niveau approprié, mais transformez les dégâts en dégâts de force et de glace. Ajoutez la capacité de **lancer un cône de fragments tranchants** (15 ft, Dextérité DD 15 pour la moitié des dégâts, 4d6 dégâts perforants \\+ 1d6 dégâts de glace), ainsi qu’une résistance à la magie. La créature hurle des phrases incompréhens"
+    },
+    {
+      "name": "Golem de pierre",
+      "context": "   * **Statistiques suggérées** : utilisez comme base un **Golem de pierre** de niveau approprié, mais transformez les dégâts en dégâts de force et de glace. Ajoutez la capacité de **lancer un cône de fragments tranchants** (15 ft, Dextérité DD 15 pour la moitié des dégâts, 4d6 dégâts perforants \\+ 1d6 dégâts de glace), ainsi qu’une résistance à la magie. La créature hurle des phrases incompréhens"
+    },
+    {
+      "name": "Insecte cristallin géant",
+      "context": " * **Insecte cristallin géant** : une seule créature de la taille d’un loup sort de son nid. Utilisez les statistiques d’une **Goule** mais changez ses attaques en dégâts perforants et froids. Elle peut escalader les parois et se nourrit de magie : si un PJ lance un sort à moins de 9 m d’elle, elle peut utiliser sa réaction pour se déplacer de 3 m vers lui. Elle est sensible au feu : toute explosi"
+    },
+    {
+      "name": "Cristal résonateur",
+      "context": "* **Cuves** : les cuves fissurées peuvent être utilisées pour prendre le dessus ou servir de couverture (+2 AC). Elles peuvent aussi être renversées (Athlétisme DD 16\\) pour inonder une zone de 3 m de radius de liquide visqueux rendant le terrain difficile.   * **Cristal résonateur** : un gros cristal au plafond amplifie la magie. Toutes les attaques magiques infligent \\+2 dégâts dans cette salle,"
+    },
+    {
+      "name": "Fin du combat :",
+      "context": " **Fin du combat :** lorsque la créature cristalline est réduite à 0 PV, elle se fissure et explose en centaines d’éclats. Ceux-ci se recomposent brièvement autour d’Elerÿna, créant un court contact télépathique : « … qui… suis-je ? … je voulais… juste vivre…. » avant de se dissiper. Cela peut susciter une réflexion morale chez Elerÿna.  ## **Découverte finale : le journal de l’expérimentateur**"
+    },
+    {
+      "name": "V. O.",
+      "context": " *« Note pour plus tard : masquer mon nom. Trop dangereux si quelqu’un lit ceci. Utiliser seulement les initiales **V. O.** Dorénavant, signer ainsi. »*  *« … le dragon d’or… murmure encore dans mes rêves. Il m’appelle par mon nom d’antan que je ne dois plus porter. Peut-être est-ce un avertissement. »*"
+    },
+    {
+      "name": "Conclusion et pistes futures",
+      "context": " ## **Conclusion et pistes futures**  Après avoir exploré le laboratoire, les aventuriers comprennent l’ampleur de l’obsession d’Amiro Léovine et la dangerosité de ses travaux. Ils peuvent se poser les questions suivantes :"
+    },
+    {
+      "name": "Insecte cristallin mineur",
+      "context": " #  **Insecte cristallin mineur**  *(Menace légère / pression environnementale)*  "
+    },
+    {
+      "name": "Petit monstre, non aligné",
+      "context": "*(Menace légère / pression environnementale)*   **Petit monstre, non aligné**  * **CA** 13 (carapace cristalline)  "
+    },
+    {
+      "name": "Corps cristallin instable",
+      "context": " * **Corps cristallin instable**      Si l’insecte subit des dégâts de feu, il explose à sa mort :      créatures à 1,50 m → DEX DD 12 ou 1d6 dégâts perforants."
+    },
+    {
+      "name": "Morsure de cristal",
+      "context": " * **Morsure de cristal**      Attaque au corps à corps : \\+4 pour toucher, allonge 1,50 m, 1 cible      Dégâts : 5 (1d6+2) perforants"
+    },
+    {
+      "name": "Très petite créature, non alignée",
+      "context": "*(Danger de zone, pas un vrai combat)*   **Très petite créature, non alignée**  * **CA** 11  "
+    },
+    {
+      "name": "Parasite magique",
+      "context": " * **Parasite magique**      Si elle touche une créature lançant un sort, la cible subit 1d6 dégâts de force supplémentaires. "
+    },
+    {
+      "name": "Bête moyenne, non alignée",
+      "context": "*(Gardien, mais peu nombreux)*   **Bête moyenne, non alignée**  * **CA** 14  "
+    },
+    {
+      "name": "Détecteur de magie",
+      "context": " * **Détecteur de magie**      Avantage aux jets d’attaque contre une créature ayant lancé un sort au tour précédent. "
+    },
+    {
+      "name": "Mandibules cristallines",
+      "context": " * **Mandibules cristallines**      \\+4 pour toucher, 1 cible      10 (2d6+2) perforants \\+ 3 (1d6) froid"
+    },
+    {
+      "name": "Créature artificielle grande, chaotique instable",
+      "context": "*(Combat central, tragique et spectaculaire)*   **Créature artificielle grande, chaotique instable**  * **CA** 17 (cristal vivant)  "
+    },
+    {
+      "name": "Corps cristallin fissuré",
+      "context": " * **Corps cristallin fissuré**      À chaque fois qu’elle descend sous un seuil de PV (100 / 60 / 30), elle explose partiellement :      → créatures à 3 m : DEX DD 14 ou 2d6 perforants.  "
+    },
+    {
+      "name": "Souvenirs dissonants",
+      "context": "   → créatures à 3 m : DEX DD 14 ou 2d6 perforants.   * **Souvenirs dissonants**      Une fois par tour, lorsqu’Elerÿna PC lui inflige des dégâts, le clone a désavantage à sa prochaine attaque. "
+    },
+    {
+      "name": "Poing de cristal",
+      "context": "   Deux attaques de poing cristallin.   * **Poing de cristal**      \\+7 pour toucher      13 (2d8+4) contondants \\+ 3 (1d6) froid  "
+    },
+    {
+      "name": "Cône d’éclats",
+      "context": "   13 (2d8+4) contondants \\+ 3 (1d6) froid   * **Cône d’éclats** (Recharge 5–6)      Cône de 4,50 m      DEX DD 15  "
+    },
+    {
+      "name": "Feu direct",
+      "context": " * **Feu direct** → explosion  * Rayon 3 m"
+    },
+    {
+      "name": "Temps d’incantation",
+      "context": "**Niveau** : 2    **Temps d’incantation** : action bonus    **Portée** : personnel    **Durée** : instantanée  "
+    },
+    {
+      "name": "Gesouto Mastiggia",
+      "context": " Le PJ est convoqué (ou invité) à un banquet ou à une réception organisée par **Gesouto Mastiggia**, riche marchand dolomitcien ayant récemment ouvert un comptoir à Alagir.    Le domaine, luxueux, dissimule sous ses dorures des **salles d’évaluation** et de **vente d’esclaves** sous couvert de “serviteurs formés”. "
+    },
+    {
+      "name": "Quête / Objectif :",
+      "context": " #### **Quête / Objectif :**  * Retrouver le serviteur et découvrir comment il est arrivé ici."
+    },
+    {
+      "name": "Découverte clé :",
+      "context": " #### **Découverte clé :**  Un nom familier figure sur la liste — **le père du PJ**, noté comme *“transféré au Comptoir de l’Ambre à Tharelium”*.  "
+    },
+    {
+      "name": "Alliés / Obstacles :",
+      "context": " #### **Alliés / Obstacles :**  * **Gesouto Mastiggia** : marchand retors, officiellement protégé par la cour d’Alagir."
+    },
+    {
+      "name": "Ekénon Tracx (Primus Solaris)",
+      "context": " * **Ekénon Tracx (Primus Solaris)** pourrait couvrir discrètement les activités des Dolomitiens, par intérêt ou obéissance.  * Une jeune domestique Palehindile, **Isenne**, peut aider les PJ si on la convainc (elle fait partie d’un réseau anti-esclavagiste secret)."
+    },
+    {
+      "name": "Daro “le Scribe Gris”",
+      "context": " * Un informateur local, **Daro “le Scribe Gris”**, peut livrer des noms contre un service :      retrouver un coffret volé contenant des **pierres d’âme**.      (Le coffre est gardé par un démon sous contrat Mastiggia.)"
+    },
+    {
+      "name": "Révélation :",
+      "context": " #### **Révélation :**  Le PJ retrouve **un membre vivant de son clan**, peut-être un cousin ou un ancien mentor.  "
+    },
+    {
+      "name": "Climax :",
+      "context": " #### **Climax :**  Trois issues possibles :"
+    },
+    {
+      "name": "Libération du clan",
+      "context": " 1. **Libération du clan** → affrontement sanglant, fuite héroïque, mais le Roi marque mentalement le PJ.  2. **Marché maudit** → le PJ accepte une transaction : libération contre un pacte, ou partage de sa lignée avec le Tyrannœil."
+    },
+    {
+      "name": "Marché maudit",
+      "context": " 2. **Marché maudit** → le PJ accepte une transaction : libération contre un pacte, ou partage de sa lignée avec le Tyrannœil.  3. **Destruction du Comptoir** → le PJ fait s’effondrer la forteresse, mais une partie des esclaves disparaît avec le feu — sacrifiés dans le processus."
+    },
+    {
+      "name": "Destruction du Comptoir",
+      "context": " 3. **Destruction du Comptoir** → le PJ fait s’effondrer la forteresse, mais une partie des esclaves disparaît avec le feu — sacrifiés dans le processus.  #### **Récompenses :**"
+    }
+  ],
+  "places": [
+    {
+      "name": "La Roue de Secours",
+      "context": " Appel de Veda Karom qui donne rendez-vous à la taverne [La Roue de Secours](https://docs.google.com/document/d/1U52DU9rBEPSrpsYsxEGuYP_HKAUGrl9ETblkTh0fMVE/edit?tab=t.rdmy0hup9534#heading=h.7gbt18gcx4h5), le contact sera Darn Fer-Vallée qui vous attendra dans la soirée.  Darn vous raconte qu’il fait partie de la braise et que vos découvertes sur le roi corrobore les informations qu’une personne d"
+    },
+    {
+      "name": "dans le quartier",
+      "context": " Dans la calèche au armoiries des Tovalis les PJ voyage jusqu'au palazzo dans le quartier   Les jardins des âmes est le quartier le plus vaste et le plus peuplé d’Alagir, les Jardins des Âmes s’étendent comme un labyrinthe de ruelles étroites, de maisons superposées et de terrasses branlantes.    Les toits y forment une mosaïque de tissus, de pots de fleurs et de verrières improvisées.  "
+    },
+    {
+      "name": "Palazzo Khaz’Kanoon",
+      "context": " ### Palazzo Khaz’Kanoon  Arrivée devant le Palazzo Khaz’Kanoon la calèche s’arrête, un grand mur d’enceinte et des pin obscurcissent la vue.   "
+    },
+    {
+      "name": "Khaz’Kanoon",
+      "context": " ### Palazzo Khaz’Kanoon  Arrivée devant le Palazzo Khaz’Kanoon la calèche s’arrête, un grand mur d’enceinte et des pin obscurcissent la vue.   "
+    },
+    {
+      "name": "Khaz’Kanoon la calèche s’arrête",
+      "context": " Arrivée devant le Palazzo Khaz’Kanoon la calèche s’arrête, un grand mur d’enceinte et des pin obscurcissent la vue.    Darn donne un laissez-passer gravé sur du marbre.    Les portes s'ouvrent et révèlent un grand jardin qui borde le chemin. Au bout 2 bâtiments, une grande écurie et un bâtiment de taille modeste blanc et carmin ou 4 grade sont postés devant."
+    },
+    {
+      "name": "Le Bas-relief – “Les Fils de la Pierre”",
+      "context": " #### Le Bas-relief – “Les Fils de la Pierre”  Autour du monolithe d’onyx, un vaste bas-relief cerne la salle.  "
+    },
+    {
+      "name": "Salle de balle",
+      "context": " ### Salle de balle  Vous arrivez dans un immense hall d’une cinquantaine de mètres de long. Entierement blanc veiné (comme du kintsugi) de pourpre ou sont disposé 2 rangé de 6 piliers. De grande tenture pourpre son pendue au plafond à côté de 3 chandeliers gargantuesque ou brille des lumières magiques.  "
+    },
+    {
+      "name": "et le pouvoir des Tovalis",
+      "context": "Vous arrivez dans un immense hall d’une cinquantaine de mètres de long. Entierement blanc veiné (comme du kintsugi) de pourpre ou sont disposé 2 rangé de 6 piliers. De grande tenture pourpre son pendue au plafond à côté de 3 chandeliers gargantuesque ou brille des lumières magiques.    De magnifiques meubles en bois foncé richement sculpté parachèvent le tableau.  Au fond, un grand balcon donne su"
+    },
+    {
+      "name": "Salle d’entrainement",
+      "context": " ### Salle d’entrainement   De 10 mètres sur 10, entierement en marbre pourpre veiné de blanc. Sur les côtés des rac d’armes en tout genre sont entreposés. Au fond, une imposante cheminée réchauffe l'atmosphère, au dessus d’elle un marteau blanc veiné (comme du kintsugi) de pourpre trone sur fond marron foncé."
+    },
+    {
+      "name": "Rubis avancent",
+      "context": " « C’est Radius Ignis Mirdobas et ma convenance attendra.    Les préparatifs dans la Crypte Rubis avancent, mais trop lentement à mon goût.    Certains… *éléments récalcitrants* ont dû recevoir des ajustements.    Et cette agitation sur les docks n’annonce rien de bon.  "
+    },
+    {
+      "name": "La Veine Hurlante (Exploration / Mystère / Tal Odius)",
+      "context": " ### **🧱 1\\. La Veine Hurlante (Exploration / Mystère / Tal Odius)**  *“Sous la pierre, la montagne parle.”*  "
+    },
+    {
+      "name": "Les Ombres du Conservatoire (Intrigue / Art / Social)",
+      "context": " ### **🕯️ 2\\. Les Ombres du Conservatoire (Intrigue / Art / Social)**  *“Quand la musique s’arrête, les mensonges commencent à jouer.”*  "
+    },
+    {
+      "name": "d’Alagir",
+      "context": "**Contexte :**    Le Conservatoire d’Alagir, rattaché aux Palehindile, prépare une grande représentation devant le Roi : *“L’Hymne de la Flamme et du Marbre”*.    Mais les musiciens tombent malades les uns après les autres, les partitions disparaissent, et des murmures étranges s’élèvent la nuit dans la salle de répétition.    Le maître de musique implore de l’aide “hors protocole”.  "
+    },
+    {
+      "name": "La Fête des Poids — Comptes de Zitris (Social / Roleplay)",
+      "context": " ### **⚖️ 1\\. La Fête des Poids — Comptes de Zitris (Social / Roleplay)**  *“Quand tout se pèse, rien n’a plus de valeur.”*  "
+    },
+    {
+      "name": "d’alchimie de Nerios Vozin (Zenos VIRION)",
+      "context": "résumé :    Trouver le laboratoire d’alchimie de Nerios Vozin (Zenos VIRION).  Pour trouver un alchimiste spécialisé dans la cristomansie. Il faut d’abord chercher ou demander à quelqu’un (soit Harl ou dans un magasin de magie) il les dirigera vers : "
+    },
+    {
+      "name": "de Amiro Léovine",
+      "context": " Après cela Laguna vous donnera la clef de l’atelier de Amiro Léovine  sous sol :  "
+    },
+    {
+      "name": "abandonné d’Amiro Léovine**",
+      "context": " # **Scénario du laboratoire abandonné d’Amiro Léovine**  **Contexte** : après avoir découvert des indices sur un « Cristomancien » aux pratiques douteuses, Elerÿna Solanmir et ses compagnons suivent les traces de l’ancien précepteur d’Elerÿna, désormais connu sous le nom d’Amiro Léovine. Guidés par des rêves et des échos de la conscience draconique de Valdris, ils pénètrent dans un ancien laborat"
+    },
+    {
+      "name": "dissimulé dans les montagnes",
+      "context": " **Contexte** : après avoir découvert des indices sur un « Cristomancien » aux pratiques douteuses, Elerÿna Solanmir et ses compagnons suivent les traces de l’ancien précepteur d’Elerÿna, désormais connu sous le nom d’Amiro Léovine. Guidés par des rêves et des échos de la conscience draconique de Valdris, ils pénètrent dans un ancien laboratoire dissimulé dans les montagnes. Ce lieu n’est pas simp"
+    },
+    {
+      "name": "d’alchimie et de magie des cristaux",
+      "context": " * **Thème** : l’exploration d’un laboratoire d’alchimie et de magie des cristaux. Il doit être oppressant : les murs transpirent le passé et la folie de celui qui a conçu cet endroit.   * **Ambiance** : sombre, froide, silence quasi permanent, seulement troublé par un bourdonnement provenant des insectes cristallins et le bruissement des cristaux qui poussent. La lumière provient des cristaux inc"
+    },
+    {
+      "name": "et temple du cristal**",
+      "context": " ## **Salle V : Grand laboratoire et temple du cristal**  Cette vaste pièce est la principale zone d’expérimentation. Des arcs soutiennent un plafond haut. Sur les côtés, des bassins circulaires encastrés contiennent des solutions colorées. Au centre, une plateforme semi-circulaire et un piédestal brisé témoignent de l’endroit où était probablement fixée une grande machine. Des symboles draconique"
+    },
+    {
+      "name": "discret à **Sulayman**",
+      "context": " *« Si mes calculs sont exacts, je devrai me rendre loin d’ici pour poursuivre mes travaux : les cristaux de cette région s’épuisent et les insectes réclament davantage. J’ai entendu parler d’un comptoir discret à **Sulayman**, la ville portuaire du Sultana de Sandarane. Là‑bas, je pourrais embarquer avec mes recherches en toute discrétion et trouver de nouvelles ressources. Je laisserai ces insta"
+    },
+    {
+      "name": "est un pas de plus vers la confrontation finale ave",
+      "context": " L’aventure se termine sur plus de questions que de réponses, tout en donnant aux personnages des indices concrets. Ce laboratoire est un pas de plus vers la confrontation finale avec Amiro Léovine et la compréhension du véritable héritage d’Elerÿna.  #  **Insecte cristallin mineur**"
+    },
+    {
+      "name": "Lieu principal : Le domaine Mastiggia, dans la Porte Pourpre.",
+      "context": " ### **Lieu principal : Le domaine Mastiggia, dans la Porte Pourpre.**  Le PJ est convoqué (ou invité) à un banquet ou à une réception organisée par **Gesouto Mastiggia**, riche marchand dolomitcien ayant récemment ouvert un comptoir à Alagir.  "
+    },
+    {
+      "name": "Mastiggia",
+      "context": " ### **Lieu principal : Le domaine Mastiggia, dans la Porte Pourpre.**  Le PJ est convoqué (ou invité) à un banquet ou à une réception organisée par **Gesouto Mastiggia**, riche marchand dolomitcien ayant récemment ouvert un comptoir à Alagir.  "
+    },
+    {
+      "name": "à Alagir",
+      "context": " Le PJ est convoqué (ou invité) à un banquet ou à une réception organisée par **Gesouto Mastiggia**, riche marchand dolomitcien ayant récemment ouvert un comptoir à Alagir.    Le domaine, luxueux, dissimule sous ses dorures des **salles d’évaluation** et de **vente d’esclaves** sous couvert de “serviteurs formés”. "
+    },
+    {
+      "name": "Mastiggia (possibilité de combat",
+      "context": " * Infiltrer les caves du domaine Mastiggia (possibilité de combat, d’enquête ou de ruse).  * Découvrir un registre codé listant **les cargaisons “vivantes”** récemment arrivées d’un port du sud : Huriya."
+    },
+    {
+      "name": "de l’Ambre à Tharelium”*",
+      "context": " Un nom familier figure sur la liste — **le père du PJ**, noté comme *“transféré au Comptoir de l’Ambre à Tharelium”*.    Une seconde note, griffonnée à la hâte : *“Revente spéciale – Échelon B.”* "
+    },
+    {
+      "name": "des Larmes d’Ambre",
+      "context": " ### **Lieu principal : Port souterrain de Huriya ou comptoir des Larmes d’Ambre, bastion Mastiggia.**  Le PJ suit la piste jusqu’à la côte sud : **le port clandestin de Huriya**, où transitent les esclaves “raffinés” — mages, artisans, drakéides.  "
+    },
+    {
+      "name": "et s’attirer la haine ouverte des Dolomitiens",
+      "context": " * Choisir : fuir discrètement, ou frapper le comptoir et s’attirer la haine ouverte des Dolomitiens.  #### **Récompenses :**"
+    },
+    {
+      "name": "du Sépulcre",
+      "context": " ### **Lieu principal : Le Comptoir du Sépulcre, domaine des Mastiggia à Tharelium.**  Une forteresse de verre et d’os bâtie sur une falaise d’obsidienne, donnant sur une mer huileuse.  "
+    },
+    {
+      "name": "des Mastiggia à Tharelium",
+      "context": " ### **Lieu principal : Le Comptoir du Sépulcre, domaine des Mastiggia à Tharelium.**  Une forteresse de verre et d’os bâtie sur une falaise d’obsidienne, donnant sur une mer huileuse.  "
+    },
+    {
+      "name": "lors d’une **“Nuit des Enchères”**",
+      "context": " * Les PJ infiltrent le domaine lors d’une **“Nuit des Enchères”**, événement où les plus puissants du continent achètent esclaves, artefacts et âmes.  * Le père du PJ (ou son esprit) y est présenté comme **“L’Initié du Sang Pur”**, objet d’une vente spéciale réservée à des acheteurs inconnus."
+    },
+    {
+      "name": "Mastiggia) | Découvrir qu’un membre du clan vit enc",
+      "context": "| ----- | ----- | ----- | ----- | ----- | | I | Alagir (Domaine Mastiggia) | Découvrir qu’un membre du clan vit encore | Gesouto Mastiggia | Le clan a été vendu, non tué | | II | Huriya ou Tharelium portuaire | Retrouver un survivant et une piste | Réseau Mastiggia | Le père est vivant, transféré pour “recherche spéciale” | | III | Tharelium, Sépulcre de Lune | Libérer le clan ou confronter le Roi"
+    }
+  ],
+  "organisations": [
+    {
+      "name": "Maison des Listes",
+      "context": " * Les balances de la **Maison des Listes** se déréglent toutes au même instant.   * Les objets déposés s’oxydent ou changent de poids.   * Et un **enfant inconnu**, vêtu d’un manteau violet, rit doucement à chaque déséquilibre."
+    },
+    {
+      "name": "famille Mastiggia",
+      "context": "Le PJ (ancien membre du clan Izotzargi, originaire du Dominion de l’Antre) croyait sa famille exterminée après la répression du Duché des Dolomites.    Mais à Alagir, il découvre que son clan n’a pas disparu : **il a été réduit en esclavage et vendu** à des maisons dolomitciennes — notamment la puissante **famille Mastiggia**, marchands d’âmes et de corps.  Ce fil narratif commence par un hasard… "
+    },
+    {
+      "name": "le Roi Tyrannœil",
+      "context": "Ce fil narratif commence par un hasard… ou une coïncidence trop parfaite pour l’être.    Sous la surface, c’est un piège et une épreuve : **le Roi Tyrannœil** observe ces retrouvailles de loin, voyant en lui un possible pion… ou un héritier dangereux.  ---"
+    },
+    {
+      "name": "les cargaisons “vivantes”",
+      "context": " * Découvrir un registre codé listant **les cargaisons “vivantes”** récemment arrivées d’un port du sud : Huriya.  #### **Découverte clé :**"
+    },
+    {
+      "name": "le père du PJ",
+      "context": " Un nom familier figure sur la liste — **le père du PJ**, noté comme *“transféré au Comptoir de l’Ambre à Tharelium”*.    Une seconde note, griffonnée à la hâte : *“Revente spéciale – Échelon B.”* "
+    },
+    {
+      "name": "le port clandestin de Huriya",
+      "context": " Le PJ suit la piste jusqu’à la côte sud : **le port clandestin de Huriya**, où transitent les esclaves “raffinés” — mages, artisans, drakéides.    Le lieu, dissimulé sous un marché d’épices, grouille de contrebandiers, de gardes corrompus et de marchands à la langue dorée. "
+    },
+    {
+      "name": "le père du PJ a été vendu à Tharelium pour ses “dons rares”",
+      "context": "Le PJ retrouve **un membre vivant de son clan**, peut-être un cousin ou un ancien mentor.    Ce survivant, marqué par les chaînes, révèle que **le père du PJ a été vendu à Tharelium pour ses “dons rares”** — son sang draconique.  Il laisse échapper un détail :"
+    }
+  ],
+  "sections": [
+    {
+      "level": 1,
+      "title": "Trame général"
+    },
+    {
+      "level": 1,
+      "title": "Partie 5: Alagir"
+    },
+    {
+      "level": 2,
+      "title": "Arrivé depuis Brise-Courant :"
+    },
+    {
+      "level": 3,
+      "title": "Discours d’Eldric Rigart"
+    },
+    {
+      "level": 3,
+      "title": "Palazzo Khaz’Kanoon"
+    },
+    {
+      "level": 4,
+      "title": "Le Bas-relief – “Les Fils de la Pierre”"
+    },
+    {
+      "level": 3,
+      "title": "Salle de balle"
+    },
+    {
+      "level": 3,
+      "title": "Dédale"
+    },
+    {
+      "level": 3,
+      "title": "Salle d’entrainement"
+    },
+    {
+      "level": 3,
+      "title": "Harl"
+    },
+    {
+      "level": 1,
+      "title": "Side Quest"
+    },
+    {
+      "level": 3,
+      "title": "La Veine Hurlante (Exploration / Mystère / Tal Odius)"
+    },
+    {
+      "level": 3,
+      "title": "Les Ombres du Conservatoire (Intrigue / Art / Social)"
+    },
+    {
+      "level": 3,
+      "title": "La Fête des Poids — Comptes de Zitris (Social / Roleplay)"
+    },
+    {
+      "level": 1,
+      "title": "Eleryna"
+    },
+    {
+      "level": 2,
+      "title": "Eleryna :"
+    },
+    {
+      "level": 1,
+      "title": "Scénario du laboratoire abandonné d’Amiro Léovine"
+    },
+    {
+      "level": 2,
+      "title": "Introduction"
+    },
+    {
+      "level": 2,
+      "title": "Consignes générales pour la MJ"
+    },
+    {
+      "level": 2,
+      "title": "Salle I : Antichambre d’accueil"
+    },
+    {
+      "level": 2,
+      "title": "Salle II : Bassin d’infusion"
+    },
+    {
+      "level": 2,
+      "title": "Salle III : Labo auxiliaire et puzzle de résonance"
+    },
+    {
+      "level": 2,
+      "title": "Salle IV : Stock et notes dispersées (pièce intermédiaire)"
+    },
+    {
+      "level": 2,
+      "title": "Salle V : Grand laboratoire et temple du cristal"
+    },
+    {
+      "level": 2,
+      "title": "Salle VI : Salle de stase et bataille finale"
+    },
+    {
+      "level": 2,
+      "title": "Découverte finale : le journal de l’expérimentateur"
+    },
+    {
+      "level": 2,
+      "title": "Conclusion et pistes futures"
+    },
+    {
+      "level": 1,
+      "title": "Insecte cristallin mineur"
+    },
+    {
+      "level": 3,
+      "title": "Traits"
+    },
+    {
+      "level": 3,
+      "title": "Actions"
+    },
+    {
+      "level": 1,
+      "title": "Larve cristalline"
+    },
+    {
+      "level": 3,
+      "title": "Traits"
+    },
+    {
+      "level": 3,
+      "title": "Actions"
+    },
+    {
+      "level": 1,
+      "title": "Insecte cristallin géant"
+    },
+    {
+      "level": 3,
+      "title": "Traits"
+    },
+    {
+      "level": 3,
+      "title": "Actions"
+    },
+    {
+      "level": 1,
+      "title": "Élerÿna Cristalline (Clone raté – Boss)"
+    },
+    {
+      "level": 3,
+      "title": "Traits"
+    },
+    {
+      "level": 3,
+      "title": "Actions"
+    },
+    {
+      "level": 3,
+      "title": "Mort"
+    },
+    {
+      "level": 1,
+      "title": "Règle spéciale – Environnement inflammable"
+    },
+    {
+      "level": 1,
+      "title": "Sort spécial – *Porte de Valdris*"
+    },
+    {
+      "level": 3,
+      "title": "Effet"
+    },
+    {
+      "level": 1,
+      "title": "Illevas"
+    },
+    {
+      "level": 1,
+      "title": "Ezbehar"
+    },
+    {
+      "level": 2,
+      "title": "Contexte général"
+    },
+    {
+      "level": 2,
+      "title": "Acte I – Les Ombres d’Alagir"
+    },
+    {
+      "level": 3,
+      "title": "*Première étape : la rencontre et la révélation*"
+    },
+    {
+      "level": 3,
+      "title": "Lieu principal : Le domaine Mastiggia, dans la Porte Pourpre."
+    },
+    {
+      "level": 4,
+      "title": "Déroulement :"
+    },
+    {
+      "level": 4,
+      "title": "Quête / Objectif :"
+    },
+    {
+      "level": 4,
+      "title": "Découverte clé :"
+    },
+    {
+      "level": 4,
+      "title": "Alliés / Obstacles :"
+    },
+    {
+      "level": 2,
+      "title": "Acte II – Les Sables du Marché Noir"
+    },
+    {
+      "level": 3,
+      "title": "*Étape intermédiaire : la trace du clan et la vérité du commerce humain*"
+    },
+    {
+      "level": 3,
+      "title": "Lieu principal : Port souterrain de Huriya ou comptoir des Larmes d’Ambre, bastion Mastiggia."
+    },
+    {
+      "level": 4,
+      "title": "Déroulement :"
+    },
+    {
+      "level": 4,
+      "title": "Révélation :"
+    },
+    {
+      "level": 4,
+      "title": "Quête / Objectif :"
+    },
+    {
+      "level": 4,
+      "title": "Récompenses :"
+    },
+    {
+      "level": 2,
+      "title": "Acte III – Le Sépulcre de Lune (Tharelium)"
+    },
+    {
+      "level": 3,
+      "title": "*Étape finale : confrontation et héritage*"
+    },
+    {
+      "level": 3,
+      "title": "Lieu principal : Le Comptoir du Sépulcre, domaine des Mastiggia à Tharelium."
+    },
+    {
+      "level": 4,
+      "title": "Déroulement :"
+    },
+    {
+      "level": 4,
+      "title": "Climax :"
+    },
+    {
+      "level": 4,
+      "title": "Récompenses :"
+    },
+    {
+      "level": 2,
+      "title": "Éléments récurrents à distiller dans Alagir :"
+    },
+    {
+      "level": 3,
+      "title": "Résumé rapide"
+    }
+  ],
+  "loreTitles": [
+    {
+      "title": "Trame général",
+      "level": 1
+    },
+    {
+      "title": "Arrivé depuis Brise-Courant :",
+      "level": 2
+    },
+    {
+      "title": "Discours d’Eldric Rigart",
+      "level": 3
+    },
+    {
+      "title": "Palazzo Khaz’Kanoon",
+      "level": 3
+    },
+    {
+      "title": "Salle de balle",
+      "level": 3
+    },
+    {
+      "title": "Dédale",
+      "level": 3
+    },
+    {
+      "title": "Salle d’entrainement",
+      "level": 3
+    },
+    {
+      "title": "Harl",
+      "level": 3
+    },
+    {
+      "title": "Side Quest",
+      "level": 1
+    },
+    {
+      "title": "La Veine Hurlante (Exploration / Mystère / Tal Odius)",
+      "level": 3
+    },
+    {
+      "title": "Les Ombres du Conservatoire (Intrigue / Art / Social)",
+      "level": 3
+    },
+    {
+      "title": "La Fête des Poids — Comptes de Zitris (Social / Roleplay)",
+      "level": 3
+    },
+    {
+      "title": "Eleryna",
+      "level": 1
+    },
+    {
+      "title": "Eleryna :",
+      "level": 2
+    },
+    {
+      "title": "Scénario du laboratoire abandonné d’Amiro Léovine",
+      "level": 1
+    },
+    {
+      "title": "Introduction",
+      "level": 2
+    },
+    {
+      "title": "Consignes générales pour la MJ",
+      "level": 2
+    },
+    {
+      "title": "Salle I : Antichambre d’accueil",
+      "level": 2
+    },
+    {
+      "title": "Salle II : Bassin d’infusion",
+      "level": 2
+    },
+    {
+      "title": "Salle III : Labo auxiliaire et puzzle de résonance",
+      "level": 2
+    },
+    {
+      "title": "Salle IV : Stock et notes dispersées (pièce intermédiaire)",
+      "level": 2
+    },
+    {
+      "title": "Salle V : Grand laboratoire et temple du cristal",
+      "level": 2
+    },
+    {
+      "title": "Salle VI : Salle de stase et bataille finale",
+      "level": 2
+    },
+    {
+      "title": "Découverte finale : le journal de l’expérimentateur",
+      "level": 2
+    },
+    {
+      "title": "Conclusion et pistes futures",
+      "level": 2
+    },
+    {
+      "title": "Insecte cristallin mineur",
+      "level": 1
+    },
+    {
+      "title": "Traits",
+      "level": 3
+    },
+    {
+      "title": "Actions",
+      "level": 3
+    },
+    {
+      "title": "Larve cristalline",
+      "level": 1
+    },
+    {
+      "title": "Traits",
+      "level": 3
+    },
+    {
+      "title": "Actions",
+      "level": 3
+    },
+    {
+      "title": "Insecte cristallin géant",
+      "level": 1
+    },
+    {
+      "title": "Traits",
+      "level": 3
+    },
+    {
+      "title": "Actions",
+      "level": 3
+    },
+    {
+      "title": "Élerÿna Cristalline (Clone raté – Boss)",
+      "level": 1
+    },
+    {
+      "title": "Traits",
+      "level": 3
+    },
+    {
+      "title": "Actions",
+      "level": 3
+    },
+    {
+      "title": "Mort",
+      "level": 3
+    },
+    {
+      "title": "Règle spéciale – Environnement inflammable",
+      "level": 1
+    },
+    {
+      "title": "Sort spécial – *Porte de Valdris*",
+      "level": 1
+    },
+    {
+      "title": "Effet",
+      "level": 3
+    },
+    {
+      "title": "Illevas",
+      "level": 1
+    },
+    {
+      "title": "Ezbehar",
+      "level": 1
+    },
+    {
+      "title": "Contexte général",
+      "level": 2
+    },
+    {
+      "title": "Acte I – Les Ombres d’Alagir",
+      "level": 2
+    },
+    {
+      "title": "*Première étape : la rencontre et la révélation*",
+      "level": 3
+    },
+    {
+      "title": "Lieu principal : Le domaine Mastiggia, dans la Porte Pourpre.",
+      "level": 3
+    },
+    {
+      "title": "Acte II – Les Sables du Marché Noir",
+      "level": 2
+    },
+    {
+      "title": "*Étape intermédiaire : la trace du clan et la vérité du commerce humain*",
+      "level": 3
+    },
+    {
+      "title": "Lieu principal : Port souterrain de Huriya ou comptoir des Larmes d’Ambre, bastion Mastiggia.",
+      "level": 3
+    },
+    {
+      "title": "Acte III – Le Sépulcre de Lune (Tharelium)",
+      "level": 2
+    },
+    {
+      "title": "*Étape finale : confrontation et héritage*",
+      "level": 3
+    },
+    {
+      "title": "Lieu principal : Le Comptoir du Sépulcre, domaine des Mastiggia à Tharelium.",
+      "level": 3
+    },
+    {
+      "title": "Éléments récurrents à distiller dans Alagir :",
+      "level": 2
+    },
+    {
+      "title": "Résumé rapide",
+      "level": 3
+    }
+  ],
+  "markdownLinks": []
+}

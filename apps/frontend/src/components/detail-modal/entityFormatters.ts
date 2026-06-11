@@ -1,4 +1,4 @@
-import type { Breed, Sex, Membership, Language, PlaceType } from '../../api/entities';
+import type { Breed, Sex, Membership, Language, PlaceType, DnDClass, DnDAlignment } from '../../api/entities';
 
 export function formatBreed(breed: Breed | null | undefined): string {
   if (!breed) return '-';
@@ -52,6 +52,43 @@ export function iconForPlaceType(placeType: PlaceType | null | undefined): strin
   };
   if (!placeType) return '/Icon/place.png';
   return map[placeType] ?? '/Icon/place.png';
+}
+
+export function formatDnDClass(cls: DnDClass | null | undefined): string {
+  if (!cls) return '—';
+  const map: Record<DnDClass, string> = {
+    BARBARE: 'Barbare',
+    BARDE: 'Barde',
+    CLERC: 'Clerc',
+    DRUIDE: 'Druide',
+    GUERRIER: 'Guerrier',
+    MOINE: 'Moine',
+    PALADIN: 'Paladin',
+    RODEUR: 'Rôdeur',
+    ROUBLARD: 'Roublard',
+    ENSORCELEUR: 'Ensorceleur',
+    SORCIER: 'Sorcier',
+    MAGICIEN: 'Magicien',
+    ARTIFICIER: 'Artificier',
+    OTHER: 'Autre',
+  };
+  return map[cls] ?? cls;
+}
+
+export function formatAlignment(alignment: DnDAlignment | null | undefined): string {
+  if (!alignment) return '—';
+  const map: Record<DnDAlignment, string> = {
+    LOYAL_BON: 'Loyal Bon',
+    NEUTRE_BON: 'Neutre Bon',
+    CHAOTIQUE_BON: 'Chaotique Bon',
+    LOYAL_NEUTRE: 'Loyal Neutre',
+    VRAI_NEUTRE: 'Vrai Neutre',
+    CHAOTIQUE_NEUTRE: 'Chaotique Neutre',
+    LOYAL_MAUVAIS: 'Loyal Mauvais',
+    NEUTRE_MAUVAIS: 'Neutre Mauvais',
+    CHAOTIQUE_MAUVAIS: 'Chaotique Mauvais',
+  };
+  return map[alignment] ?? alignment;
 }
 
 export function formatLanguage(lang: Language): string {

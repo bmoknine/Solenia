@@ -64,6 +64,8 @@ export const placeInputSchema = z.object({
   districtId: idSchema.nullable().optional(),
   /** Liens Organisation ↔ Lieu (table de jointure) */
   organisationIds: z.array(idSchema).optional(),
+  /** Personnages joueurs présents dans ce lieu */
+  playerCharacterIds: z.array(idSchema).optional(),
   showOnMap: z.boolean().optional(),
   isForDM: z.boolean().optional(),
 });
@@ -77,7 +79,7 @@ export const statsSchema = z.object({
   CHA: z.number().int(),
 });
 
-const breedEnum = z.enum([
+export const breedEnum = z.enum([
   'ELFE',
   'HALFELIN',
   'HUMAIN',
@@ -164,7 +166,7 @@ export const personInputSchema = z
   .object({
     name: z.string().min(1),
     description: z.string().optional(),
-    imageUrl: z.string().url().optional(),
+    imageUrl: z.string().nullable().optional(),
     breed: breedEnum.nullish(),
     sex: sexEnum.nullish(),
     membership: membershipEnum.nullish(),
@@ -208,13 +210,15 @@ export const positionInputSchema = z
     cityId: idSchema.optional(),
     placeId: idSchema.optional(),
     personOfInterestId: idSchema.optional(),
+    playerCharacterId: idSchema.optional(),
   })
   .refine((data) => {
     const count =
       Number(Boolean(data.kingdomId)) +
       Number(Boolean(data.cityId)) +
       Number(Boolean(data.placeId)) +
-      Number(Boolean(data.personOfInterestId));
+      Number(Boolean(data.personOfInterestId)) +
+      Number(Boolean(data.playerCharacterId));
     return count === 1;
   }, { message: 'Une position doit cibler exactement un élément.' });
 
@@ -225,7 +229,7 @@ export const loreInputSchema = z.object({
     .array(z.string().trim().min(1))
     .optional()
     .transform((value) => (value ? Array.from(new Set(value)) : value)),
-  dateInGame: z.number().optional().nullable(),
+  dateInGame: soleniaDateInGameSchema.nullable().optional(),
   summary: z.string().optional().nullable(),
   isForDM: z.boolean().optional(),
   kingdomIds: z.array(idSchema).optional(),
@@ -234,6 +238,101 @@ export const loreInputSchema = z.object({
   personIds: z.array(idSchema).optional(),
   organisationIds: z.array(idSchema).optional(),
 });
+
+export const dndClassEnum = z.enum([
+  'BARBARE',
+  'BARDE',
+  'CLERC',
+  'DRUIDE',
+  'GUERRIER',
+  'MOINE',
+  'PALADIN',
+  'RODEUR',
+  'ROUBLARD',
+  'ENSORCELEUR',
+  'SORCIER',
+  'MAGICIEN',
+  'ARTIFICIER',
+  'OTHER',
+]);
+export type DnDClass = z.infer<typeof dndClassEnum>;
+export const DND_CLASS_VALUES = dndClassEnum.options;
+
+export const dndAlignmentEnum = z.enum([
+  'LOYAL_BON',
+  'NEUTRE_BON',
+  'CHAOTIQUE_BON',
+  'LOYAL_NEUTRE',
+  'VRAI_NEUTRE',
+  'CHAOTIQUE_NEUTRE',
+  'LOYAL_MAUVAIS',
+  'NEUTRE_MAUVAIS',
+  'CHAOTIQUE_MAUVAIS',
+]);
+export type DnDAlignment = z.infer<typeof dndAlignmentEnum>;
+export const DND_ALIGNMENT_VALUES = dndAlignmentEnum.options;
+
+export const abilityKeyEnum = z.enum(['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']);
+export type AbilityKey = z.infer<typeof abilityKeyEnum>;
+
+const playerCharacterSkillSchema = z.object({
+  id: idSchema.optional(),
+  name: z.string().min(1),
+  ability: abilityKeyEnum.default('DEX'),
+  proficient: z.boolean().default(false),
+  expertise: z.boolean().default(false),
+});
+
+const playerCharacterSavingThrowSchema = z.object({
+  id: idSchema.optional(),
+  ability: abilityKeyEnum,
+  proficient: z.boolean().default(false),
+});
+
+const playerCharacterEquipmentItemSchema = z.object({
+  id: idSchema.optional(),
+  name: z.string().min(1),
+  quantity: z.number().int().positive().default(1),
+  description: z.string().nullable().optional(),
+  equipped: z.boolean().default(false),
+});
+
+const playerCharacterSpellSchema = z.object({
+  id: idSchema.optional(),
+  name: z.string().min(1),
+  level: z.number().int().min(0).max(9).default(0),
+  school: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  prepared: z.boolean().default(false),
+});
+
+export const playerCharacterInputSchema = z
+  .object({
+    name: z.string().min(1),
+    class: dndClassEnum.nullish(),
+    level: z.number().int().min(1).max(20).default(1),
+    race: breedEnum.nullish(),
+    background: z.string().nullable().optional(),
+    alignment: dndAlignmentEnum.nullish(),
+    imageUrl: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    pv: z.number().int().nonnegative().nullable().optional(),
+    pvMax: z.number().int().nonnegative().nullable().optional(),
+    ca: z.number().int().nonnegative().nullable().optional(),
+    initiative: z.number().int().nullable().optional(),
+    speed: z.number().int().nonnegative().nullable().optional(),
+    showOnMap: z.boolean().optional(),
+    isForDM: z.boolean().optional(),
+    kingdomId: idSchema.nullish(),
+    cityId: idSchema.nullish(),
+    districtId: idSchema.nullish(),
+    placeId: idSchema.nullish(),
+    skills: z.array(playerCharacterSkillSchema).optional(),
+    savingThrows: z.array(playerCharacterSavingThrowSchema).optional(),
+    equipment: z.array(playerCharacterEquipmentItemSchema).optional(),
+    spells: z.array(playerCharacterSpellSchema).optional(),
+  })
+  .merge(statsSchema);
 
 export type KingdomInput = z.infer<typeof kingdomInputSchema>;
 export type CityInput = z.infer<typeof cityInputSchema>;
@@ -245,4 +344,5 @@ export type CommentInput = z.infer<typeof commentInputSchema>;
 export type CommentUpdate = z.infer<typeof commentUpdateSchema>;
 export type PositionInput = z.infer<typeof positionInputSchema>;
 export type LoreInput = z.infer<typeof loreInputSchema>;
+export type PlayerCharacterInput = z.infer<typeof playerCharacterInputSchema>;
 

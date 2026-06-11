@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { deleteLore, type KingdomDetail, type LoreDetail, type CityDetail, type DistrictDetail, type PlaceDetail, type PersonDetail, type OrganisationDetail } from '../api/entities';
+import { deleteLore, type KingdomDetail, type LoreDetail, type CityDetail, type DistrictDetail, type PlaceDetail, type PersonDetail, type OrganisationDetail, type PlayerCharacterDetail } from '../api/entities';
 import { LoreView } from './detail-modal/LoreView';
 import type { LoreEditState } from './detail-modal/loreTypes';
 import { useToast } from '../toast/ToastProvider';
@@ -13,11 +13,12 @@ import {
   PersonView,
   OrganisationView,
 } from './detail-modal/views';
+import { PlayerCharacterView } from './detail-modal/views/PlayerCharacterView';
 import { useDetailModalEntity } from './detail-modal/useDetailModalEntity';
 import { DetailModalSidebar } from './detail-modal/DetailModalSidebar';
 import type { EntityData } from './detail-modal/detailModalTypes';
 
-export default function DetailModal({ point, onClose, token, onUpdated, onDelete, onNavigate, onCreateDistrict, onOpenLore, loreId, createMode }: DetailModalProps) {
+export default function DetailModal({ point, onClose, onBack, backLabel, token, onUpdated, onDelete, onNavigate, onCreateDistrict, onOpenLore, loreId, createMode }: DetailModalProps) {
   const { push } = useToast();
   const {
     data,
@@ -92,11 +93,21 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
           point={point}
           data={data as EntityData}
           onNavigate={onNavigate}
+          onOpenLore={onOpenLore}
           createMode={createMode}
         />
         <div className="detail-modal glass">
           <button className="detail-close ghost" onClick={onClose}>×</button>
           <div className="detail-actions">
+            {onBack && (
+              <button
+                className="ghost detail-back-btn"
+                onClick={onBack}
+                title={`Retour : ${backLabel ?? 'précédent'}`}
+              >
+                ← {backLabel ?? 'Retour'}
+              </button>
+            )}
             {token && (data || createMode) && (
               <>
                 {!createMode && (
@@ -235,6 +246,16 @@ export default function DetailModal({ point, onClose, token, onUpdated, onDelete
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
                 onOpenLore={onOpenLore}
+              />
+            )}
+            {currentKind === 'playerCharacter' && (
+              <PlayerCharacterView
+                data={data as PlayerCharacterDetail | null}
+                editMode={editMode}
+                editState={editState!}
+                onChange={updateField}
+                valueOrDash={valueOrDash}
+                onNavigate={onNavigate}
               />
             )}
             {currentKind === 'lore' && (

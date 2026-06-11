@@ -14,7 +14,9 @@ export type District = {
   rumors?: string | null;
   secret?: string | null;
 };
-export type PlaceType = 'MAGASIN' | 'TAVERNE_AUBERGE' | 'MAGASIN_MAGIE' | 'HERBORISTE_APOTHICAIRE' | 'AUTRE';
+export type PlaceType = 'MAGASIN' | 'TAVERNE_AUBERGE' | 'MAGASIN_MAGIE' | 'HERBORISTE_APOTHICAIRE' | 'DONJON_CAVERNE' | 'AUTRE';
+export type DnDClass = 'BARBARE' | 'BARDE' | 'CLERC' | 'DRUIDE' | 'GUERRIER' | 'MOINE' | 'PALADIN' | 'RODEUR' | 'ROUBLARD' | 'ENSORCELEUR' | 'SORCIER' | 'MAGICIEN' | 'ARTIFICIER' | 'OTHER';
+export type DnDAlignment = 'LOYAL_BON' | 'NEUTRE_BON' | 'CHAOTIQUE_BON' | 'LOYAL_NEUTRE' | 'VRAI_NEUTRE' | 'CHAOTIQUE_NEUTRE' | 'LOYAL_MAUVAIS' | 'NEUTRE_MAUVAIS' | 'CHAOTIQUE_MAUVAIS';
 export type Place = { id: string; name: string; placeType?: PlaceType; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; showOnMap?: boolean; isForDM?: boolean };
 export type OrganisationType = 'CELLULE' | 'PRINCIPAL';
 export type Membership = 'POLITIC' | 'RELIGEUX' | 'MARCHAND' | 'MILITAIRE' | 'CRIMINALITE' | 'OTHER';
@@ -59,7 +61,7 @@ type PlaceRef = { id: string; name: string; iconUrl?: string | null; placeType?:
 type CommentRef = { id: string; description: string; dateInGame?: string | null };
 
 // Lore
-export type LoreRef = { id: string; title: string; tags?: string[]; dateInGame?: number | null; isForDM?: boolean };
+export type LoreRef = { id: string; title: string; tags?: string[]; dateInGame?: string | number | null; isForDM?: boolean };
 export type Lore = LoreRef & { content?: string; summary?: string | null };
 export type LoreDetail = LoreRef & { content: string; summary?: string | null } & {
   kingdoms?: Ref[];
@@ -119,6 +121,7 @@ export type PlaceDetail = Place & {
   city?: Ref | null;
   district?: Ref | null;
   persons?: Ref[];
+  playerCharacters?: Ref[];
   comments?: CommentRef[];
   organisations?: Ref[];
   lores?: LoreRef[];
@@ -146,6 +149,48 @@ export type OrganisationDetail = Organisation & {
   parentOrganisation?: Ref | null;
   subOrganisations?: Ref[];
   lores?: LoreRef[];
+};
+
+export type AbilityKey = 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'CHA';
+export type PlayerCharacterSkill = { id?: string; name: string; ability: AbilityKey; proficient: boolean; expertise: boolean };
+export type PlayerCharacterSavingThrow = { id?: string; ability: string; proficient: boolean };
+export type PlayerCharacterEquipmentItem = { id?: string; name: string; quantity: number; description?: string | null; equipped: boolean };
+export type PlayerCharacterSpell = { id?: string; name: string; level: number; school?: string | null; description?: string | null; prepared: boolean };
+
+export type PlayerCharacter = {
+  id: string;
+  name: string;
+  class?: DnDClass | null;
+  level: number;
+  race?: Breed | null;
+  background?: string | null;
+  alignment?: DnDAlignment | null;
+  imageUrl?: string | null;
+  description?: string | null;
+  STR: number;
+  DEX: number;
+  CON: number;
+  INT: number;
+  WIS: number;
+  CHA: number;
+  pv?: number | null;
+  pvMax?: number | null;
+  ca?: number | null;
+  initiative?: number | null;
+  speed?: number | null;
+  showOnMap?: boolean;
+  isForDM?: boolean;
+};
+
+export type PlayerCharacterDetail = PlayerCharacter & {
+  kingdom?: Ref | null;
+  city?: Ref | null;
+  district?: Ref | null;
+  place?: Ref | null;
+  skills?: PlayerCharacterSkill[];
+  savingThrows?: PlayerCharacterSavingThrow[];
+  equipment?: PlayerCharacterEquipmentItem[];
+  spells?: PlayerCharacterSpell[];
 };
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -374,13 +419,42 @@ export async function createPerson(
   return withAuth(token).post<{ id: string }>('/persons', data);
 }
 
+export async function listPlayerCharacters() {
+  return getPublicJson<PlayerCharacter[]>('/player-characters', 'Chargement personnages joueur échoué');
+}
+
+export async function getPlayerCharacter(id: string) {
+  return getPublicJson<PlayerCharacterDetail>(`/player-characters/${id}`, 'Chargement personnage joueur échoué');
+}
+
+export async function createPlayerCharacter(
+  token: string,
+  data: Omit<PlayerCharacterDetail, 'id' | 'kingdom' | 'city' | 'district' | 'place'> & {
+    kingdomId?: string | null;
+    cityId?: string | null;
+    districtId?: string | null;
+    placeId?: string | null;
+  },
+) {
+  return withAuth(token).post<{ id: string }>('/player-characters', data);
+}
+
+export async function updatePlayerCharacter(
+  token: string,
+  id: string,
+  data: Partial<PlayerCharacterDetail & { kingdomId?: string | null; cityId?: string | null; districtId?: string | null; placeId?: string | null }>,
+) {
+  return withAuth(token).put(`/player-characters/${id}`, data);
+}
+
 export async function updatePosition(
   token: string,
   data:
-    | { kingdomId: string; cityId?: never; placeId?: never; personOfInterestId?: never; x: number; y: number }
-    | { kingdomId?: never; cityId: string; placeId?: never; personOfInterestId?: never; x: number; y: number }
-    | { kingdomId?: never; cityId?: never; placeId: string; personOfInterestId?: never; x: number; y: number }
-    | { kingdomId?: never; cityId?: never; placeId?: never; personOfInterestId: string; x: number; y: number },
+    | { kingdomId: string; cityId?: never; placeId?: never; personOfInterestId?: never; playerCharacterId?: never; x: number; y: number }
+    | { kingdomId?: never; cityId: string; placeId?: never; personOfInterestId?: never; playerCharacterId?: never; x: number; y: number }
+    | { kingdomId?: never; cityId?: never; placeId: string; personOfInterestId?: never; playerCharacterId?: never; x: number; y: number }
+    | { kingdomId?: never; cityId?: never; placeId?: never; personOfInterestId: string; playerCharacterId?: never; x: number; y: number }
+    | { kingdomId?: never; cityId?: never; placeId?: never; personOfInterestId?: never; playerCharacterId: string; x: number; y: number },
 ) {
   return withAuth(token).post('/positions', data);
 }
@@ -470,7 +544,7 @@ export type LoreInput = {
   title: string;
   content: string;
   tags?: string[];
-  dateInGame?: number | null;
+  dateInGame?: string | number | null;
   summary?: string | null;
   isForDM?: boolean;
   kingdomIds?: string[];

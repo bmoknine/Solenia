@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { compareSoleniaDates } from '@solenia/shared';
 import { listLores, type Lore } from '../api/entities';
+import { formatSoleniaDateLong } from '../utils/solenia-date';
 import './LoreModal.css';
 
 type LoreModalProps = {
@@ -22,19 +24,35 @@ export function LoreModal({ open, onClose, onSelectLore, onCreateNew }: LoreModa
     if (!open) return;
     setError(null);
     setLoading(true);
-    setTagFilters(['__all__']);
-    setViewMode('timeline');
     setIsFilterMenuOpen(false);
+    // On ne réinitialise PAS tagFilters ni viewMode pour conserver les filtres au retour
     listLores()
       .then(setLores)
       .catch((err) => setError(err instanceof Error ? err.message : 'Chargement échoué'))
       .finally(() => setLoading(false));
   }, [open]);
 
+  // Verrouillage du scroll arrière-plan
+  useEffect(() => {
+    if (!open) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
+
   const sorted = [...lores].sort((a, b) => {
-    const da = a.dateInGame ?? Number.POSITIVE_INFINITY;
-    const db = b.dateInGame ?? Number.POSITIVE_INFINITY;
-    return da - db;
+    const byDate = compareSoleniaDates(a.dateInGame, b.dateInGame);
+    if (byDate !== 0) return byDate;
+    return a.title.localeCompare(b.title, 'fr');
   });
 
   const getLoreTags = (lore: Lore) =>
@@ -179,7 +197,7 @@ export function LoreModal({ open, onClose, onSelectLore, onCreateNew }: LoreModa
                   >
                     <span className="lore-list-item-title">{lore.title}</span>
                     <span className="lore-list-item-meta">
-                      {[getLoreTags(lore).join(', '), lore.dateInGame != null ? `Date: ${lore.dateInGame}` : '', lore.summary].filter(Boolean).join(' · ')}
+                      {[getLoreTags(lore).join(', '), lore.dateInGame != null ? formatSoleniaDateLong(lore.dateInGame) : '', lore.summary].filter(Boolean).join(' · ')}
                     </span>
                   </li>
                 ))}
@@ -190,7 +208,7 @@ export function LoreModal({ open, onClose, onSelectLore, onCreateNew }: LoreModa
                 <div className="lore-timeline" role="list">
                   {filtered.map((lore, idx) => {
                     const side: 'left' | 'right' = idx % 2 === 0 ? 'left' : 'right';
-                    const dateLabel = lore.dateInGame != null ? `An ${lore.dateInGame}` : 'Sans date';
+                    const dateLabel = lore.dateInGame != null ? formatSoleniaDateLong(lore.dateInGame) : 'Sans date';
                     return (
                       <div
                         key={lore.id}

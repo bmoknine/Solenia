@@ -1,22 +1,10 @@
 import { SearchBox } from './SearchBox';
 import { FilterPanel } from './FilterPanel';
 import { PointsList } from './PointsList';
-import type { MapPoint } from '../api/map';
+import type { GlobalSearchResult } from '../search/types';
 import './Sidebar.css';
 
-type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation';
-
-type OrganisationSearchResult = {
-  id: string;
-  x: number;
-  y: number;
-  kind: 'organisation';
-  targetId: string;
-  name: string;
-  description: string | null;
-};
-
-type SearchResult = MapPoint | OrganisationSearchResult;
+type Kind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation' | 'playerCharacter';
 
 type SidebarProps = {
   search: string;
@@ -27,12 +15,13 @@ type SidebarProps = {
   toggleFilter: (kind: Kind) => void;
   creatingMode: boolean;
   setCreatingMode: (value: boolean | ((prev: boolean) => boolean)) => void;
-  createKind: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore';
-  setCreateKind: (value: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore') => void;
+  createKind: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter';
+  setCreateKind: (value: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter') => void;
   onOpenLoreModal?: () => void;
   onCancelCreate: () => void;
-  searchResults: SearchResult[];
-  onSelectResult: (point: SearchResult) => void;
+  searchResults: GlobalSearchResult[];
+  searchLoading?: boolean;
+  onSelectResult: (point: GlobalSearchResult) => void;
 };
 
 export function Sidebar({
@@ -48,6 +37,7 @@ export function Sidebar({
   setCreateKind,
   onCancelCreate,
   searchResults,
+  searchLoading,
   onSelectResult,
   onOpenLoreModal,
 }: SidebarProps) {
@@ -76,10 +66,11 @@ export function Sidebar({
               onSearch={setSearch}
             />
           </div>
-          {search.trim() !== '' && searchResults.length > 0 && (
+          {search.trim() !== '' && (
             <div className="sidebar-results-panel glass">
               <PointsList
                 points={searchResults}
+                loading={searchLoading}
                 onSelect={onSelectResult}
               />
             </div>
@@ -111,6 +102,7 @@ export function Sidebar({
           <option value="city">Ville</option>
           <option value="place">Lieu</option>
           <option value="person">Personnage</option>
+          <option value="playerCharacter">Personnage joueur</option>
           <option value="organisation">Organisation</option>
           <option value="lore">Lore</option>
         </select>

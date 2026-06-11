@@ -8,12 +8,14 @@ import {
   getPerson,
   getOrganisation,
   getLore,
+  getPlayerCharacter,
   updateKingdom,
   updateCity,
   updateDistrict,
   updatePlace,
   updatePerson,
   updateOrganisation,
+  updatePlayerCharacter,
   createKingdom,
   createCity,
   createDistrict,
@@ -21,6 +23,7 @@ import {
   createPerson,
   createOrganisation,
   createLore,
+  createPlayerCharacter,
   updateLore,
   updatePosition,
   type KingdomDetail,
@@ -29,7 +32,7 @@ import {
   type PlaceDetail,
 } from '../../api/entities';
 import type { LoreEditState } from './loreTypes';
-import type { DetailModalProps, EditState, EntityData, OrganisationEditState, PersonEditState } from './detailModalTypes';
+import type { DetailModalProps, EditState, EntityData, OrganisationEditState, PersonEditState, PlayerCharacterEditState } from './detailModalTypes';
 import {
   buildEditStateAfterSaveRefetch,
   buildEditStateFromFetchedEntity,
@@ -112,7 +115,7 @@ export function useDetailModalEntity({
     }
     if (
       point.kind === 'unknown' ||
-      !['kingdom', 'city', 'district', 'place', 'person', 'organisation'].includes(point.kind)
+      !['kingdom', 'city', 'district', 'place', 'person', 'organisation', 'playerCharacter'].includes(point.kind)
     ) {
       return;
     }
@@ -121,7 +124,7 @@ export function useDetailModalEntity({
       setLoading(true);
       setError(null);
       try {
-        const k = point.kind as 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation';
+        const k = point.kind as 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'playerCharacter';
         let result: EntityData = null;
         switch (k) {
           case 'kingdom':
@@ -141,6 +144,9 @@ export function useDetailModalEntity({
             break;
           case 'organisation':
             result = await getOrganisation(point.targetId!);
+            break;
+          case 'playerCharacter':
+            result = await getPlayerCharacter(point.targetId!);
             break;
         }
         setData(result);
@@ -234,7 +240,7 @@ export function useDetailModalEntity({
             break;
           }
           case 'place': {
-            const placeState = editState as PlaceDetail & { organisationIds?: string[] };
+            const placeState = editState as PlaceDetail & { organisationIds?: string[]; playerCharacterIds?: string[] };
             createdEntity = await createPlace(token, {
               name: (placeState.name ?? '').trim(),
               description: placeState.description ?? undefined,
@@ -244,6 +250,7 @@ export function useDetailModalEntity({
               cityId: placeState.cityId ?? undefined,
               districtId: placeState.districtId ?? undefined,
               organisationIds: placeState.organisationIds ?? [],
+              playerCharacterIds: placeState.playerCharacterIds ?? [],
               showOnMap: placeState.showOnMap ?? true,
             });
             break;
@@ -306,6 +313,41 @@ export function useDetailModalEntity({
             });
             break;
           }
+          case 'playerCharacter': {
+            const pcState = editState as PlayerCharacterEditState;
+            createdEntity = await createPlayerCharacter(token, {
+              name: (pcState.name ?? '').trim(),
+              class: pcState.class ?? null,
+              level: pcState.level ?? 1,
+              race: pcState.race ?? null,
+              background: pcState.background ?? null,
+              alignment: pcState.alignment ?? null,
+              imageUrl: pcState.imageUrl ?? null,
+              description: pcState.description ?? null,
+              STR: pcState.STR ?? 10,
+              DEX: pcState.DEX ?? 10,
+              CON: pcState.CON ?? 10,
+              INT: pcState.INT ?? 10,
+              WIS: pcState.WIS ?? 10,
+              CHA: pcState.CHA ?? 10,
+              pv: pcState.pv ?? null,
+              pvMax: pcState.pvMax ?? null,
+              ca: pcState.ca ?? null,
+              initiative: pcState.initiative ?? null,
+              speed: pcState.speed ?? null,
+              showOnMap: pcState.showOnMap ?? true,
+              isForDM: pcState.isForDM ?? false,
+              kingdomId: pcState.kingdomId ?? null,
+              cityId: pcState.cityId ?? null,
+              districtId: pcState.districtId ?? null,
+              placeId: pcState.placeId ?? null,
+              skills: pcState.skills ?? [],
+              savingThrows: pcState.savingThrows ?? [],
+              equipment: pcState.equipment ?? [],
+              spells: pcState.spells ?? [],
+            });
+            break;
+          }
         }
 
         const placeEmbedded =
@@ -331,7 +373,9 @@ export function useDetailModalEntity({
                 ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, cityId: newId }
                 : kind === 'place'
                   ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, placeId: newId }
-                  : { x: createMode.initialPosition.x, y: createMode.initialPosition.y, personOfInterestId: newId };
+                  : kind === 'playerCharacter'
+                    ? { x: createMode.initialPosition.x, y: createMode.initialPosition.y, playerCharacterId: newId }
+                    : { x: createMode.initialPosition.x, y: createMode.initialPosition.y, personOfInterestId: newId };
 
           await updatePosition(token, positionPayload);
         }
@@ -377,11 +421,11 @@ export function useDetailModalEntity({
       const pk = point.kind;
       if (
         pk === 'unknown' ||
-        !['kingdom', 'city', 'district', 'place', 'person', 'organisation'].includes(pk)
+        !['kingdom', 'city', 'district', 'place', 'person', 'organisation', 'playerCharacter'].includes(pk)
       ) {
         return;
       }
-      const entityKind = pk as 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation';
+      const entityKind = pk as 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'playerCharacter';
 
       switch (entityKind) {
         case 'kingdom': {
@@ -431,7 +475,7 @@ export function useDetailModalEntity({
           break;
         }
         case 'place': {
-          const ps = editState as PlaceDetail & { organisationIds?: string[] };
+          const ps = editState as PlaceDetail & { organisationIds?: string[]; playerCharacterIds?: string[] };
           await updatePlace(token, point.targetId, {
             name: (ps.name ?? '').trim(),
             description: ps.description ?? null,
@@ -441,6 +485,7 @@ export function useDetailModalEntity({
             cityId: ps.cityId ?? null,
             districtId: ps.districtId ?? null,
             organisationIds: ps.organisationIds ?? [],
+            playerCharacterIds: ps.playerCharacterIds ?? [],
             showOnMap: ps.showOnMap ?? true,
           });
           break;
@@ -487,6 +532,41 @@ export function useDetailModalEntity({
           });
           break;
         }
+        case 'playerCharacter': {
+          const pcState = editState as PlayerCharacterEditState;
+          await updatePlayerCharacter(token, point.targetId, {
+            name: (pcState.name ?? '').trim(),
+            class: pcState.class ?? null,
+            level: pcState.level ?? 1,
+            race: pcState.race ?? null,
+            background: pcState.background ?? null,
+            alignment: pcState.alignment ?? null,
+            imageUrl: pcState.imageUrl ?? null,
+            description: pcState.description ?? null,
+            STR: pcState.STR,
+            DEX: pcState.DEX,
+            CON: pcState.CON,
+            INT: pcState.INT,
+            WIS: pcState.WIS,
+            CHA: pcState.CHA,
+            pv: pcState.pv ?? null,
+            pvMax: pcState.pvMax ?? null,
+            ca: pcState.ca ?? null,
+            initiative: pcState.initiative ?? null,
+            speed: pcState.speed ?? null,
+            showOnMap: pcState.showOnMap ?? true,
+            isForDM: pcState.isForDM ?? false,
+            kingdomId: pcState.kingdomId ?? null,
+            cityId: pcState.cityId ?? null,
+            districtId: pcState.districtId ?? null,
+            placeId: pcState.placeId ?? null,
+            skills: pcState.skills ?? [],
+            savingThrows: pcState.savingThrows ?? [],
+            equipment: pcState.equipment ?? [],
+            spells: pcState.spells ?? [],
+          });
+          break;
+        }
       }
 
       push('Enregistré', 'success');
@@ -503,7 +583,9 @@ export function useDetailModalEntity({
               ? getPlace(point.targetId!)
               : entityKind === 'organisation'
                 ? getOrganisation(point.targetId!)
-                : getPerson(point.targetId!));
+                : entityKind === 'playerCharacter'
+                  ? getPlayerCharacter(point.targetId!)
+                  : getPerson(point.targetId!));
       setData(refreshed);
       setEditState(buildEditStateAfterSaveRefetch(entityKind, refreshed));
     } catch (err) {

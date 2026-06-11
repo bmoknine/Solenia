@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
-import type { City, District, Kingdom, Organisation, PlaceDetail, PlaceType } from '../../../api/entities';
-import { listCities, listDistricts, listKingdoms, listOrganisations } from '../../../api/entities';
+import type { City, District, Kingdom, Organisation, PlaceDetail, PlaceType, PlayerCharacter } from '../../../api/entities';
+import { listCities, listDistricts, listKingdoms, listOrganisations, listPlayerCharacters } from '../../../api/entities';
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { SearchableSelect } from '../SearchableSelect';
@@ -34,10 +34,11 @@ export function PlaceView({
   const [cities, setCities] = useState<City[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const [playerCharactersList, setPlayerCharactersList] = useState<PlayerCharacter[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
-  const placeEdit = editState as PlaceDetail & { organisationIds?: string[] };
+  const placeEdit = editState as PlaceDetail & { organisationIds?: string[]; playerCharacterIds?: string[] };
   const selectedCityId =
     placeEdit.cityId !== undefined && placeEdit.cityId !== null ? placeEdit.cityId : data?.city?.id ?? null;
   const districtsForCity = selectedCityId ? districts.filter((d) => d.cityId === selectedCityId) : [];
@@ -47,21 +48,24 @@ export function PlaceView({
       const loadLists = async () => {
         setLoadingLists(true);
         try {
-          const [kingdomsData, citiesData, districtsData, orgsData] = await Promise.all([
+          const [kingdomsData, citiesData, districtsData, orgsData, pcsData] = await Promise.all([
             listKingdoms(),
             listCities(),
             listDistricts(),
             listOrganisations(),
+            listPlayerCharacters(),
           ]);
           setKingdoms(kingdomsData);
           setCities(citiesData);
           setDistricts(districtsData);
           setOrganisations(orgsData);
+          setPlayerCharactersList(pcsData);
         } catch {
           setKingdoms([]);
           setCities([]);
           setDistricts([]);
           setOrganisations([]);
+          setPlayerCharactersList([]);
         } finally {
           setLoadingLists(false);
         }
@@ -282,6 +286,36 @@ export function PlaceView({
                 onClick={() => { if (onNavigate) onNavigate(organisationRefToNavPoint(org)); }}
               >
                 {org.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className="detail-value">{valueOrDash(null)}</span>
+        )}
+      </div>
+      <div className="detail-item">
+        <span className="detail-label">Personnages joueurs</span>
+        {editMode ? (
+          loadingLists ? (
+            <span className="detail-value">Chargement...</span>
+          ) : (
+            <SearchableMultiSelect
+              items={playerCharactersList}
+              selectedIds={placeEdit.playerCharacterIds ?? []}
+              onChange={(ids) => onChange('playerCharacterIds', ids)}
+              placeholder="Ajouter un personnage joueur..."
+            />
+          )
+        ) : (data?.playerCharacters?.length ?? 0) > 0 ? (
+          <div className="tags">
+            {(data?.playerCharacters ?? []).map((pc) => (
+              <span
+                key={pc.id}
+                className="tag"
+                style={{ cursor: onNavigate ? 'pointer' : 'default' }}
+                onClick={() => { if (onNavigate) onNavigate(createMapPointFromRef(pc, 'playerCharacter')); }}
+              >
+                🎮 {pc.name}
               </span>
             ))}
           </div>

@@ -24,6 +24,10 @@
     "db:snapshot": "bash scripts/db-snapshot-for-rollback.sh",
     "db:restore": "bash scripts/db-restore-from-snapshot.sh",
     "db:import-drive-solenia": "tsx scripts/import-drive-solenia.ts",
+    "db:extract-partie5": "tsx src/scripts/extract-partie5.ts",
+    "db:import-partie5": "tsx src/scripts/import-partie5-alagir.ts",
+    "db:import-valbrume": "tsx src/scripts/import-valbrume-varek.ts",
+    "db:import-monastere-nuits": "tsx src/scripts/import-monastere-nuits.ts",
     "backup:person-affiliations": "tsx scripts/backup-person-affiliations.ts"
   },
   "keywords": [],

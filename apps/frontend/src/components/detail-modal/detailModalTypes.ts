@@ -7,6 +7,7 @@ import type {
   PersonDetail,
   OrganisationDetail,
   LoreDetail,
+  PlayerCharacterDetail,
 } from '../../api/entities';
 import type { LoreEditState } from './loreTypes';
 
@@ -15,7 +16,7 @@ export type ExtendedMapPoint = MapPoint | {
   id: string;
   x: number;
   y: number;
-  kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'unknown';
+  kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'playerCharacter' | 'unknown';
   targetId: string | null;
   name: string;
   description: string | null;
@@ -25,6 +26,10 @@ export type ExtendedMapPoint = MapPoint | {
 export type DetailModalProps = {
   point: ExtendedMapPoint | null;
   onClose: () => void;
+  /** Retour à la vue précédente dans la pile (si définie). */
+  onBack?: () => void;
+  /** Libellé du bouton retour (ex. nom de l'entité précédente, « Frise »). */
+  backLabel?: string;
   token?: string | null;
   onUpdated?: () => void;
   onDelete?: (point: MapPoint) => void;
@@ -33,7 +38,7 @@ export type DetailModalProps = {
   onOpenLore?: (loreId: string) => void;
   loreId?: string | null;
   createMode?: {
-    kind: MapPoint['kind'] | 'district' | 'organisation' | 'lore';
+    kind: MapPoint['kind'] | 'district' | 'organisation' | 'lore' | 'playerCharacter';
     initialPosition?: { x: number; y: number };
     parentCityId?: string;
   };
@@ -47,6 +52,7 @@ export type EntityData =
   | PersonDetail
   | OrganisationDetail
   | LoreDetail
+  | PlayerCharacterDetail
   | null;
 
 export type PersonEditState = Partial<PersonDetail> & {
@@ -72,14 +78,23 @@ export type OrganisationEditState = Partial<OrganisationDetail> & {
   personIds?: string[];
 };
 
+export type PlayerCharacterEditState = Partial<PlayerCharacterDetail> & {
+  kind: 'playerCharacter';
+  kingdomId?: string | null;
+  cityId?: string | null;
+  districtId?: string | null;
+  placeId?: string | null;
+};
+
 export type EditState =
   | (Partial<KingdomDetail> & { kind: 'kingdom' })
   | (Partial<CityDetail> & { kind: 'city' })
   | DistrictEditState
-  | (Partial<PlaceDetail> & { kind: 'place'; organisationIds?: string[] })
+  | (Partial<PlaceDetail> & { kind: 'place'; organisationIds?: string[]; playerCharacterIds?: string[] })
   | PersonEditState
   | OrganisationEditState
   | LoreEditState
+  | PlayerCharacterEditState
   | null;
 
 export type DetailComment = { id: string; description: string; dateInGame?: string | null };
