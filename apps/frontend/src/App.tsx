@@ -5,7 +5,10 @@ import { useMapPoints } from './hooks/useMapPoints';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { deleteTarget } from './api/map';
 import type { NavigablePoint } from './api/map';
-import { updatePosition, listOrganisations, type Organisation } from './api/entities';
+import { updatePosition } from './api/entities';
+import { useEntityCatalog } from './hooks/useEntityCatalog';
+import { searchEntityCatalog } from './search/entityCatalog';
+import type { GlobalSearchResult } from './search/types';
 import { EditDrawer } from './components/EditDrawer';
 import { ToastProvider, useToast } from './toast/ToastProvider';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -13,17 +16,36 @@ import { LoginPanel } from './components/LoginPanel';
 import DetailModal from './components/DetailModal';
 import { Sidebar } from './components/Sidebar';
 import { LoreModal } from './components/LoreModal';
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import {
+  type DetailStackEntry,
+  getBackLabel,
+  isModalOpen,
+  stackEntryToModalProps,
+} from './components/detail-modal/detailNavigation';
+
+function detailModalKey(stack: DetailStackEntry[]): string {
+  const top = stack[stack.length - 1];
+  if (!top) return 'empty';
+  if (top.type === 'entity') return `${stack.length}-entity-${top.point.kind}-${top.point.targetId}`;
+  if (top.type === 'lore') return `${stack.length}-lore-${top.loreId}`;
+  if (top.type === 'create') {
+    const cm = top.createMode;
+    return `${stack.length}-create-${cm.kind}-${cm.parentCityId ?? ''}-${cm.initialPosition?.x ?? 0}-${cm.initialPosition?.y ?? 0}`;
+  }
+  return `${stack.length}-unknown`;
+}
+import type { ExtendedMapPoint } from './components/detail-modal/detailModalTypes';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 function Content() {
   const { user, token } = useAuth();
   const { points, loading, error, reload } = useMapPoints(token);
-  const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const { catalog, loading: catalogLoading, reload: reloadCatalog } = useEntityCatalog(!!user);
   const [actionError, setActionError] = useState<string | null>(null);
   const canEdit = !!user && user.type !== 'viewer';
   const [editing, setEditing] = useState<ReturnType<typeof useMapPoints>['points'][number] | null>(null);
-  const [filters, setFilters] = useState<Set<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation'>>(
-    new Set(['kingdom', 'city', 'district', 'place', 'person', 'unknown', 'organisation']),
+  const [filters, setFilters] = useState<Set<'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation' | 'playerCharacter'>>(
+    new Set(['kingdom', 'city', 'district', 'place', 'person', 'unknown', 'organisation', 'playerCharacter']),
   );
   const [search, setSearch] = useState('');
   const { push } = useToast();
@@ -31,50 +53,54 @@ function Content() {
   const [showSearch, setShowSearch] = useState(false);
   const [hideError, setHideError] = useState(false);
   const [hideActionError, setHideActionError] = useState(false);
-  const [detailPoint, setDetailPoint] = useState<NavigablePoint | { id: string; x: number; y: number; kind: 'organisation'; targetId: string; name: string; description: string | null } | null>(null);
+  const [detailStack, setDetailStack] = useState<DetailStackEntry[]>([]);
   const [creatingMode, setCreatingMode] = useState(false);
-  const [createPosition, setCreatePosition] = useState<{ x: number; y: number } | null>(null);
-  const [createKind, setCreateKind] = useState<'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore'>('kingdom');
+  const [createKind, setCreateKind] = useState<'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter'>('kingdom');
   const [showLoreModal, setShowLoreModal] = useState(false);
-  const [selectedLoreId, setSelectedLoreId] = useState<string | null>(null);
-  const [creatingDistrictForCity, setCreatingDistrictForCity] = useState<string | null>(null);
-  const previousCreatingDistrictRef = useRef<string | null>(null);
   const [dragLocked, setDragLocked] = useState(true); // par défaut verrouillé pour éviter les déplacements accidentels
-  
-  // Charger les organisations
-  const reloadOrganisations = useCallback(async () => {
-    try {
-      const orgs = await listOrganisations();
-      setOrganisations(orgs);
-    } catch {
-      setOrganisations([]);
-    }
+
+  const detailStackTop = detailStack[detailStack.length - 1];
+  const detailStackPrev = detailStack.length > 1 ? detailStack[detailStack.length - 2] : null;
+
+  const openEntityDetail = useCallback((point: ExtendedMapPoint) => {
+    setDetailStack([{ type: 'entity', point }]);
   }, []);
 
-  useEffect(() => {
-    reloadOrganisations();
-  }, [reloadOrganisations]);
+  const pushEntityDetail = useCallback((point: ExtendedMapPoint) => {
+    setDetailStack((prev) => [...prev, { type: 'entity', point }]);
+  }, []);
+
+  const pushLoreDetail = useCallback((loreId: string) => {
+    setDetailStack((prev) => [...prev, { type: 'lore', loreId }]);
+  }, []);
+
+  const closeDetailModal = useCallback(() => {
+    setDetailStack([]);
+  }, []);
+
+  const goBackDetail = useCallback(() => {
+    setDetailStack((prev) => {
+      if (prev.length <= 1) return prev;
+      const next = prev.slice(0, -1);
+      const newTop = next[next.length - 1];
+      if (newTop?.type === 'lore-frise') {
+        setShowLoreModal(true);
+        return [];
+      }
+      return next;
+    });
+  }, []);
+
+  const popDetailAfterSave = useCallback(() => {
+    setDetailStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : []));
+  }, []);
+  
   
   useEffect(() => {
     if (error) push(error, 'error');
     setHideError(false);
   }, [error, push]);
   
-  // Recharger les données de la ville si elle est ouverte après la création d'un district
-  useEffect(() => {
-    // Si creatingDistrictForCity passe de quelque chose à null, cela signifie qu'un district a été créé
-    if (previousCreatingDistrictRef.current && !creatingDistrictForCity) {
-      const cityId = previousCreatingDistrictRef.current;
-      // Si la modal de détail est ouverte et affiche cette ville, forcer le rechargement
-      if (detailPoint && detailPoint.kind === 'city' && detailPoint.targetId === cityId) {
-        // Forcer le rechargement en changeant temporairement detailPoint
-        const currentPoint = detailPoint;
-        setDetailPoint(null);
-        setTimeout(() => setDetailPoint(currentPoint), 0);
-      }
-    }
-    previousCreatingDistrictRef.current = creatingDistrictForCity;
-  }, [creatingDistrictForCity, detailPoint]);
 
   useEffect(() => {
     if (actionError) push(actionError, 'error');
@@ -83,37 +109,35 @@ function Content() {
 
 
   const filteredPoints = useMemo(
-    () =>
-      points.filter(
-        (p) =>
-          filters.has(p.kind) &&
-          (search.trim() === '' ||
-            p.name.toLowerCase().includes(search.trim().toLowerCase())),
-      ),
-    [points, filters, search],
+    () => points.filter((p) => filters.has(p.kind)),
+    [points, filters],
   );
 
-  // Ajouter les organisations aux résultats de recherche
   const searchResults = useMemo(() => {
-    const mapPointResults = filteredPoints;
-    const organisationResults = search.trim() === '' 
-      ? [] 
-      : organisations
-          .filter((org) => org.name.toLowerCase().includes(search.trim().toLowerCase()))
-          .map((org) => ({
-            id: org.id,
-            x: 0,
-            y: 0,
-            kind: 'organisation' as const,
-            targetId: org.id,
-            name: org.name,
-            description: org.description ?? null,
-          }));
-    
-    return [...mapPointResults, ...organisationResults];
-  }, [filteredPoints, organisations, search]);
+    if (search.trim() === '' || !catalog) return [];
+    return searchEntityCatalog(catalog, points, search);
+  }, [catalog, points, search]);
 
-  const toggleFilter = (k: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation') => {
+  const handleSelectSearchResult = useCallback(
+    (result: GlobalSearchResult) => {
+      if (result.kind === 'lore') {
+        setDetailStack([{ type: 'lore', loreId: result.targetId }]);
+        return;
+      }
+      openEntityDetail({
+        id: result.id,
+        x: result.x,
+        y: result.y,
+        kind: result.kind,
+        targetId: result.targetId,
+        name: result.name,
+        description: result.description,
+      });
+    },
+    [openEntityDetail],
+  );
+
+  const toggleFilter = (k: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation' | 'playerCharacter') => {
     setFilters((prev) => {
       const next = new Set(prev);
       if (next.has(k)) next.delete(k);
@@ -123,19 +147,30 @@ function Content() {
   };
 
   const handleMapClickForCreation = useCallback((x: number, y: number) => {
-    setCreatePosition({ x, y });
+    setDetailStack([{ type: 'create', createMode: { kind: createKind, initialPosition: { x, y } } }]);
     setCreatingMode(false);
-  }, []);
+  }, [createKind]);
 
   const handleCreateDistrict = useCallback((cityId: string) => {
-    setCreatingDistrictForCity(cityId);
-    setDetailPoint(null);
+    setDetailStack((prev) => [
+      ...prev,
+      { type: 'create', createMode: { kind: 'district', parentCityId: cityId } },
+    ]);
   }, []);
 
-  // Ouvrir automatiquement la modal de création pour les organisations et Lore (pas besoin de clic sur la carte)
+  const cancelPendingCreate = useCallback(() => {
+    setDetailStack((prev) => {
+      const top = prev[prev.length - 1];
+      if (top?.type === 'create') return prev.slice(0, -1);
+      return prev;
+    });
+  }, []);
+
+  // Ouvrir directement la création org/lore (sans clic carte)
   useEffect(() => {
     if (creatingMode && (createKind === 'organisation' || createKind === 'lore')) {
-      setCreatePosition({ x: 0, y: 0 }); // Position factice, non utilisée
+      setDetailStack([{ type: 'create', createMode: { kind: createKind, initialPosition: { x: 0, y: 0 } } }]);
+      setCreatingMode(false);
     }
   }, [creatingMode, createKind]);
 
@@ -192,11 +227,10 @@ function Content() {
               setCreatingMode={setCreatingMode}
               createKind={createKind}
               setCreateKind={setCreateKind}
-              onCancelCreate={() => setCreatePosition(null)}
+              onCancelCreate={cancelPendingCreate}
               searchResults={searchResults}
-              onSelectResult={(p) => {
-                setDetailPoint(p as any);
-              }}
+              searchLoading={catalogLoading}
+              onSelectResult={handleSelectSearchResult}
               onOpenLoreModal={() => setShowLoreModal(true)}
             />
 
@@ -215,35 +249,17 @@ function Content() {
                     ? { x, y, cityId: point.targetId }
                     : point.kind === 'place'
                     ? { x, y, placeId: point.targetId }
+                    : point.kind === 'playerCharacter'
+                    ? { x, y, playerCharacterId: point.targetId }
                     : { x, y, personOfInterestId: point.targetId };
                 await updatePosition(token, payload);
                 await reload();
                 push('Position mise à jour', 'success');
               } : undefined}
-              onDetail={(p) => setDetailPoint(p as NavigablePoint)}
+              onDetail={(p) => openEntityDetail(p as ExtendedMapPoint)}
             />
           </div>
           <EditDrawer point={editing} onClose={() => setEditing(null)} onSaved={async () => { await reload(); push('Enregistré', 'success'); }} />
-          {createPosition && (
-            <DetailModal
-              point={null}
-              createMode={{
-                kind: createKind,
-                initialPosition: createPosition,
-              }}
-              token={token}
-              onClose={() => {
-                setCreatePosition(null);
-                setCreateKind('kingdom'); // Reset to default
-              }}
-              onUpdated={async () => {
-                await reload();
-                await reloadOrganisations();
-                setCreatePosition(null);
-                setCreateKind('kingdom'); // Reset to default
-              }}
-            />
-          )}
           <ConfirmDialog
             open={confirm.open}
             title="Confirmer la suppression"
@@ -256,11 +272,14 @@ function Content() {
                   setActionError(null);
                   await deleteTarget(confirm.kind as any, confirm.targetId, token);
                   await reload();
-                  await reloadOrganisations();
+                  await reloadCatalog();
                   push('Supprimé', 'success');
-                  // Fermer le modal de détail si l'entité supprimée est celle affichée
-                  if (detailPoint && detailPoint.id === confirm.pointId) {
-                    setDetailPoint(null);
+                  // Fermer le modal si l'entité supprimée est celle affichée
+                  if (
+                    detailStackTop?.type === 'entity' &&
+                    detailStackTop.point.id === confirm.pointId
+                  ) {
+                    closeDetailModal();
                   }
                 } catch (err) {
                   const msg = err instanceof Error ? err.message : 'Erreur';
@@ -279,11 +298,14 @@ function Content() {
                 setActionError(null);
                 await deleteTarget(point.kind, point.targetId, token);
                 await reload();
-                await reloadOrganisations();
+                await reloadCatalog();
                 push('Supprimé', 'success');
                 // Fermer le modal de détail si l'entité supprimée est celle affichée
-                if (detailPoint && detailPoint.id === point.id) {
-                  setDetailPoint(null);
+                if (
+                  detailStackTop?.type === 'entity' &&
+                  detailStackTop.point.id === point.id
+                ) {
+                  closeDetailModal();
                 }
               } catch (err) {
                 const msg = err instanceof Error ? err.message : 'Erreur';
@@ -299,70 +321,48 @@ function Content() {
             onClose={() => setShowLoreModal(false)}
             onSelectLore={(id) => {
               setShowLoreModal(false);
-              setSelectedLoreId(id);
+              setDetailStack([{ type: 'lore-frise' }, { type: 'lore', loreId: id }]);
             }}
             onCreateNew={() => {
               setShowLoreModal(false);
-              setCreatingMode(true);
-              setCreateKind('lore');
-              setCreatePosition({ x: 0, y: 0 });
+              setDetailStack([
+                { type: 'lore-frise' },
+                { type: 'create', createMode: { kind: 'lore', initialPosition: { x: 0, y: 0 } } },
+              ]);
             }}
           />
-          <DetailModal
-            point={detailPoint}
-            token={token}
-            onClose={() => setDetailPoint(null)}
-            onUpdated={async () => {
-              await reload();
-              await reloadOrganisations();
-            }}
-            onDelete={canEdit && detailPoint ? (p) => {
-              if (!p.targetId) return;
-              setConfirm({ 
-                open: true, 
-                pointId: p.id,
-                kind: p.kind,
-                targetId: p.targetId
-              });
-            } : undefined}
-            onNavigate={(p) => setDetailPoint(p)}
-            onCreateDistrict={canEdit ? handleCreateDistrict : undefined}
-            onOpenLore={(loreId) => {
-              setDetailPoint(null);
-              setSelectedLoreId(loreId);
-            }}
-          />
-          {selectedLoreId && (
+          {isModalOpen(detailStack) && detailStackTop && detailStackTop.type !== 'lore-frise' && (
             <DetailModal
-              point={null}
-              loreId={selectedLoreId}
+              key={detailModalKey(detailStack)}
+              {...stackEntryToModalProps(detailStackTop)}
               token={token}
-              onClose={() => {
-                setSelectedLoreId(null);
-                setShowLoreModal(true);
-              }}
+              onClose={closeDetailModal}
+              onBack={detailStackPrev ? goBackDetail : undefined}
+              backLabel={detailStackPrev ? getBackLabel(detailStackPrev) : undefined}
               onUpdated={async () => {
                 await reload();
-                await reloadOrganisations();
+                await reloadCatalog();
+                if (detailStackTop.type === 'create') {
+                  popDetailAfterSave();
+                  setCreateKind('kingdom');
+                }
               }}
-            />
-          )}
-          {creatingDistrictForCity && (
-            <DetailModal
-              point={null}
-              token={token}
-              onClose={() => {
-                setCreatingDistrictForCity(null);
-              }}
-              onUpdated={async () => {
-                await reload();
-                await reloadOrganisations();
-                setCreatingDistrictForCity(null);
-              }}
-              createMode={{
-                kind: 'district',
-                parentCityId: creatingDistrictForCity,
-              }}
+              onDelete={
+                canEdit && detailStackTop.type === 'entity'
+                  ? (p) => {
+                      if (!p.targetId) return;
+                      setConfirm({
+                        open: true,
+                        pointId: p.id,
+                        kind: p.kind,
+                        targetId: p.targetId,
+                      });
+                    }
+                  : undefined
+              }
+              onNavigate={(p) => pushEntityDetail(p as ExtendedMapPoint)}
+              onCreateDistrict={canEdit ? handleCreateDistrict : undefined}
+              onOpenLore={pushLoreDetail}
             />
           )}
         </>

@@ -7,10 +7,14 @@ import type {
   OrganisationDetail,
   PersonDetail,
   PlaceDetail,
+  PlayerCharacterDetail,
 } from '../../api/entities';
 import type { DetailModalProps, EntityData, ExtendedMapPoint } from './detailModalTypes';
 import { iconForPlaceType } from './entityFormatters';
 import type { PlaceType } from '../../api/entities';
+import { DetailModalSidebarItem } from './DetailModalSidebarItem';
+import { useFavorites } from '../../favorites/useFavorites';
+import type { SearchableKind } from '../../search/types';
 
 function AccordionSection({
   title,
@@ -49,9 +53,29 @@ function AccordionSection({
   );
 }
 
-type SidebarKind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation';
+type SidebarKind = SearchableKind;
 
 type SidebarEntity = { id: string; name: string; kind: SidebarKind; iconUrl?: string | null; placeType?: PlaceType | null };
+
+function sidebarEntityIcon(kind: SidebarKind, entity?: { iconUrl?: string | null; placeType?: PlaceType | null }) {
+  if (kind === 'kingdom') return '👑';
+  if (kind === 'organisation') return '🏛️';
+  if (kind === 'city') return '🏙️';
+  if (kind === 'district') return '🏘️';
+  if (kind === 'person') return '👤';
+  if (kind === 'playerCharacter') return '🎮';
+  if (kind === 'place') {
+    return (
+      <img
+        src={entity?.iconUrl ?? iconForPlaceType(entity?.placeType)}
+        alt=""
+        style={{ width: '16px', height: '16px', objectFit: 'contain', verticalAlign: 'middle' }}
+      />
+    );
+  }
+  if (kind === 'lore') return '📜';
+  return '•';
+}
 
 type GroupedRow = { kind: SidebarKind; label: string; entities: SidebarEntity[] };
 
@@ -165,6 +189,22 @@ function getGroupedEntities(point: ExtendedMapPoint, data: EntityData): GroupedR
     }
   }
 
+  if (point.kind === 'playerCharacter') {
+    const pcData = data as PlayerCharacterDetail;
+    if (pcData.kingdom) {
+      groups.set('kingdom', [{ id: pcData.kingdom.id, name: pcData.kingdom.name, kind: 'kingdom' as const }]);
+    }
+    if (pcData.city) {
+      groups.set('city', [{ id: pcData.city.id, name: pcData.city.name, kind: 'city' as const }]);
+    }
+    if (pcData.district) {
+      groups.set('district', [{ id: pcData.district.id, name: pcData.district.name, kind: 'district' as const }]);
+    }
+    if (pcData.place) {
+      groups.set('place', [{ id: pcData.place.id, name: pcData.place.name, kind: 'place' as const }]);
+    }
+  }
+
   const kindLabels: Record<SidebarKind, string> = {
     kingdom: 'Royaume :',
     city: 'Ville :',
@@ -172,16 +212,19 @@ function getGroupedEntities(point: ExtendedMapPoint, data: EntityData): GroupedR
     place: 'Lieu :',
     person: 'Personne :',
     organisation: 'Organisation :',
+    playerCharacter: 'Personnage joueur :',
+    lore: 'Lore :',
   };
 
   const result: GroupedRow[] = [];
-  const order: Array<'kingdom' | 'organisation' | 'city' | 'district' | 'place' | 'person'> = [
+  const order: Array<'kingdom' | 'organisation' | 'city' | 'district' | 'place' | 'person' | 'playerCharacter'> = [
     'kingdom',
     'organisation',
     'city',
     'district',
     'place',
     'person',
+    'playerCharacter',
   ];
   for (const kind of order) {
     const entities = groups.get(kind);
@@ -197,25 +240,66 @@ type Props = {
   point: ExtendedMapPoint | null;
   data: EntityData;
   onNavigate?: (point: NavigablePoint) => void;
+  onOpenLore?: (loreId: string) => void;
   createMode?: DetailModalProps['createMode'];
 };
 
-export function DetailModalSidebar({ point, data, onNavigate, createMode }: Props) {
+export function DetailModalSidebar({ point, data, onNavigate, onOpenLore, createMode }: Props) {
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
+
   if (!point && !createMode) return null;
 
   const handleNavigate = (kind: SidebarKind, id: string, name: string) => {
-    if (onNavigate) {
-      onNavigate({
-        id,
-        x: 0,
-        y: 0,
-        kind: kind as EntityKind,
-        targetId: id,
-        name,
-        description: null,
-      });
+    if (kind === 'lore') {
+      onOpenLore?.(id);
+      return;
     }
+    onNavigate?.({
+      id,
+      x: 0,
+      y: 0,
+      kind: kind as EntityKind,
+      targetId: id,
+      name,
+      description: null,
+    });
   };
+
+  const renderEntity = (
+    kind: SidebarKind,
+    entity: { id: string; name: string; iconUrl?: string | null; placeType?: PlaceType | null },
+    nested?: boolean,
+  ) => (
+    <DetailModalSidebarItem
+      key={entity.id}
+      kind={kind}
+      entityId={entity.id}
+      name={entity.name}
+      icon={sidebarEntityIcon(kind, entity)}
+      isFavorite={isFavorite(kind, entity.id)}
+      onToggleFavorite={() => toggleFavorite({ kind, targetId: entity.id, name: entity.name })}
+      onNavigate={() => handleNavigate(kind, entity.id, entity.name)}
+      nested={nested}
+    />
+  );
+
+  const favoritesSection =
+    favorites.length > 0 ? (
+      <AccordionSection title="Favoris" count={favorites.length} defaultOpen>
+        {favorites.map((f) => (
+          <DetailModalSidebarItem
+            key={`${f.kind}:${f.targetId}`}
+            kind={f.kind}
+            entityId={f.targetId}
+            name={f.name}
+            icon={sidebarEntityIcon(f.kind)}
+            isFavorite
+            onToggleFavorite={() => toggleFavorite(f)}
+            onNavigate={() => handleNavigate(f.kind, f.targetId, f.name)}
+          />
+        ))}
+      </AccordionSection>
+    ) : null;
 
   if (point?.kind === 'city' && data) {
     const cityData = data as CityDetail;
@@ -242,7 +326,13 @@ export function DetailModalSidebar({ point, data, onNavigate, createMode }: Prop
     const hasKingdom = Boolean(cityData.kingdom);
     const hasOrgs = (cityData.organisations?.length ?? 0) > 0;
     const hasDistricts = districts.length > 0;
-    const hasSidebar = hasKingdom || hasOrgs || hasDistricts || allPlaces.length > 0 || allPersons.length > 0;
+    const hasSidebar =
+      favorites.length > 0 ||
+      hasKingdom ||
+      hasOrgs ||
+      hasDistricts ||
+      allPlaces.length > 0 ||
+      allPersons.length > 0;
 
     if (!hasSidebar) return null;
 
@@ -254,87 +344,35 @@ export function DetailModalSidebar({ point, data, onNavigate, createMode }: Prop
     return (
       <div className="detail-sidebar glass">
         <div className="detail-sidebar-list">
-          {/* Royaume */}
+          {favoritesSection}
+
           {hasKingdom && cityData.kingdom && (
             <AccordionSection title="Royaume" count={1}>
-              <button
-                type="button"
-                className="detail-sidebar-item ghost"
-                onClick={() => handleNavigate('kingdom', cityData.kingdom!.id, cityData.kingdom!.name)}
-              >
-                <span className="detail-sidebar-icon">👑</span>
-                <span className="detail-sidebar-name">{cityData.kingdom.name}</span>
-              </button>
+              {renderEntity('kingdom', cityData.kingdom)}
             </AccordionSection>
           )}
 
-          {/* Organisations */}
           {hasOrgs && (
             <AccordionSection title="Organisations" count={cityData.organisations!.length}>
-              {cityData.organisations!.map((org) => (
-                <button
-                  key={org.id}
-                  type="button"
-                  className="detail-sidebar-item ghost"
-                  onClick={() => handleNavigate('organisation', org.id, org.name)}
-                >
-                  <span className="detail-sidebar-icon">🏛️</span>
-                  <span className="detail-sidebar-name">{org.name}</span>
-                </button>
-              ))}
+              {cityData.organisations!.map((org) => renderEntity('organisation', org))}
             </AccordionSection>
           )}
 
-          {/* Quartiers — liste plate de tous les quartiers */}
           {hasDistricts && (
             <AccordionSection title="Quartiers" count={districts.length}>
-              {districts.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  className="detail-sidebar-item ghost"
-                  onClick={() => handleNavigate('district', d.id, d.name)}
-                >
-                  <span className="detail-sidebar-icon">🏘️</span>
-                  <span className="detail-sidebar-name">{d.name}</span>
-                </button>
-              ))}
+              {districts.map((d) => renderEntity('district', d))}
             </AccordionSection>
           )}
 
-          {/* Lieux — tous les lieux agrégés */}
           {allPlaces.length > 0 && (
             <AccordionSection title="Lieux" count={allPlaces.length}>
-              {allPlaces.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="detail-sidebar-item ghost"
-                  onClick={() => handleNavigate('place', p.id, p.name)}
-                >
-                  <span className="detail-sidebar-icon">
-                    <img src={p.iconUrl ?? iconForPlaceType(p.placeType)} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', verticalAlign: 'middle' }} />
-                  </span>
-                  <span className="detail-sidebar-name">{p.name}</span>
-                </button>
-              ))}
+              {allPlaces.map((p) => renderEntity('place', p))}
             </AccordionSection>
           )}
 
-          {/* Personnages — tous les personnages agrégés */}
           {allPersons.length > 0 && (
             <AccordionSection title="Personnages" count={allPersons.length}>
-              {allPersons.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="detail-sidebar-item ghost"
-                  onClick={() => handleNavigate('person', p.id, p.name)}
-                >
-                  <span className="detail-sidebar-icon">👤</span>
-                  <span className="detail-sidebar-name">{p.name}</span>
-                </button>
-              ))}
+              {allPersons.map((p) => renderEntity('person', p))}
             </AccordionSection>
           )}
 
@@ -346,38 +384,29 @@ export function DetailModalSidebar({ point, data, onNavigate, createMode }: Prop
           {/* Vue par quartier — fixe, sans accordéon */}
           {districtsWithChildren.map((d) => (
             <div key={d.id} className="detail-sidebar-district-block">
-              <button
-                type="button"
-                className="detail-sidebar-district-title ghost"
-                onClick={() => handleNavigate('district', d.id, d.name)}
-              >
-                <span className="detail-sidebar-icon">🏘️</span>
-                <span>{d.name}</span>
-              </button>
-              {(d.places ?? []).map((p) => (
+              <div className="detail-sidebar-item-row">
                 <button
-                  key={`p-${p.id}`}
                   type="button"
-                  className="detail-sidebar-item ghost detail-sidebar-nested"
-                  onClick={() => handleNavigate('place', p.id, p.name)}
+                  className="detail-sidebar-district-title ghost"
+                  onClick={() => handleNavigate('district', d.id, d.name)}
                 >
-                  <span className="detail-sidebar-icon">
-                    <img src={p.iconUrl ?? iconForPlaceType(p.placeType)} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', verticalAlign: 'middle' }} />
-                  </span>
-                  <span className="detail-sidebar-name">{p.name}</span>
+                  <span className="detail-sidebar-icon">🏘️</span>
+                  <span>{d.name}</span>
                 </button>
-              ))}
-              {(d.persons ?? []).map((p) => (
                 <button
-                  key={`per-${p.id}`}
                   type="button"
-                  className="detail-sidebar-item ghost detail-sidebar-nested"
-                  onClick={() => handleNavigate('person', p.id, p.name)}
+                  className={`detail-sidebar-fav-btn ghost${isFavorite('district', d.id) ? ' active' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite({ kind: 'district', targetId: d.id, name: d.name });
+                  }}
+                  aria-label={isFavorite('district', d.id) ? `Retirer ${d.name} des favoris` : `Ajouter ${d.name} aux favoris`}
                 >
-                  <span className="detail-sidebar-icon">👤</span>
-                  <span className="detail-sidebar-name">{p.name}</span>
+                  {isFavorite('district', d.id) ? '★' : '☆'}
                 </button>
-              ))}
+              </div>
+              {(d.places ?? []).map((p) => renderEntity('place', p, true))}
+              {(d.persons ?? []).map((p) => renderEntity('person', p, true))}
             </div>
           ))}
         </div>
@@ -386,35 +415,17 @@ export function DetailModalSidebar({ point, data, onNavigate, createMode }: Prop
   }
 
   const groupedEntities = point && data ? getGroupedEntities(point, data) : [];
-  if (groupedEntities.length === 0) {
+  if (groupedEntities.length === 0 && favorites.length === 0) {
     return null;
   }
 
   return (
     <div className="detail-sidebar glass">
       <div className="detail-sidebar-list">
+        {favoritesSection}
         {groupedEntities.map((group) => (
           <AccordionSection key={group.kind} title={group.label} count={group.entities.length}>
-            {group.entities.map((entity) => (
-              <button
-                key={entity.id}
-                type="button"
-                className="detail-sidebar-item ghost"
-                onClick={() => handleNavigate(entity.kind, entity.id, entity.name)}
-              >
-                <span className="detail-sidebar-icon">
-                  {entity.kind === 'kingdom' && '👑'}
-                  {entity.kind === 'organisation' && '🏛️'}
-                  {entity.kind === 'city' && '🏙️'}
-                  {entity.kind === 'district' && '🏘️'}
-                  {entity.kind === 'place' && (
-                    <img src={entity.iconUrl ?? iconForPlaceType(entity.placeType)} alt="" style={{ width: '16px', height: '16px', objectFit: 'contain', verticalAlign: 'middle' }} />
-                  )}
-                  {entity.kind === 'person' && '👤'}
-                </span>
-                <span className="detail-sidebar-name">{entity.name}</span>
-              </button>
-            ))}
+            {group.entities.map((entity) => renderEntity(entity.kind, entity))}
           </AccordionSection>
         ))}
       </div>

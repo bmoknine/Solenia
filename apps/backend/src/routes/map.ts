@@ -16,12 +16,13 @@ export async function mapRoutes(app: FastifyInstance) {
         city: { include: { kingdom: true } },
         place: { select: { id: true, name: true, iconUrl: true, description: true, cityId: true, districtId: true, showOnMap: true } },
         personOfInterest: { select: { id: true, name: true, description: true, showOnMap: true } },
+        playerCharacter: { select: { id: true, name: true, description: true, imageUrl: true, showOnMap: true } },
       },
     });
 
     return positions
       .map((p) => {
-        const target = p.kingdom ?? p.city ?? p.place ?? p.personOfInterest;
+        const target = p.kingdom ?? p.city ?? p.place ?? p.personOfInterest ?? p.playerCharacter;
 
         if (!target) {
           return null;
@@ -32,12 +33,14 @@ export async function mapRoutes(app: FastifyInstance) {
         }
         if (p.placeId && p.place && p.place.showOnMap === false) return null;
         if (p.personOfInterestId && p.personOfInterest && p.personOfInterest.showOnMap === false) return null;
+        if (p.playerCharacterId && p.playerCharacter && p.playerCharacter.showOnMap === false) return null;
 
         const kind =
           p.kingdomId ? 'kingdom' :
           p.cityId ? 'city' :
           p.placeId ? 'place' :
           p.personOfInterestId ? 'person' :
+          p.playerCharacterId ? 'playerCharacter' :
           'unknown';
 
         let iconUrl: string | null = null;
@@ -52,6 +55,8 @@ export async function mapRoutes(app: FastifyInstance) {
           kingdomColor = p.city.kingdom?.color ?? null;
         } else if (p.place) {
           iconUrl = p.place.iconUrl ?? null;
+        } else if (p.playerCharacter) {
+          iconUrl = p.playerCharacter.imageUrl ?? null;
         }
 
         return {
@@ -59,7 +64,7 @@ export async function mapRoutes(app: FastifyInstance) {
           x: p.x,
           y: p.y,
           kind,
-          targetId: p.kingdomId ?? p.cityId ?? p.placeId ?? p.personOfInterestId ?? null,
+          targetId: p.kingdomId ?? p.cityId ?? p.placeId ?? p.personOfInterestId ?? p.playerCharacterId ?? null,
           name: target.name,
           description: descriptionFromPositionTarget(target),
           iconUrl,

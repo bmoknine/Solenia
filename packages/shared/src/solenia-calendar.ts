@@ -22,7 +22,7 @@ export const soleniaDateInGameSchema = z.preprocess(
     .union([
       z.number().int(),
       z.string().min(1).refine(
-        (s) => /^\d{1,5}$/.test(s) || /^\d{1,5}-\d{1,2}-\d{1,2}$/.test(s),
+        (s) => /^-?\d{1,5}$/.test(s) || /^-?\d{1,5}-\d{1,2}-\d{1,2}$/.test(s),
         { message: 'Date : année (nombre) ou YYYY-MM-DD (calendrier Solenia)' }
       ),
     ])
@@ -82,10 +82,10 @@ export function parseSoleniaDate(
   if (s.length > 10 && /^\d{4}-\d{2}-\d{2}/.test(s)) {
     s = s.slice(0, 10);
   }
-  if (/^\d{1,5}$/.test(s)) {
+  if (/^-?\d{1,5}$/.test(s)) {
     return new Date(parseInt(s, 10), 0, 1);
   }
-  const match = s.match(/^(\d{1,5})-(\d{1,2})-(\d{1,2})$/);
+  const match = s.match(/^(-?\d{1,5})-(\d{1,2})-(\d{1,2})$/);
   if (match) {
     const y = parseInt(match[1], 10);
     const m = parseInt(match[2], 10) - 1;
@@ -125,4 +125,138 @@ export function formatSoleniaDate(date: Date | string | number | null | undefine
     return `${SOLENIA_MONTHS[month]} ${day}, ${y}`;
   }
   return d.toISOString().slice(0, 10);
+}
+
+export type SoleniaDateParts = {
+  year: number;
+  month: number | null;
+  day: number | null;
+  isYearOnly: boolean;
+  isSacredDay: boolean;
+};
+
+/** Jour de l’année Solenia (1–365). */
+export function soleniaDayOfYear(monthIndex: number, day: number): number {
+  if (monthIndex === 11 && day >= 26) return 360 + (day - 25);
+  return monthIndex * 30 + day;
+}
+
+/** Index du jour de la semaine (0 = Lumenis … 5 = Umbris). */
+export function soleniaWeekdayIndex(monthIndex: number, day: number): number {
+  return (soleniaDayOfYear(monthIndex, day) - 1) % 6;
+}
+
+export function getSoleniaWeekday(date: Date | string | number | null | undefined): string {
+  const d = date == null ? undefined : typeof date === 'object' && 'getFullYear' in date
+    ? date as Date
+    : parseSoleniaDate(date);
+  if (!d) return '';
+  const month = d.getMonth();
+  const day = d.getDate();
+  if (month === 0 && day === 1 && d.getHours() === 0 && d.getMinutes() === 0) return '';
+  return SOLENIA_WEEKDAYS[soleniaWeekdayIndex(month, day)];
+}
+
+export function soleniaDateToParts(
+  value: Date | string | number | null | undefined
+): SoleniaDateParts | null {
+  const d = value == null ? undefined : typeof value === 'object' && 'getFullYear' in value
+    ? value as Date
+    : parseSoleniaDate(value);
+  if (!d) return null;
+  const year = d.getFullYear();
+  const monthIndex = d.getMonth();
+  const day = d.getDate();
+  if (monthIndex === 0 && day === 1 && d.getHours() === 0 && d.getMinutes() === 0) {
+    return { year, month: null, day: null, isYearOnly: true, isSacredDay: false };
+  }
+  if (monthIndex === 11 && day >= 26 && day <= 30) {
+    return {
+      year,
+      month: 12,
+      day: 30 + (day - 25),
+      isYearOnly: false,
+      isSacredDay: true,
+    };
+  }
+  return {
+    year,
+    month: monthIndex + 1,
+    day,
+    isYearOnly: false,
+    isSacredDay: false,
+  };
+}
+
+export function buildSoleniaDateValue(parts: {
+  year: number | string;
+  month?: number | string | null;
+  day?: number | string | null;
+}): number | string | null {
+  const year = typeof parts.year === 'string' ? parseInt(parts.year, 10) : parts.year;
+  if (!Number.isFinite(year)) return null;
+  const monthRaw = parts.month;
+  const dayRaw = parts.day;
+  if (monthRaw == null || monthRaw === '' || dayRaw == null || dayRaw === '') {
+    return year;
+  }
+  const month = typeof monthRaw === 'string' ? parseInt(monthRaw, 10) : monthRaw;
+  const day = typeof dayRaw === 'string' ? parseInt(dayRaw, 10) : dayRaw;
+  if (!Number.isFinite(month) || !Number.isFinite(day)) return year;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/** Normalise une date Solenia pour stockage en base (texte). */
+export function normalizeSoleniaDateStorage(
+  value: string | number | null | undefined
+): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return String(value);
+  let s = String(value).trim();
+  if (/^-?\d{1,5}$/.test(s)) return s;
+  const isoPrefix = s.length > 10 && /^-?\d{1,5}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : s;
+  const match = isoPrefix.match(/^(-?\d{1,5})-(\d{1,2})-(\d{1,2})$/);
+  if (match) {
+    const y = match[1];
+    const m = String(parseInt(match[2], 10)).padStart(2, '0');
+    const d = String(parseInt(match[3], 10)).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return s;
+}
+
+/** Clé de tri chronologique (année seule = début d’année). */
+export function soleniaDateToSortKey(
+  value: Date | string | number | null | undefined
+): number {
+  const d = value == null ? undefined : typeof value === 'object' && 'getFullYear' in value
+    ? value as Date
+    : parseSoleniaDate(value);
+  if (!d) return Number.POSITIVE_INFINITY;
+  const year = d.getFullYear();
+  const monthIndex = d.getMonth();
+  const day = d.getDate();
+  if (monthIndex === 0 && day === 1 && d.getHours() === 0 && d.getMinutes() === 0) {
+    return year * 1000;
+  }
+  return year * 1000 + soleniaDayOfYear(monthIndex, day);
+}
+
+export function compareSoleniaDates(
+  a: Date | string | number | null | undefined,
+  b: Date | string | number | null | undefined
+): number {
+  return soleniaDateToSortKey(a) - soleniaDateToSortKey(b);
+}
+
+/** Date lisible avec jour de la semaine (si date complète). */
+export function formatSoleniaDateLong(
+  date: Date | string | number | null | undefined
+): string {
+  const formatted = formatSoleniaDate(date);
+  if (!formatted) return '';
+  const weekday = getSoleniaWeekday(date);
+  if (!weekday) return formatted;
+  const shortWeekday = weekday.split(' — ')[0];
+  return `${shortWeekday}, ${formatted}`;
 }

@@ -199,16 +199,50 @@
   gap: 2px;
 }
 
+.detail-sidebar-item-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+}
+
+.detail-sidebar-item-row-nested {
+  padding-left: 8px;
+}
+
 .detail-sidebar-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 0.875rem;
   text-align: left;
   transition: all 0.2s;
-  width: 100%;
+}
+
+.detail-sidebar-fav-btn {
+  flex-shrink: 0;
+  width: 36px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #64748b;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-sidebar-fav-btn:hover {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.detail-sidebar-fav-btn.active {
+  color: #fbbf24;
 }
 
 .detail-sidebar-item.ghost {
@@ -352,8 +386,18 @@
 
 .detail-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.detail-back-btn {
+  max-width: min(220px, 45vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
 }
 
 .lore-section .lore-filter-bar {
@@ -962,4 +1006,27 @@
 
 .detail-tab-content {
   margin-top: 16px;
+}
+
+.solenia-date-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.solenia-date-input-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.solenia-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.solenia-date-weekday {
+  color: #94a3b8;
 }

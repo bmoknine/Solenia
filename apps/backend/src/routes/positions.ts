@@ -4,15 +4,16 @@ import { positionInputSchema } from '@solenia/shared';
 import { parseRouteUuid } from '../utils/routeParams';
 import { requireRole } from '../utils/rbac';
 
-type TargetKey = 'kingdomId' | 'cityId' | 'placeId' | 'personOfInterestId';
+type TargetKey = 'kingdomId' | 'cityId' | 'placeId' | 'personOfInterestId' | 'playerCharacterId';
 
-const pickTarget = (data: { kingdomId?: string; cityId?: string; placeId?: string; personOfInterestId?: string }) => {
+const pickTarget = (data: { kingdomId?: string; cityId?: string; placeId?: string; personOfInterestId?: string; playerCharacterId?: string }) => {
   const entries = (
     [
       ['kingdomId', data.kingdomId],
       ['cityId', data.cityId],
       ['placeId', data.placeId],
       ['personOfInterestId', data.personOfInterestId],
+      ['playerCharacterId', data.playerCharacterId],
     ] as const
   ).filter((entry): entry is [TargetKey, string] => Boolean(entry[1]));
 
@@ -30,6 +31,8 @@ function positionWhereUnique(key: TargetKey, value: string): Prisma.PositionWher
       return { placeId: value };
     case 'personOfInterestId':
       return { personOfInterestId: value };
+    case 'playerCharacterId':
+      return { playerCharacterId: value };
     default: {
       const _x: never = key;
       throw new Error(`Clé position inconnue: ${String(_x)}`);

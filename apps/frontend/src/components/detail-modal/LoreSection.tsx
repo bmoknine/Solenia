@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { compareSoleniaDates } from '@solenia/shared';
 import type { LoreRef } from '../../api/entities';
+import { formatSoleniaDateLong } from '../../utils/solenia-date';
 
 type LoreSectionProps = {
   lores?: LoreRef[];
@@ -18,9 +20,9 @@ export function LoreSection({ lores, onOpenLore }: LoreSectionProps) {
   const tags = Array.from(new Set(lores.flatMap((l) => loreTags(l)))).sort((a, b) => a.localeCompare(b));
 
   const sorted = [...lores].sort((a, b) => {
-    const da = a.dateInGame ?? Number.POSITIVE_INFINITY;
-    const db = b.dateInGame ?? Number.POSITIVE_INFINITY;
-    return da - db;
+    const byDate = compareSoleniaDates(a.dateInGame, b.dateInGame);
+    if (byDate !== 0) return byDate;
+    return a.title.localeCompare(b.title, 'fr');
   });
 
   const filtered = tagFilter === '__all__' ? sorted : sorted.filter((l) => loreTags(l).includes(tagFilter));
@@ -54,7 +56,7 @@ export function LoreSection({ lores, onOpenLore }: LoreSectionProps) {
             <span style={{ fontWeight: 600 }}>{lore.title}</span>
             {loreTags(lore).length > 0 || lore.dateInGame != null ? (
               <span style={{ marginLeft: 8, color: '#94a3b8', fontSize: '0.9em' }}>
-                {[loreTags(lore).join(', '), lore.dateInGame != null ? String(lore.dateInGame) : ''].filter(Boolean).join(' · ')}
+                {[loreTags(lore).join(', '), lore.dateInGame != null ? formatSoleniaDateLong(lore.dateInGame) : ''].filter(Boolean).join(' · ')}
               </span>
             ) : null}
           </li>

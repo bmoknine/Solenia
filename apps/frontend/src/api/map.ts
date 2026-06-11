@@ -1,13 +1,13 @@
 import { apiGet, withAuth } from './client';
 
 // Type pour les entités navigables (inclut district même s'il n'est pas sur la map)
-export type EntityKind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation';
+export type EntityKind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'playerCharacter';
 
 export type MapPoint = {
   id: string;
   x: number;
   y: number;
-  kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation';
+  kind: 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'unknown' | 'organisation' | 'playerCharacter';
   targetId: string | null;
   name: string;
   description: string | null;
@@ -46,6 +46,8 @@ export async function deleteTarget(kind: MapPoint['kind'] | EntityKind | 'organi
       return client.delete(`/persons/${targetId}`);
     case 'organisation':
       return client.delete(`/organisations/${targetId}`);
+    case 'playerCharacter':
+      return client.delete(`/player-characters/${targetId}`);
     default:
       throw new Error('Type non supporté pour suppression');
   }

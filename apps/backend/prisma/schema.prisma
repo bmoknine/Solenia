@@ -13,6 +13,35 @@ enum UserType {
   viewer
 }
 
+enum DnDClass {
+  BARBARE
+  BARDE
+  CLERC
+  DRUIDE
+  GUERRIER
+  MOINE
+  PALADIN
+  RODEUR
+  ROUBLARD
+  ENSORCELEUR
+  SORCIER
+  MAGICIEN
+  ARTIFICIER
+  OTHER
+}
+
+enum DnDAlignment {
+  LOYAL_BON
+  NEUTRE_BON
+  CHAOTIQUE_BON
+  LOYAL_NEUTRE
+  VRAI_NEUTRE
+  CHAOTIQUE_NEUTRE
+  LOYAL_MAUVAIS
+  NEUTRE_MAUVAIS
+  CHAOTIQUE_MAUVAIS
+}
+
 enum Breed {
   ELFE
   HALFELIN
@@ -91,13 +120,14 @@ model Kingdom {
   flag        String?   // URL du drapeau (remplace l’icône sur la carte si défini)
   isForDM     Boolean   @default(false)
 
-  cities   City[]
-  places   Place[]
-  comments Comment[]
-  persons  PersonOfInterest[]
-  position Position?
-  organisations OrganisationKingdom[]
-  lores   LoreKingdom[]
+  cities           City[]
+  places           Place[]
+  comments         Comment[]
+  persons          PersonOfInterest[]
+  playerCharacters PlayerCharacter[]
+  position         Position?
+  organisations    OrganisationKingdom[]
+  lores            LoreKingdom[]
 }
 
 model City {
@@ -110,14 +140,15 @@ model City {
   kingdomId   String?
   isForDM     Boolean   @default(false)
 
-  kingdom   Kingdom? @relation(fields: [kingdomId], references: [id])
-  places    Place[]
-  districts District[]
-  comments  Comment[]
-  persons   PersonOfInterest[]
-  position  Position?
-  organisations OrganisationCity[]
-  lores   LoreCity[]
+  kingdom          Kingdom? @relation(fields: [kingdomId], references: [id])
+  places           Place[]
+  districts        District[]
+  comments         Comment[]
+  persons          PersonOfInterest[]
+  playerCharacters PlayerCharacter[]
+  position         Position?
+  organisations    OrganisationCity[]
+  lores            LoreCity[]
 }
 
 model District {
@@ -130,10 +161,11 @@ model District {
   secret      String?  // Secret caché
   cityId      String
 
-  city     City      @relation(fields: [cityId], references: [id])
-  places   Place[]  // Lieux notables (relation)
-  comments Comment[]
-  persons  PersonOfInterest[]
+  city             City      @relation(fields: [cityId], references: [id])
+  places           Place[]
+  comments         Comment[]
+  persons          PersonOfInterest[]
+  playerCharacters PlayerCharacter[]
 }
 
 enum PlaceType {
@@ -158,14 +190,15 @@ model Place {
   showOnMap   Boolean    @default(true)
   isForDM     Boolean    @default(false)
 
-  kingdom  Kingdom?  @relation(fields: [kingdomId], references: [id])
-  city     City?     @relation(fields: [cityId], references: [id])
-  district District? @relation(fields: [districtId], references: [id])
-  comments Comment[]
-  persons  PersonOfInterest[]
-  position Position?
-  organisations OrganisationPlace[]
-  lores   LorePlace[]
+  kingdom          Kingdom?  @relation(fields: [kingdomId], references: [id])
+  city             City?     @relation(fields: [cityId], references: [id])
+  district         District? @relation(fields: [districtId], references: [id])
+  comments         Comment[]
+  persons          PersonOfInterest[]
+  playerCharacters PlayerCharacter[]
+  position         Position?
+  organisations    OrganisationPlace[]
+  lores            LorePlace[]
 }
 
 model PersonOfInterest {
@@ -230,11 +263,13 @@ model Position {
   cityId             String? @unique
   placeId            String? @unique
   personOfInterestId String? @unique
+  playerCharacterId  String? @unique
 
   kingdom          Kingdom?          @relation(fields: [kingdomId], references: [id])
   city             City?             @relation(fields: [cityId], references: [id])
   place            Place?            @relation(fields: [placeId], references: [id])
   personOfInterest PersonOfInterest? @relation(fields: [personOfInterestId], references: [id])
+  playerCharacter  PlayerCharacter?  @relation(fields: [playerCharacterId], references: [id])
 }
 
 enum OrganisationType {
@@ -312,7 +347,7 @@ model Lore {
   title      String
   content    String
   tags       String[] @default([])
-  dateInGame Int?
+  dateInGame String?
   summary    String?
   isForDM    Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -378,4 +413,86 @@ model LoreOrganisation {
   organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
   @@unique([loreId, organisationId])
+}
+
+model PlayerCharacter {
+  id          String        @id @default(uuid())
+  name        String
+  class       DnDClass?
+  level       Int           @default(1)
+  race        Breed?
+  background  String?
+  alignment   DnDAlignment?
+  imageUrl    String?
+  description String?
+  STR         Int           @default(10)
+  DEX         Int           @default(10)
+  CON         Int           @default(10)
+  INT         Int           @default(10)
+  WIS         Int           @default(10)
+  CHA         Int           @default(10)
+  pv          Int?
+  pvMax       Int?
+  ca          Int?
+  initiative  Int?
+  speed       Int?
+  isForDM     Boolean       @default(false)
+  showOnMap   Boolean       @default(true)
+  kingdomId   String?
+  cityId      String?
+  districtId  String?
+  placeId     String?
+
+  kingdom      Kingdom?  @relation(fields: [kingdomId], references: [id])
+  city         City?     @relation(fields: [cityId], references: [id])
+  district     District? @relation(fields: [districtId], references: [id])
+  place        Place?    @relation(fields: [placeId], references: [id])
+  position     Position?
+  skills       PlayerCharacterSkill[]
+  savingThrows PlayerCharacterSavingThrow[]
+  equipment    PlayerCharacterEquipmentItem[]
+  spells       PlayerCharacterSpell[]
+}
+
+model PlayerCharacterSkill {
+  id                String  @id @default(uuid())
+  playerCharacterId String
+  name              String
+  ability           String  @default("DEX") // STR, DEX, CON, INT, WIS, CHA
+  proficient        Boolean @default(false)
+  expertise         Boolean @default(false)
+
+  playerCharacter PlayerCharacter @relation(fields: [playerCharacterId], references: [id], onDelete: Cascade)
+}
+
+model PlayerCharacterSavingThrow {
+  id                String  @id @default(uuid())
+  playerCharacterId String
+  ability           String
+  proficient        Boolean @default(false)
+
+  playerCharacter PlayerCharacter @relation(fields: [playerCharacterId], references: [id], onDelete: Cascade)
+}
+
+model PlayerCharacterEquipmentItem {
+  id                String  @id @default(uuid())
+  playerCharacterId String
+  name              String
+  quantity          Int     @default(1)
+  description       String?
+  equipped          Boolean @default(false)
+
+  playerCharacter PlayerCharacter @relation(fields: [playerCharacterId], references: [id], onDelete: Cascade)
+}
+
+model PlayerCharacterSpell {
+  id                String  @id @default(uuid())
+  playerCharacterId String
+  name              String
+  level             Int     @default(0)
+  school            String?
+  description       String?
+  prepared          Boolean @default(false)
+
+  playerCharacter PlayerCharacter @relation(fields: [playerCharacterId], references: [id], onDelete: Cascade)
 }

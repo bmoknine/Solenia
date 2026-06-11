@@ -1,7 +1,8 @@
-import type { CityDetail, DistrictDetail, OrganisationDetail, PersonDetail, PlaceDetail } from '../../api/entities';
-import type { DetailModalProps, EditState, EntityData, OrganisationEditState, PersonEditState } from './detailModalTypes';
+import type { CityDetail, DistrictDetail, OrganisationDetail, PersonDetail, PlaceDetail, PlayerCharacterDetail } from '../../api/entities';
+import type { DetailModalProps, EditState, EntityData, OrganisationEditState, PersonEditState, PlayerCharacterEditState } from './detailModalTypes';
+import { mergeSkillsWithDefaults, mergeSavingThrowsWithDefaults } from './dndConstants';
 
-type MapEntityKind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation';
+type MapEntityKind = 'kingdom' | 'city' | 'district' | 'place' | 'person' | 'organisation' | 'playerCharacter';
 
 /** État formulaire par défaut au démarrage d’une création. */
 export function defaultEditStateForCreate(createMode: NonNullable<DetailModalProps['createMode']>): EditState {
@@ -34,6 +35,7 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
       cityId: null,
       districtId: null,
       organisationIds: [] as string[],
+      playerCharacterIds: [] as string[],
       showOnMap: true,
     };
   }
@@ -66,6 +68,39 @@ export function defaultEditStateForCreate(createMode: NonNullable<DetailModalPro
       personIds: [],
       organisationIds: [],
     };
+  }
+  if (createMode.kind === 'playerCharacter') {
+    return {
+      kind: 'playerCharacter',
+      name: '',
+      class: null,
+      level: 1,
+      race: null,
+      background: null,
+      alignment: null,
+      imageUrl: null,
+      description: null,
+      STR: 10,
+      DEX: 10,
+      CON: 10,
+      INT: 10,
+      WIS: 10,
+      CHA: 10,
+      pv: null,
+      pvMax: null,
+      ca: null,
+      initiative: null,
+      speed: null,
+      showOnMap: true,
+      kingdomId: null,
+      cityId: null,
+      districtId: null,
+      placeId: null,
+      skills: mergeSkillsWithDefaults([]),
+      savingThrows: mergeSavingThrowsWithDefaults([]),
+      equipment: [],
+      spells: [],
+    } as PlayerCharacterEditState;
   }
   return {
     kind: 'person',
@@ -143,7 +178,21 @@ export function buildEditStateFromFetchedEntity(kind: MapEntityKind, result: Ent
       cityId: (result as PlaceDetail).city?.id ?? null,
       districtId: (result as PlaceDetail).district?.id ?? null,
       organisationIds: (result as PlaceDetail).organisations?.map((o) => o.id) ?? [],
+      playerCharacterIds: (result as PlaceDetail).playerCharacters?.map((pc) => pc.id) ?? [],
     } as EditState;
+  }
+  if (kind === 'playerCharacter') {
+    const pc = result as PlayerCharacterDetail;
+    return {
+      kind: 'playerCharacter' as const,
+      ...pc,
+      kingdomId: pc.kingdom?.id ?? null,
+      cityId: pc.city?.id ?? null,
+      districtId: pc.district?.id ?? null,
+      placeId: pc.place?.id ?? null,
+      skills: mergeSkillsWithDefaults(pc.skills ?? []),
+      savingThrows: mergeSavingThrowsWithDefaults(pc.savingThrows ?? []),
+    } as PlayerCharacterEditState;
   }
   const _exhaustive: never = kind;
   throw new Error(`buildEditStateFromFetchedEntity: kind inattendu ${String(_exhaustive)}`);
@@ -183,7 +232,21 @@ export function buildEditStateAfterSaveRefetch(kind: MapEntityKind, refreshed: E
       cityId: pr.city?.id ?? null,
       districtId: pr.district?.id ?? null,
       organisationIds: pr.organisations?.map((o) => o.id) ?? [],
+      playerCharacterIds: pr.playerCharacters?.map((pc) => pc.id) ?? [],
     } as EditState;
+  }
+  if (kind === 'playerCharacter') {
+    const pc = refreshed as PlayerCharacterDetail;
+    return {
+      kind: 'playerCharacter' as const,
+      ...pc,
+      kingdomId: pc.kingdom?.id ?? null,
+      cityId: pc.city?.id ?? null,
+      districtId: pc.district?.id ?? null,
+      placeId: pc.place?.id ?? null,
+      skills: mergeSkillsWithDefaults(pc.skills ?? []),
+      savingThrows: mergeSavingThrowsWithDefaults(pc.savingThrows ?? []),
+    } as PlayerCharacterEditState;
   }
   return { kind, ...refreshed } as EditState;
 }

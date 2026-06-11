@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { formatSoleniaDateLong } from '../../utils/solenia-date';
+import { SoleniaDateInput } from '../SoleniaDateInput';
 import { listLores, type LoreDetail } from '../../api/entities';
 import type { LoreEditState } from './loreTypes';
 
@@ -141,15 +143,14 @@ export function LoreView({ data, editMode, editState, onChange, valueOrDash }: L
       <div className="detail-item">
         <span className="detail-label">Date (en jeu)</span>
         {editMode ? (
-          <input
-            className="detail-input"
-            type="number"
-            value={editState.dateInGame ?? ''}
-            onChange={(e) => onChange('dateInGame', e.target.value === '' ? null : Number(e.target.value))}
-            placeholder="ex: 859, -120, 1330"
+          <SoleniaDateInput
+            value={editState.dateInGame ?? null}
+            onChange={(value) => onChange('dateInGame', value)}
           />
         ) : (
-          <span className="detail-value">{valueOrDash(data?.dateInGame)}</span>
+          <span className="detail-value">
+            {data?.dateInGame ? formatSoleniaDateLong(data.dateInGame) : valueOrDash(data?.dateInGame)}
+          </span>
         )}
       </div>
       <div className="detail-item">
