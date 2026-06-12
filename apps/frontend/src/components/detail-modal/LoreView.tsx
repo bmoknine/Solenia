@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatSoleniaDateLong } from '../../utils/solenia-date';
+import { RichTextContent } from '../rich-text/RichTextContent';
+import { RichTextField } from '../rich-text/RichTextField';
 import { SoleniaDateInput } from '../SoleniaDateInput';
 import { listLores, type LoreDetail } from '../../api/entities';
 import type { LoreEditState } from './loreTypes';
@@ -169,17 +171,14 @@ export function LoreView({ data, editMode, editState, onChange, valueOrDash }: L
       <div className="detail-item">
         <span className="detail-label">Contenu</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={editState.content ?? ''}
-            onChange={(e) => onChange('content', e.target.value)}
+            onChange={(html) => onChange('content', html)}
             placeholder="Contenu de la lore"
-            rows={12}
+            minHeight={280}
           />
         ) : (
-          <p className="detail-desc" style={{ whiteSpace: 'pre-wrap' }}>
-            {valueOrDash(data?.content)}
-          </p>
+          <RichTextContent value={data?.content} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       {!editMode && data && (data.kingdoms?.length || data.cities?.length || data.places?.length || data.persons?.length || data.organisations?.length) ? (

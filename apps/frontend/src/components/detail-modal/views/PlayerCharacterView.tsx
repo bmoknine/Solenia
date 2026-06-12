@@ -13,6 +13,8 @@ import type {
   PlayerCharacterSpell,
 } from '../../../api/entities';
 import { listCities, listDistricts, listKingdoms, listPlaces } from '../../../api/entities';
+import { RichTextContent } from '../../rich-text/RichTextContent';
+import { RichTextField } from '../../rich-text/RichTextField';
 import { SearchableSelect } from '../SearchableSelect';
 import { ALIGNMENT_OPTIONS, BREED_OPTIONS, DND_CLASS_OPTIONS } from '../entityOptions';
 import { formatAlignment, formatBreed, formatDnDClass } from '../entityFormatters';
@@ -306,14 +308,13 @@ export function PlayerCharacterView({
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={pcEdit?.description ?? ''}
-            onChange={(e) => onChange('description', e.target.value === '' ? null : e.target.value)}
+            onChange={(html) => onChange('description', html === '' ? null : html)}
             placeholder="Description du personnage"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.description)}</p>
+          <RichTextContent value={data?.description} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
 

@@ -577,8 +577,8 @@
 }
 
 /* En lecture, masquer les champs vides (pas d'input/textarea/select et valeur vide) */
-.detail-item:not(:has(.detail-input, .detail-textarea, input, textarea, select, button)):has(.detail-value:empty),
-.detail-item:not(:has(.detail-input, .detail-textarea, input, textarea, select, button)):has(.detail-desc:empty) {
+.detail-item:not(:has(.detail-input, .detail-textarea, .rich-text-field, input, textarea, select, button)):has(.detail-value:empty),
+.detail-item:not(:has(.detail-input, .detail-textarea, .rich-text-field, input, textarea, select, button)):has(.detail-desc:empty) {
   display: none;
 }
 

@@ -19,6 +19,7 @@ import {
   listPlayerCharacters,
 } from '../api/entities';
 import type { MapPoint } from '../api/map';
+import { stripHtml } from '../components/rich-text/richTextUtils';
 import type { GlobalSearchResult, SearchableKind } from './types';
 
 export type EntityCatalog = {
@@ -53,6 +54,13 @@ function normalizeQuery(q: string): string {
 
 function haystackIncludes(haystack: string, query: string): boolean {
   return haystack.toLowerCase().includes(query);
+}
+
+function searchableText(...parts: (string | null | undefined)[]): string {
+  return parts
+    .filter((part): part is string => Boolean(part?.trim()))
+    .map((part) => stripHtml(part))
+    .join(' ');
 }
 
 function coordsFor(
@@ -98,7 +106,8 @@ export function searchEntityCatalog(
   const seen = new Set<string>();
 
   for (const k of catalog.kingdoms) {
-    if (!haystackIncludes(k.name, query)) continue;
+    const text = searchableText(k.name, k.description);
+    if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'kingdom',
       targetId: k.id,
@@ -109,7 +118,8 @@ export function searchEntityCatalog(
   }
 
   for (const c of catalog.cities) {
-    if (!haystackIncludes(c.name, query)) continue;
+    const text = searchableText(c.name, c.description);
+    if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'city',
       targetId: c.id,
@@ -120,7 +130,7 @@ export function searchEntityCatalog(
   }
 
   for (const d of catalog.districts) {
-    const text = [d.name, d.motto, d.ambiance, d.content, d.rumors, d.secret].filter(Boolean).join(' ');
+    const text = searchableText(d.name, d.motto, d.ambiance, d.content, d.rumors, d.secret);
     if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'district',
@@ -132,7 +142,8 @@ export function searchEntityCatalog(
   }
 
   for (const p of catalog.places) {
-    if (!haystackIncludes(p.name, query)) continue;
+    const text = searchableText(p.name, p.description);
+    if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'place',
       targetId: p.id,
@@ -143,7 +154,7 @@ export function searchEntityCatalog(
   }
 
   for (const p of catalog.persons) {
-    const text = [p.name, p.description].filter(Boolean).join(' ');
+    const text = searchableText(p.name, p.description);
     if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'person',
@@ -155,7 +166,7 @@ export function searchEntityCatalog(
   }
 
   for (const o of catalog.organisations) {
-    const text = [o.name, o.description].filter(Boolean).join(' ');
+    const text = searchableText(o.name, o.description);
     if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'organisation',
@@ -167,7 +178,7 @@ export function searchEntityCatalog(
   }
 
   for (const pc of catalog.playerCharacters) {
-    const text = [pc.name, pc.description, pc.background, pc.race].filter(Boolean).join(' ');
+    const text = searchableText(pc.name, pc.description, pc.background, pc.race);
     if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'playerCharacter',
@@ -179,7 +190,7 @@ export function searchEntityCatalog(
   }
 
   for (const l of catalog.lores) {
-    const text = [l.title, l.summary, l.content, ...(l.tags ?? [])].filter(Boolean).join(' ');
+    const text = searchableText(l.title, l.summary, l.content, ...(l.tags ?? []));
     if (!haystackIncludes(text, query)) continue;
     pushResult(results, seen, {
       kind: 'lore',

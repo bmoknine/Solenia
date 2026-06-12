@@ -1,6 +1,8 @@
 import type { NavigablePoint } from '../../../api/map';
 import type { KingdomDetail } from '../../../api/entities';
 import { formatSoleniaDate, toDateInputValue } from '../../../utils/solenia-date';
+import { RichTextContent } from '../../rich-text/RichTextContent';
+import { RichTextField } from '../../rich-text/RichTextField';
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { FlagSelect } from '../FlagSelect';
@@ -40,14 +42,13 @@ export function KingdomView({
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={(editState as Partial<KingdomDetail> & { kind: 'kingdom' })?.description ?? ''}
-            onChange={(e) => onChange('description', e.target.value)}
+            onChange={(html) => onChange('description', html)}
             placeholder="Description du royaume"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.description)}</p>
+          <RichTextContent value={data?.description} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       <div className="detail-grid">
