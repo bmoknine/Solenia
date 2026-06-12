@@ -1,0 +1,148 @@
+.rich-text-field {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.rich-text-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.rich-text-toolbar-btn {
+  min-width: 32px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.rich-text-toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+.rich-text-toolbar-btn.active {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(129, 140, 248, 0.45);
+  color: #e0e7ff;
+}
+
+.rich-text-toolbar-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.rich-text-editor {
+  padding: 10px 12px;
+}
+
+.rich-text-editor .tiptap {
+  min-height: var(--rich-text-min-height, 160px);
+  outline: none;
+  color: #e2e8f0;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.rich-text-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #64748b;
+  pointer-events: none;
+  height: 0;
+}
+
+.rich-text-editor .tiptap > * + * {
+  margin-top: 0.65em;
+}
+
+.rich-text-editor .tiptap h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0.5em 0 0.25em;
+}
+
+.rich-text-editor .tiptap h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0.5em 0 0.25em;
+}
+
+.rich-text-editor .tiptap ul,
+.rich-text-editor .tiptap ol {
+  padding-left: 1.4rem;
+}
+
+.rich-text-editor .tiptap blockquote {
+  margin: 0;
+  padding: 0.25rem 0 0.25rem 0.9rem;
+  border-left: 3px solid rgba(129, 140, 248, 0.55);
+  color: #cbd5e1;
+}
+
+.rich-text-content {
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.rich-text-content--plain {
+  white-space: pre-wrap;
+}
+
+.rich-text-content h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0.6em 0 0.3em;
+}
+
+.rich-text-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0.5em 0 0.25em;
+}
+
+.rich-text-content p {
+  margin: 0.4em 0;
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+  margin: 0.4em 0;
+  padding-left: 1.4rem;
+}
+
+.rich-text-content blockquote {
+  margin: 0.4em 0;
+  padding: 0.25rem 0 0.25rem 0.9rem;
+  border-left: 3px solid rgba(129, 140, 248, 0.55);
+  color: #94a3b8;
+}
+
+.rich-text-content strong {
+  color: #f1f5f9;
+}

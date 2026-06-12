@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
 import { listCities, type City, type DistrictDetail } from '../../../api/entities';
+import { RichTextContent } from '../../rich-text/RichTextContent';
+import { RichTextField } from '../../rich-text/RichTextField';
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { SearchableSelect } from '../SearchableSelect';
@@ -75,53 +77,49 @@ export function DistrictView({
       <div className="detail-item">
         <span className="detail-label">Ambiance</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={((editState as DistrictDetail)?.ambiance as string) ?? ''}
-            onChange={(e) => onChange('ambiance', e.target.value)}
+            onChange={(html) => onChange('ambiance', html)}
             placeholder="Ambiance et description"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.ambiance)}</p>
+          <RichTextContent value={data?.ambiance} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       <div className="detail-item">
         <span className="detail-label">Contenu</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={((editState as DistrictDetail)?.content as string) ?? ''}
-            onChange={(e) => onChange('content', e.target.value)}
+            onChange={(html) => onChange('content', html)}
             placeholder="Contenu du quartier"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.content)}</p>
+          <RichTextContent value={data?.content} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       <div className="detail-item">
         <span className="detail-label">Rumeurs</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={((editState as DistrictDetail)?.rumors as string) ?? ''}
-            onChange={(e) => onChange('rumors', e.target.value)}
+            onChange={(html) => onChange('rumors', html)}
             placeholder="Rumeurs et murmures"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.rumors)}</p>
+          <RichTextContent value={data?.rumors} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       <div className="detail-item">
         <span className="detail-label">Secret</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={((editState as DistrictDetail)?.secret as string) ?? ''}
-            onChange={(e) => onChange('secret', e.target.value)}
+            onChange={(html) => onChange('secret', html)}
             placeholder="Secret caché"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.secret)}</p>
+          <RichTextContent value={data?.secret} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       <div className="detail-item">

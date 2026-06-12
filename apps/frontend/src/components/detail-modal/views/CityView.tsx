@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
 import { listKingdoms, type CityDetail, type Kingdom } from '../../../api/entities';
+import { RichTextContent } from '../../rich-text/RichTextContent';
+import { RichTextField } from '../../rich-text/RichTextField';
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { FlagSelect } from '../FlagSelect';
@@ -68,14 +70,13 @@ export function CityView({
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={(editState as Partial<CityDetail> & { kind: 'city' })?.description ?? ''}
-            onChange={(e) => onChange('description', e.target.value)}
+            onChange={(html) => onChange('description', html)}
             placeholder="Description de la ville"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.description)}</p>
+          <RichTextContent value={data?.description} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       {editMode && (

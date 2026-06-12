@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
 import type { Breed, City, Kingdom, Organisation, PersonDetail, Place, Sex } from '../../../api/entities';
 import { listCities, listKingdoms, listOrganisations, listPlaces } from '../../../api/entities';
+import { RichTextContent } from '../../rich-text/RichTextContent';
+import { RichTextField } from '../../rich-text/RichTextField';
 import { LoreSection } from '../LoreSection';
 import { CommentsSection } from '../CommentsSection';
 import { SearchableSelect } from '../SearchableSelect';
@@ -92,14 +94,13 @@ export function PersonView({
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={personEdit?.description ?? ''}
-            onChange={(e) => onChange('description', e.target.value)}
+            onChange={(html) => onChange('description', html)}
             placeholder="Description du personnage"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.description)}</p>
+          <RichTextContent value={data?.description} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
 

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { NavigablePoint } from '../../../api/map';
 import type { City, Kingdom, Membership, Organisation, OrganisationDetail, Person, Place } from '../../../api/entities';
 import { listCities, listKingdoms, listOrganisations, listPersons, listPlaces } from '../../../api/entities';
+import { RichTextContent } from '../../rich-text/RichTextContent';
+import { RichTextField } from '../../rich-text/RichTextField';
 import { LoreSection } from '../LoreSection';
 import { FlagSelect } from '../FlagSelect';
 import { SearchableSelect } from '../SearchableSelect';
@@ -83,14 +85,13 @@ export function OrganisationView({
       <div className="detail-item">
         <span className="detail-label">Description</span>
         {editMode ? (
-          <textarea
-            className="detail-textarea"
+          <RichTextField
             value={((editState as OrganisationDetail)?.description as string) ?? ''}
-            onChange={(e) => onChange('description', e.target.value)}
+            onChange={(html) => onChange('description', html)}
             placeholder="Description de l'organisation"
           />
         ) : (
-          <p className="detail-desc">{valueOrDash(data?.description)}</p>
+          <RichTextContent value={data?.description} emptyLabel={String(valueOrDash(null))} />
         )}
       </div>
       <div className="detail-item">
