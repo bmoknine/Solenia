@@ -82,6 +82,16 @@ function buildCoordIndex(mapPoints: MapPoint[]): Map<string, { x: number; y: num
   return index;
 }
 
+function buildSnippet(text: string, query: string, radius = 60): string | null {
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return null;
+  const start = Math.max(0, idx - radius);
+  const end = Math.min(text.length, idx + query.length + radius);
+  const before = start > 0 ? '…' : '';
+  const after = end < text.length ? '…' : '';
+  return before + text.slice(start, end) + after;
+}
+
 function pushResult(
   results: GlobalSearchResult[],
   seen: Set<string>,
@@ -113,6 +123,7 @@ export function searchEntityCatalog(
       targetId: k.id,
       name: k.name,
       description: null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('kingdom', k.id, coordIndex),
     });
   }
@@ -125,6 +136,7 @@ export function searchEntityCatalog(
       targetId: c.id,
       name: c.name,
       description: null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('city', c.id, coordIndex),
     });
   }
@@ -137,6 +149,7 @@ export function searchEntityCatalog(
       targetId: d.id,
       name: d.name,
       description: d.motto ?? d.ambiance ?? null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('district', d.id, coordIndex),
     });
   }
@@ -149,6 +162,7 @@ export function searchEntityCatalog(
       targetId: p.id,
       name: p.name,
       description: null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('place', p.id, coordIndex),
     });
   }
@@ -161,6 +175,7 @@ export function searchEntityCatalog(
       targetId: p.id,
       name: p.name,
       description: p.description ?? null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('person', p.id, coordIndex),
     });
   }
@@ -173,6 +188,7 @@ export function searchEntityCatalog(
       targetId: o.id,
       name: o.name,
       description: o.description ?? null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('organisation', o.id, coordIndex),
     });
   }
@@ -185,6 +201,7 @@ export function searchEntityCatalog(
       targetId: pc.id,
       name: pc.name,
       description: pc.description ?? null,
+      snippet: buildSnippet(text, query),
       ...coordsFor('playerCharacter', pc.id, coordIndex),
     });
   }
@@ -197,6 +214,7 @@ export function searchEntityCatalog(
       targetId: l.id,
       name: l.title,
       description: l.summary ?? null,
+      snippet: buildSnippet(text, query),
       x: 0,
       y: 0,
     });

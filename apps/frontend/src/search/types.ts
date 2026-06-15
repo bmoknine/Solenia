@@ -9,6 +9,8 @@ export type GlobalSearchResult = {
   targetId: string;
   name: string;
   description: string | null;
+  /** Extrait de la description avec le terme recherché en contexte */
+  snippet: string | null;
   x: number;
   y: number;
 };
