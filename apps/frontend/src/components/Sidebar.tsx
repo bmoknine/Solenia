@@ -18,6 +18,8 @@ type SidebarProps = {
   createKind: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter';
   setCreateKind: (value: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter') => void;
   onOpenLoreModal?: () => void;
+  onOpenGraphModal?: () => void;
+  onOpenDashboard?: () => void;
   onCancelCreate: () => void;
   searchResults: GlobalSearchResult[];
   searchLoading?: boolean;
@@ -40,6 +42,8 @@ export function Sidebar({
   searchLoading,
   onSelectResult,
   onOpenLoreModal,
+  onOpenGraphModal,
+  onOpenDashboard,
 }: SidebarProps) {
 
   return (
@@ -48,23 +52,17 @@ export function Sidebar({
       <button
         className="ghost sidebar-button"
         onClick={() => {
-          if (showSearch) {
-            setSearch('');
-          }
+          if (showSearch) setSearch('');
           setShowSearch((v) => !v);
         }}
       >
         {showSearch ? 'Fermer' : 'Recherche'}
       </button>
-      
+
       {showSearch && (
         <>
           <div className="sidebar-search-panel glass">
-            <SearchBox
-              value={search}
-              onChange={setSearch}
-              onSearch={setSearch}
-            />
+            <SearchBox value={search} onChange={setSearch} onSearch={setSearch} />
           </div>
           {search.trim() !== '' && (
             <div className="sidebar-results-panel glass">
@@ -72,6 +70,7 @@ export function Sidebar({
                 points={searchResults}
                 loading={searchLoading}
                 onSelect={onSelectResult}
+                query={search}
               />
             </div>
           )}
@@ -91,7 +90,7 @@ export function Sidebar({
       >
         {creatingMode ? 'Fermer' : 'Créer'}
       </button>
-      
+
       {creatingMode && (
         <select
           className="ghost sidebar-select"
@@ -108,15 +107,19 @@ export function Sidebar({
         </select>
       )}
 
-      {/* Bouton Lore : ouvre la modal liste des Lore */}
-      <button
-        className="ghost sidebar-button"
-        onClick={() => {
-          onCancelCreate();
-          onOpenLoreModal?.();
-        }}
-      >
+      {/* Lore */}
+      <button className="ghost sidebar-button" onClick={() => { onCancelCreate(); onOpenLoreModal?.(); }}>
         Lore
+      </button>
+
+      {/* Graphe de relations */}
+      <button className="ghost sidebar-button" onClick={() => { onCancelCreate(); onOpenGraphModal?.(); }}>
+        Graphe
+      </button>
+
+      {/* Tableau de bord */}
+      <button className="ghost sidebar-button" onClick={() => { onCancelCreate(); onOpenDashboard?.(); }}>
+        Tableau de bord
       </button>
     </div>
   );

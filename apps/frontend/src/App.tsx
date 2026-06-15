@@ -16,6 +16,8 @@ import { LoginPanel } from './components/LoginPanel';
 import DetailModal from './components/DetailModal';
 import { Sidebar } from './components/Sidebar';
 import { LoreModal } from './components/LoreModal';
+import { GraphModal } from './components/GraphModal';
+import { DashboardModal } from './components/DashboardModal';
 import {
   type DetailStackEntry,
   getBackLabel,
@@ -57,6 +59,8 @@ function Content() {
   const [creatingMode, setCreatingMode] = useState(false);
   const [createKind, setCreateKind] = useState<'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter'>('kingdom');
   const [showLoreModal, setShowLoreModal] = useState(false);
+  const [showGraphModal, setShowGraphModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [dragLocked, setDragLocked] = useState(true); // par défaut verrouillé pour éviter les déplacements accidentels
 
   const detailStackTop = detailStack[detailStack.length - 1];
@@ -232,6 +236,8 @@ function Content() {
               searchLoading={catalogLoading}
               onSelectResult={handleSelectSearchResult}
               onOpenLoreModal={() => setShowLoreModal(true)}
+              onOpenGraphModal={() => setShowGraphModal(true)}
+              onOpenDashboard={() => setShowDashboard(true)}
             />
 
             <MapView
@@ -315,6 +321,24 @@ function Content() {
                 setConfirm({ open: false });
               }
             }}
+          />
+          <GraphModal
+            open={showGraphModal}
+            onClose={() => setShowGraphModal(false)}
+            onSelectPerson={(id) => {
+              setShowGraphModal(false);
+              const pt = points.find((p) => p.kind === 'person' && p.targetId === id);
+              if (pt) openEntityDetail(pt as ExtendedMapPoint);
+            }}
+            onSelectOrg={(id) => {
+              setShowGraphModal(false);
+              const pt = points.find((p) => p.kind === 'organisation' && p.targetId === id);
+              if (pt) openEntityDetail(pt as ExtendedMapPoint);
+            }}
+          />
+          <DashboardModal
+            open={showDashboard}
+            onClose={() => setShowDashboard(false)}
           />
           <LoreModal
             open={showLoreModal}

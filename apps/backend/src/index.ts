@@ -19,6 +19,8 @@ import { loreRoutes } from './routes/lores';
 import { flagRoutes } from './routes/flags';
 import { uploadRoutes } from './routes/upload';
 import { playerCharacterRoutes } from './routes/playerCharacters';
+import { graphRoutes } from './routes/graph';
+import { statsRoutes } from './routes/stats';
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ export const buildServer = () => {
   app.register(flagRoutes);
   app.register(uploadRoutes);
   app.register(playerCharacterRoutes);
+  app.register(graphRoutes);
+  app.register(statsRoutes);
 
   return app;
 };
