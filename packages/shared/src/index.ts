@@ -1,6 +1,7 @@
 export * from './schemas/auth';
 export * from './schemas/user';
 export * from './schemas/domain';
+export * from './schemas/gm';
 export * from './solenia-calendar';
 export const version = '0.0.1';
 

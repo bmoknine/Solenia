@@ -234,6 +234,7 @@ model PersonOfInterest {
   position Position?
   organisations OrganisationMember[]
   lores   LorePerson[]
+  combatants Combatant[]
 }
 
 model Comment {
@@ -452,6 +453,7 @@ model PlayerCharacter {
   savingThrows PlayerCharacterSavingThrow[]
   equipment    PlayerCharacterEquipmentItem[]
   spells       PlayerCharacterSpell[]
+  combatants   Combatant[]
 }
 
 model PlayerCharacterSkill {
@@ -495,4 +497,66 @@ model PlayerCharacterSpell {
   prepared          Boolean @default(false)
 
   playerCharacter PlayerCharacter @relation(fields: [playerCharacterId], references: [id], onDelete: Cascade)
+}
+
+enum CombatStatus {
+  ACTIVE
+  FINISHED
+}
+
+enum QuestStatus {
+  A_FAIRE
+  EN_COURS
+  TERMINEE
+  ECHOUEE
+}
+
+model Combat {
+  id              String       @id @default(uuid())
+  name            String
+  round           Int          @default(1)
+  activeTurnIndex Int          @default(0)
+  status          CombatStatus @default(ACTIVE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  combatants Combatant[]
+}
+
+model Combatant {
+  id                String   @id @default(uuid())
+  combatId          String
+  name              String // snapshot dénormalisé (sert aussi aux monstres ad hoc)
+  playerCharacterId String?
+  personId          String?
+  initiativeRoll    Int      @default(0)
+  currentHp         Int      @default(0)
+  maxHp             Int      @default(0)
+  ca                Int?
+  conditions        String[] @default([])
+  createdAt         DateTime @default(now())
+
+  combat          Combat            @relation(fields: [combatId], references: [id], onDelete: Cascade)
+  playerCharacter PlayerCharacter?  @relation(fields: [playerCharacterId], references: [id], onDelete: SetNull)
+  person          PersonOfInterest? @relation(fields: [personId], references: [id], onDelete: SetNull)
+}
+
+model Quest {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  status      QuestStatus @default(A_FAIRE)
+  notes       String?
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model GameSession {
+  id        String   @id @default(uuid())
+  date      DateTime
+  title     String?
+  summary   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

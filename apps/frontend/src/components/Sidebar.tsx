@@ -18,8 +18,7 @@ type SidebarProps = {
   createKind: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter';
   setCreateKind: (value: 'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter') => void;
   onOpenLoreModal?: () => void;
-  onOpenGraphModal?: () => void;
-  onOpenDashboard?: () => void;
+  onOpenGMPage?: () => void;
   onCancelCreate: () => void;
   searchResults: GlobalSearchResult[];
   searchLoading?: boolean;
@@ -42,8 +41,7 @@ export function Sidebar({
   searchLoading,
   onSelectResult,
   onOpenLoreModal,
-  onOpenGraphModal,
-  onOpenDashboard,
+  onOpenGMPage,
 }: SidebarProps) {
 
   return (
@@ -112,15 +110,12 @@ export function Sidebar({
         Lore
       </button>
 
-      {/* Graphe de relations */}
-      <button className="ghost sidebar-button" onClick={() => { onCancelCreate(); onOpenGraphModal?.(); }}>
-        Graphe
-      </button>
-
-      {/* Tableau de bord */}
-      <button className="ghost sidebar-button" onClick={() => { onCancelCreate(); onOpenDashboard?.(); }}>
-        Tableau de bord
-      </button>
+      {/* Page Maître du Jeu (admin/editor uniquement : callback absente pour les viewers) */}
+      {onOpenGMPage && (
+        <button className="ghost sidebar-button" onClick={() => { onCancelCreate(); onOpenGMPage(); }}>
+          MJ
+        </button>
+      )}
     </div>
   );
 }
