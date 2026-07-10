@@ -1,0 +1,485 @@
+/* ─── Overlay & structure ─────────────────────────────────────── */
+
+.gm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900; /* GraphModal (1000) et DetailModal s'ouvrent au-dessus */
+}
+
+.gm-page {
+  width: 96vw;
+  max-width: 1200px;
+  height: 92vh;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.gm-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.gm-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.gm-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.gm-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.gm-hint {
+  opacity: 0.6;
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}
+
+/* ─── Combat : liste ──────────────────────────────────────────── */
+
+.combat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.combat-create {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.combat-create .detail-input {
+  flex: 1;
+}
+
+.combat-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.combat-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.combat-card-meta {
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.combat-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ─── Combat : vue active ─────────────────────────────────────── */
+
+.combat-active {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.combat-active-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.combat-active-title {
+  margin: 0;
+  font-size: 1.1rem;
+  flex: 1;
+}
+
+.combat-round {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.combat-end {
+  opacity: 0.7;
+}
+
+.combat-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.combat-row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  align-items: flex-start;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.combat-row--active {
+  border-color: rgba(167, 139, 250, 0.8) !important;
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.25);
+}
+
+.combat-row--down {
+  opacity: 0.45;
+}
+
+.combat-init {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.combat-row-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.combat-row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.combat-name {
+  flex: 1;
+}
+
+.combat-ca {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.combat-remove {
+  padding: 0 0.4rem;
+  font-size: 1rem;
+}
+
+.combat-hp-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.combat-hp-controls .ghost {
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.combat-hp {
+  min-width: 90px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.combat-hp--low {
+  color: #f87171;
+}
+
+.combat-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.combat-chip {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.1s ease, background 0.1s ease;
+}
+
+.combat-chip:hover {
+  opacity: 0.85;
+}
+
+.combat-chip--on {
+  opacity: 1;
+  background: rgba(167, 139, 250, 0.35);
+  border-color: rgba(167, 139, 250, 0.7);
+}
+
+/* ─── Combat : panneau d'ajout ────────────────────────────────── */
+
+.combat-add-btn {
+  align-self: flex-start;
+}
+
+.combat-add-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+}
+
+.combat-add-tabs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.combat-add-close {
+  margin-left: auto;
+}
+
+.combat-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.combat-picker-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.combat-picker-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.combat-picker-stats {
+  font-size: 0.78rem;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.combat-adhoc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.combat-adhoc-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.combat-adhoc-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  flex: 1;
+}
+
+/* ─── Campagne ────────────────────────────────────────────────── */
+
+.campaign-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.campaign-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.campaign-section-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.campaign-create {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.campaign-create .detail-input {
+  flex: 1;
+}
+
+.quest-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.quest-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quest-column-title {
+  margin: 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.quest-column--en_cours .quest-column-title { color: #60a5fa; }
+.quest-column--terminee .quest-column-title { color: #34d399; }
+.quest-column--echouee .quest-column-title { color: #f87171; }
+
+.quest-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.quest-card-header {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 500;
+}
+
+.quest-card-header:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.quest-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 8px 12px 12px;
+}
+
+.quest-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+.quest-delete {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  color: #f87171;
+}
+
+/* ─── Sessions ────────────────────────────────────────────────── */
+
+.session-create {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.session-create-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.session-create-row .detail-input:last-child {
+  flex: 1;
+}
+
+.session-create .primary {
+  align-self: flex-start;
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.session-card {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.session-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.session-card-header strong {
+  flex: 1;
+}
+
+.session-date {
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.session-summary {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.85;
+  white-space: pre-wrap;
+}
+
+.session-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

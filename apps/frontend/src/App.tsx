@@ -17,7 +17,7 @@ import DetailModal from './components/DetailModal';
 import { Sidebar } from './components/Sidebar';
 import { LoreModal } from './components/LoreModal';
 import { GraphModal } from './components/GraphModal';
-import { DashboardModal } from './components/DashboardModal';
+import { GMPage } from './components/gm/GMPage';
 import {
   type DetailStackEntry,
   getBackLabel,
@@ -60,7 +60,7 @@ function Content() {
   const [createKind, setCreateKind] = useState<'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter'>('kingdom');
   const [showLoreModal, setShowLoreModal] = useState(false);
   const [showGraphModal, setShowGraphModal] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(false);
+  const [showGMPage, setShowGMPage] = useState(false);
   const [dragLocked, setDragLocked] = useState(true); // par défaut verrouillé pour éviter les déplacements accidentels
 
   const detailStackTop = detailStack[detailStack.length - 1];
@@ -236,8 +236,7 @@ function Content() {
               searchLoading={catalogLoading}
               onSelectResult={handleSelectSearchResult}
               onOpenLoreModal={() => setShowLoreModal(true)}
-              onOpenGraphModal={() => setShowGraphModal(true)}
-              onOpenDashboard={() => setShowDashboard(true)}
+              onOpenGMPage={canEdit ? () => setShowGMPage(true) : undefined}
             />
 
             <MapView
@@ -336,9 +335,11 @@ function Content() {
               if (pt) openEntityDetail(pt as ExtendedMapPoint);
             }}
           />
-          <DashboardModal
-            open={showDashboard}
-            onClose={() => setShowDashboard(false)}
+          <GMPage
+            open={showGMPage}
+            onClose={() => setShowGMPage(false)}
+            token={token}
+            onOpenGraphModal={() => setShowGraphModal(true)}
           />
           <LoreModal
             open={showLoreModal}
