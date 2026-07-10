@@ -22,6 +22,8 @@ const QUEST_STATUSES: { value: QuestStatus; label: string }[] = [
   { value: 'ECHOUEE', label: 'Échouée' },
 ];
 
+const statusLabel = (s: QuestStatus) => QUEST_STATUSES.find((q) => q.value === s)?.label ?? s;
+
 type Props = { token: string | null };
 
 export function CampaignTab({ token }: Props) {
@@ -31,6 +33,7 @@ export function CampaignTab({ token }: Props) {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [newQuestTitle, setNewQuestTitle] = useState('');
   const [expandedQuest, setExpandedQuest] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<QuestStatus | 'ALL'>('ALL');
   const [confirmDeleteQuest, setConfirmDeleteQuest] = useState<string | null>(null);
 
   // Sessions
@@ -55,6 +58,8 @@ export function CampaignTab({ token }: Props) {
       const quest = await createQuest(token, { title });
       setQuests((prev) => [...prev, quest]);
       setNewQuestTitle('');
+      setExpandedQuest(quest.id);
+      setStatusFilter('ALL');
     } catch (e) {
       push(e instanceof Error ? e.message : 'Erreur', 'error');
     }
@@ -93,6 +98,9 @@ export function CampaignTab({ token }: Props) {
     }
   };
 
+  const visibleQuests = statusFilter === 'ALL' ? quests : quests.filter((q) => q.status === statusFilter);
+  const countFor = (s: QuestStatus) => quests.filter((q) => q.status === s).length;
+
   return (
     <div className="campaign-tab">
       {/* ─── Quêtes ─────────────────────────────────────────────── */}
@@ -112,60 +120,101 @@ export function CampaignTab({ token }: Props) {
           </button>
         </div>
 
-        <div className="quest-columns">
-          {QUEST_STATUSES.map(({ value, label }) => {
-            const group = quests.filter((q) => q.status === value);
-            return (
-              <div key={value} className={`quest-column quest-column--${value.toLowerCase()}`}>
-                <h4 className="quest-column-title">{label} ({group.length})</h4>
-                {group.map((q) => (
-                  <div key={q.id} className="quest-card glass">
-                    <button
-                      className="quest-card-header"
-                      onClick={() => setExpandedQuest(expandedQuest === q.id ? null : q.id)}
-                    >
-                      {q.title}
-                    </button>
-                    {expandedQuest === q.id && (
-                      <div className="quest-card-body">
-                        <label className="quest-field">Statut
-                          <select
-                            className="detail-input"
-                            value={q.status}
-                            onChange={(e) => patchQuest(q.id, { status: e.target.value as QuestStatus })}
-                          >
-                            {QUEST_STATUSES.map((s) => (
-                              <option key={s.value} value={s.value}>{s.label}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="quest-field">Description
-                          <textarea
-                            className="detail-input"
-                            rows={2}
-                            defaultValue={q.description ?? ''}
-                            onBlur={(e) => patchQuest(q.id, { description: e.target.value || null })}
-                          />
-                        </label>
-                        <label className="quest-field">Notes
-                          <textarea
-                            className="detail-input"
-                            rows={3}
-                            defaultValue={q.notes ?? ''}
-                            onBlur={(e) => patchQuest(q.id, { notes: e.target.value || null })}
-                          />
-                        </label>
-                        <button className="ghost quest-delete" onClick={() => setConfirmDeleteQuest(q.id)}>
-                          Supprimer
-                        </button>
-                      </div>
-                    )}
+        <div className="quest-filters">
+          <button
+            className={`quest-filter ${statusFilter === 'ALL' ? 'quest-filter--on' : ''}`}
+            onClick={() => setStatusFilter('ALL')}
+          >
+            Toutes ({quests.length})
+          </button>
+          {QUEST_STATUSES.map(({ value, label }) => (
+            <button
+              key={value}
+              className={`quest-filter quest-filter--${value.toLowerCase()} ${statusFilter === value ? 'quest-filter--on' : ''}`}
+              onClick={() => setStatusFilter(value)}
+            >
+              {label} ({countFor(value)})
+            </button>
+          ))}
+        </div>
+
+        <div className="quest-list">
+          {visibleQuests.map((q) => (
+            <div key={q.id} className={`quest-card glass ${expandedQuest === q.id ? 'quest-card--open' : ''}`}>
+              <button
+                className="quest-card-header"
+                onClick={() => setExpandedQuest(expandedQuest === q.id ? null : q.id)}
+              >
+                <span className={`quest-status-pill quest-status-pill--${q.status.toLowerCase()}`}>
+                  {statusLabel(q.status)}
+                </span>
+                <span className="quest-card-title">{q.title}</span>
+                {q.description && expandedQuest !== q.id && (
+                  <span className="quest-card-preview">{q.description}</span>
+                )}
+                <span className="quest-card-chevron">{expandedQuest === q.id ? '▾' : '▸'}</span>
+              </button>
+              {expandedQuest === q.id && (
+                <div className="quest-card-body">
+                  <div className="quest-body-row">
+                    <label className="quest-field quest-field--title">
+                      <span className="quest-field-label">Titre</span>
+                      <input
+                        className="detail-input"
+                        defaultValue={q.title}
+                        onBlur={(e) => {
+                          const title = e.target.value.trim();
+                          if (title && title !== q.title) patchQuest(q.id, { title });
+                        }}
+                      />
+                    </label>
+                    <label className="quest-field quest-field--status">
+                      <span className="quest-field-label">Statut</span>
+                      <select
+                        className="detail-input"
+                        value={q.status}
+                        onChange={(e) => patchQuest(q.id, { status: e.target.value as QuestStatus })}
+                      >
+                        {QUEST_STATUSES.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
-                ))}
-                {group.length === 0 && <div className="gm-hint">—</div>}
-              </div>
-            );
-          })}
+                  <div className="quest-body-row">
+                    <label className="quest-field">
+                      <span className="quest-field-label">Description</span>
+                      <textarea
+                        className="detail-input"
+                        rows={4}
+                        placeholder="De quoi s'agit-il, qui l'a donnée, quel est l'objectif…"
+                        defaultValue={q.description ?? ''}
+                        onBlur={(e) => patchQuest(q.id, { description: e.target.value || null })}
+                      />
+                    </label>
+                    <label className="quest-field">
+                      <span className="quest-field-label">Notes du MJ</span>
+                      <textarea
+                        className="detail-input"
+                        rows={4}
+                        placeholder="Avancement, secrets, récompenses prévues…"
+                        defaultValue={q.notes ?? ''}
+                        onBlur={(e) => patchQuest(q.id, { notes: e.target.value || null })}
+                      />
+                    </label>
+                  </div>
+                  <button className="ghost quest-delete" onClick={() => setConfirmDeleteQuest(q.id)}>
+                    Supprimer la quête
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {visibleQuests.length === 0 && (
+            <div className="gm-hint">
+              {statusFilter === 'ALL' ? 'Aucune quête — crée la première ci-dessus.' : 'Aucune quête avec ce statut.'}
+            </div>
+          )}
         </div>
       </section>
 
@@ -187,31 +236,31 @@ export function CampaignTab({ token }: Props) {
               value={sessionForm.title}
               onChange={(e) => setSessionForm((f) => ({ ...f, title: e.target.value }))}
             />
+            <button className="primary glass" onClick={handleCreateSession} disabled={!sessionForm.date}>
+              Ajouter
+            </button>
           </div>
           <textarea
             className="detail-input"
-            rows={3}
+            rows={2}
             placeholder="Résumé de la session…"
             value={sessionForm.summary}
             onChange={(e) => setSessionForm((f) => ({ ...f, summary: e.target.value }))}
           />
-          <button className="primary glass" onClick={handleCreateSession} disabled={!sessionForm.date}>
-            Ajouter la session
-          </button>
         </div>
 
         <div className="session-list">
           {sessions.map((s) => (
             <div key={s.id} className="session-card glass">
               <div className="session-card-header">
-                <strong>{s.title || 'Session'}</strong>
-                <span className="session-date">
-                  {new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                <span className="session-date glass">
+                  {new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
-                <button className="ghost" onClick={() => setEditingSession(editingSession === s.id ? null : s.id)}>
+                <strong className="session-title">{s.title || 'Session'}</strong>
+                <button className="ghost session-action" onClick={() => setEditingSession(editingSession === s.id ? null : s.id)}>
                   {editingSession === s.id ? 'Fermer' : 'Modifier'}
                 </button>
-                <button className="ghost" onClick={() => setConfirmDeleteSession(s.id)}>×</button>
+                <button className="ghost session-action" onClick={() => setConfirmDeleteSession(s.id)}>×</button>
               </div>
               {editingSession === s.id ? (
                 <div className="session-edit">
@@ -223,7 +272,7 @@ export function CampaignTab({ token }: Props) {
                   />
                   <textarea
                     className="detail-input"
-                    rows={4}
+                    rows={5}
                     defaultValue={s.summary ?? ''}
                     placeholder="Résumé"
                     onBlur={(e) => patchSession(s.id, { summary: e.target.value || null })}
