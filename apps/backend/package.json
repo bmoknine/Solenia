@@ -29,7 +29,10 @@
     "db:import-valbrume": "tsx src/scripts/import-valbrume-varek.ts",
     "db:import-monastere-nuits": "tsx src/scripts/import-monastere-nuits.ts",
     "db:import-rigart-secretary": "tsx src/scripts/import-rigart-secretary.ts",
-    "backup:person-affiliations": "tsx scripts/backup-person-affiliations.ts"
+    "backup:person-affiliations": "tsx scripts/backup-person-affiliations.ts",
+    "db:data:dump": "node scripts/dump-data.mjs",
+    "db:data:load": "node scripts/load-data.mjs",
+    "db:create-user": "tsx src/scripts/create-user.ts"
   },
   "keywords": [],
   "author": "",

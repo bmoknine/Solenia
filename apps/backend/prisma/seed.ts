@@ -1,9 +1,28 @@
 import 'dotenv/config';
+import argon2 from 'argon2';
 import { PrismaClient, UserType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/**
+ * Mot de passe des comptes créés par le seed. Jamais écrit en dur : un hash committé
+ * finit publié avec le dépôt, ce qui est exactement ce qui s'est produit jusqu'au
+ * 2026-09-11 (hash argon2id d'admin et editor visible dans ce fichier et dans quatre
+ * sauvegardes SQL, sur un dépôt public).
+ */
+const SEED_PASSWORD = process.env.SEED_PASSWORD;
+
 async function main() {
+  if (!SEED_PASSWORD) {
+    console.error(
+      'SEED_PASSWORD est absente.\n' +
+        'Choisissez un mot de passe et relancez :\n' +
+        '  SEED_PASSWORD="votre-mot-de-passe" npm run prisma:seed',
+    );
+    process.exit(1);
+  }
+  const passwordHash = await argon2.hash(SEED_PASSWORD);
+
   // Nettoyer la base de données
   await prisma.comment.deleteMany();
   await prisma.position.deleteMany();
@@ -18,7 +37,7 @@ async function main() {
     data: {
       username: 'admin',
       email: 'admin@solenia.dev',
-      passwordHash: '***HASH-PURGE-2026-09-11***',
+      passwordHash,
       type: UserType.admin,
     },
   });
@@ -27,7 +46,7 @@ async function main() {
     data: {
       username: 'editor',
       email: 'editor@solenia.dev',
-      passwordHash: '***HASH-PURGE-2026-09-11***',
+      passwordHash,
       type: UserType.editor,
     },
   });
