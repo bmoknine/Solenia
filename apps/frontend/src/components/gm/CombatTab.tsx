@@ -16,6 +16,7 @@ import {
 import { listPersons, listPlayerCharacters, type Person, type PlayerCharacter } from '../../api/entities';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { useToast } from '../../toast/ToastProvider';
+import { usePersonInspect, PersonInspectModal } from './PersonInspect';
 
 const CONDITIONS = [
   'Empoisonné', 'À terre', 'Aveuglé', 'Assourdi', 'Charmé', 'Effrayé', 'Agrippé',
@@ -38,15 +39,20 @@ function sortCombatants(list: Combatant[]): Combatant[] {
 
 type AddMode = 'pj' | 'pnj' | 'adhoc';
 
-type Props = { token: string | null };
+type Props = { token: string | null; openCombatId?: string | null; onConsumeOpen?: () => void };
 
-export function CombatTab({ token }: Props) {
+export function CombatTab({ token, openCombatId, onConsumeOpen }: Props) {
   const { push } = useToast();
   const [combats, setCombats] = useState<CombatSummary[]>([]);
   const [active, setActive] = useState<CombatDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [newName, setNewName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Fiche PNJ inspectée (résumé stats/attaques/sauvegardes)
+  const { inspect, inspectPerson, closeInspect } = usePersonInspect((e) =>
+    push(e instanceof Error ? e.message : 'Erreur', 'error'),
+  );
 
   // Panneau d'ajout de combattant
   const [showAdd, setShowAdd] = useState(false);
@@ -84,6 +90,15 @@ export function CombatTab({ token }: Props) {
       push(e instanceof Error ? e.message : 'Erreur', 'error');
     }
   };
+
+  // Ouverture déclenchée depuis l'onglet Campagne (« Lancer » sur une péripétie)
+  useEffect(() => {
+    if (openCombatId) {
+      openCombat(openCombatId);
+      onConsumeOpen?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openCombatId]);
 
   const handleCreate = async () => {
     const name = newName.trim();
@@ -225,12 +240,18 @@ export function CombatTab({ token }: Props) {
           {sorted.map((c, i) => (
             <div
               key={c.id}
-              className={`combat-row glass ${i === activeIdx ? 'combat-row--active' : ''} ${c.currentHp <= 0 ? 'combat-row--down' : ''}`}
+              className={`combat-row glass ${c.playerCharacterId ? 'combat-row--pj' : 'combat-row--pnj'} ${i === activeIdx ? 'combat-row--active' : ''} ${c.currentHp <= 0 ? 'combat-row--down' : ''}`}
             >
               <span className="combat-init glass">{c.initiativeRoll}</span>
               <div className="combat-row-main">
                 <div className="combat-row-top">
-                  <strong className="combat-name">{c.name}</strong>
+                  {c.personId ? (
+                    <button className="combat-name combat-name--link" onClick={() => inspectPerson(c.personId!)} title="Voir la fiche (stats, attaques, sauvegardes)">
+                      {c.name}
+                    </button>
+                  ) : (
+                    <strong className="combat-name">{c.name}</strong>
+                  )}
                   {c.ca != null && <span className="combat-ca">CA {c.ca}</span>}
                   <button className="ghost combat-remove" onClick={() => removeCombatant(c.id)} title="Retirer">×</button>
                 </div>
@@ -345,6 +366,8 @@ export function CombatTab({ token }: Props) {
             )}
           </div>
         )}
+
+        <PersonInspectModal inspect={inspect} onClose={closeInspect} />
       </div>
     );
   }

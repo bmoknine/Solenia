@@ -12,6 +12,8 @@ import { MEMBERSHIP_OPTIONS } from '../entityOptions';
 import { formatMembership } from '../entityFormatters';
 import type { EditState, OrganisationEditState } from '../detailModalTypes';
 import { createMapPointFromRef, organisationRefToNavPoint } from '../createMapPointFromRef';
+import { fetchFamilyTree, type FamilyMember, type SubOrganisation } from '../../../api/family';
+import { FamilyTree } from '../../family/FamilyTree';
 
 export function OrganisationView({
   data,
@@ -21,6 +23,7 @@ export function OrganisationView({
   valueOrDash,
   onNavigate,
   onOpenLore,
+  onOpenFamilyTree,
 }: {
   data: OrganisationDetail | null;
   editMode: boolean;
@@ -29,6 +32,7 @@ export function OrganisationView({
   valueOrDash: (v: unknown) => string | number;
   onNavigate?: (point: NavigablePoint) => void;
   onOpenLore?: (loreId: string) => void;
+  onOpenFamilyTree?: (family: { id: string; name: string }) => void;
 }) {
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [kingdoms, setKingdoms] = useState<Kingdom[]>([]);
@@ -36,6 +40,41 @@ export function OrganisationView({
   const [places, setPlaces] = useState<Place[]>([]);
   const [persons, setPersons] = useState<Person[]>([]);
   const [loadingLists, setLoadingLists] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [subOrgs, setSubOrgs] = useState<SubOrganisation[]>([]);
+
+  // Aperçu dans la fiche : arbre généalogique pour les familles, organigramme sinon.
+  const isFamily = (data as OrganisationDetail | null)?.organisationType === 'FAMILLE';
+  const familyId = data?.id;
+  useEffect(() => {
+    if (!familyId) {
+      setFamilyMembers([]);
+      setSubOrgs([]);
+      return;
+    }
+    let cancelled = false;
+    const load = () => {
+      fetchFamilyTree(familyId)
+        .then((tree) => {
+          if (cancelled) return;
+          setFamilyMembers(tree.members);
+          setSubOrgs(tree.subOrganisations ?? []);
+        })
+        .catch(() => { if (!cancelled) { setFamilyMembers([]); setSubOrgs([]); } });
+    };
+    load();
+
+    // L'éditeur plein écran signale ses modifications : on garde l'aperçu à jour.
+    const onUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ organisationId: string }>).detail;
+      if (detail?.organisationId === familyId) load();
+    };
+    window.addEventListener('family-tree-updated', onUpdated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('family-tree-updated', onUpdated);
+    };
+  }, [familyId]);
 
   useEffect(() => {
     if (editMode || !data?.id) {
@@ -105,6 +144,7 @@ export function OrganisationView({
             <option value="">— (Non défini)</option>
             <option value="PRINCIPAL">Principal</option>
             <option value="CELLULE">Cellule</option>
+            <option value="FAMILLE">Famille</option>
           </select>
         ) : (
           <span className="detail-value">
@@ -112,10 +152,41 @@ export function OrganisationView({
               ? 'Principal'
               : (data as OrganisationDetail)?.organisationType === 'CELLULE'
                 ? 'Cellule'
-                : valueOrDash(null)}
+                : (data as OrganisationDetail)?.organisationType === 'FAMILLE'
+                  ? 'Famille'
+                  : valueOrDash(null)}
           </span>
         )}
       </div>
+      {onOpenFamilyTree && data?.id && !editMode && (
+        <div className="detail-item">
+          <span className="detail-label">{isFamily ? 'Généalogie' : 'Organigramme'}</span>
+          {(familyMembers.length > 0 || (!isFamily && subOrgs.length > 0)) && (
+            <FamilyTree
+              members={familyMembers}
+              mode={isFamily ? 'genealogy' : 'orgchart'}
+              organisation={{ id: data.id, name: data.name }}
+              subOrganisations={isFamily ? [] : subOrgs}
+              variant="preview"
+              onOpenFull={() => onOpenFamilyTree({ id: data.id, name: data.name })}
+            />
+          )}
+          <button
+            type="button"
+            className="border-edit-btn"
+            style={{ marginTop: familyMembers.length > 0 ? 8 : 0 }}
+            onClick={() => onOpenFamilyTree({ id: data.id, name: data.name })}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="5" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="19" r="2" />
+              <path d="M12 7v5M6 17v-2h12v2" />
+            </svg>
+            {familyMembers.length > 0
+              ? (isFamily ? 'Ouvrir / modifier l’arbre' : 'Ouvrir / modifier l’organigramme')
+              : (isFamily ? 'Créer l’arbre généalogique' : 'Créer l’organigramme')}
+          </button>
+        </div>
+      )}
       <div className="detail-item">
         <span className="detail-label">Affiliation</span>
         {editMode ? (

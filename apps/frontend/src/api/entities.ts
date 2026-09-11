@@ -2,7 +2,7 @@ import { withAuth } from './client';
 
 type Base = { name: string; description?: string };
 
-export type Kingdom = { id: string; name: string; description?: string | null; color?: string | null; flag?: string | null; isForDM?: boolean };
+export type Kingdom = { id: string; name: string; description?: string | null; color?: string | null; flag?: string | null; borderPoints?: [number, number][] | [number, number][][] | null; isForDM?: boolean };
 export type City = { id: string; name: string; description?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; flag?: string | null; isForDM?: boolean };
 export type District = { 
   id: string; 
@@ -18,7 +18,7 @@ export type PlaceType = 'MAGASIN' | 'TAVERNE_AUBERGE' | 'MAGASIN_MAGIE' | 'HERBO
 export type DnDClass = 'BARBARE' | 'BARDE' | 'CLERC' | 'DRUIDE' | 'GUERRIER' | 'MOINE' | 'PALADIN' | 'RODEUR' | 'ROUBLARD' | 'ENSORCELEUR' | 'SORCIER' | 'MAGICIEN' | 'ARTIFICIER' | 'OTHER';
 export type DnDAlignment = 'LOYAL_BON' | 'NEUTRE_BON' | 'CHAOTIQUE_BON' | 'LOYAL_NEUTRE' | 'VRAI_NEUTRE' | 'CHAOTIQUE_NEUTRE' | 'LOYAL_MAUVAIS' | 'NEUTRE_MAUVAIS' | 'CHAOTIQUE_MAUVAIS';
 export type Place = { id: string; name: string; description?: string | null; placeType?: PlaceType; cityId?: string | null; districtId?: string | null; kingdomId?: string | null; iconUrl?: string | null; map?: string | null; showOnMap?: boolean; isForDM?: boolean };
-export type OrganisationType = 'CELLULE' | 'PRINCIPAL';
+export type OrganisationType = 'CELLULE' | 'PRINCIPAL' | 'FAMILLE';
 export type Membership = 'POLITIC' | 'RELIGEUX' | 'MARCHAND' | 'MILITAIRE' | 'CRIMINALITE' | 'OTHER';
 export type Organisation = {
   id: string;
@@ -276,6 +276,7 @@ export async function updateKingdom(
     dateInGame: string | null;
     color: string | null;
     flag: string | null;
+    borderPoints: [number, number][][] | null;
   }>,
 ) {
   return withAuth(token).put(`/kingdoms/${id}`, data);

@@ -5,6 +5,8 @@ import { parseRouteUuid } from '../utils/routeParams';
 
 const gmOnly = (app: FastifyInstance) => requireRole(app, ['admin', 'editor']);
 
+// Note : le rattachement à une campagne (`campaignId`) transite via `...rest`
+// depuis gameSessionInputSchema — aucune transformation supplémentaire requise.
 export async function gameSessionRoutes(app: FastifyInstance) {
   app.get('/game-sessions', { preHandler: gmOnly(app) }, async () => {
     return app.prisma.gameSession.findMany({ orderBy: { date: 'desc' } });

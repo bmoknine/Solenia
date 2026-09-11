@@ -203,7 +203,7 @@ export async function personRoutes(app: FastifyInstance) {
 
   app.delete('/persons/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
     const id = parseRouteUuid(request);
-    await app.prisma.position.deleteMany({ where: { personOfInterestId: id } });
+    // La position associée part en cascade (contrainte Position_personOfInterestId_fkey).
     await app.prisma.personOfInterest.delete({ where: { id } });
     reply.code(204);
   });

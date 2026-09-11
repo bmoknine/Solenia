@@ -248,3 +248,209 @@
   color: #e5e7eb;
 }
 
+
+/* ─── Règle de mesure ─────────────────────────────────────────────── */
+
+.ruler-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.ruler-readout {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #ffd166;
+  min-width: 140px;
+}
+
+.ruler-scale {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+}
+
+.ruler-scale-input,
+.ruler-unit-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #e5e7eb;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+.ruler-scale-input {
+  width: 68px;
+}
+
+.ruler-unit-input {
+  width: 76px;
+}
+
+.ruler-panel .ghost {
+  color: #f87171;
+}
+
+/* Étiquette de distance sur la ligne de mesure */
+.leaflet-tooltip.ruler-tooltip {
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(255, 209, 102, 0.6);
+  color: #ffd166;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-tooltip.ruler-tooltip::before {
+  display: none; /* pas de flèche */
+}
+
+@media (max-width: 640px) {
+  .ruler-panel {
+    flex-direction: column;
+    gap: 8px;
+    white-space: normal;
+    max-width: 92vw;
+  }
+}
+
+/* ── Édition de frontière de royaume ─────────────────────────────── */
+.border-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  max-width: min(520px, 92vw);
+}
+
+.border-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.border-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  flex: 0 0 auto;
+}
+
+.border-panel-count {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.border-panel-warn {
+  color: #fbbf24;
+}
+
+.border-panel-hint {
+  font-size: 0.78rem;
+  opacity: 0.7;
+  line-height: 1.35;
+}
+
+.border-panel-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.border-panel .primary {
+  background: #2563eb;
+  color: #fff;
+  border: 1px solid #3b82f6;
+  border-radius: 10px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.border-panel .primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.border-panel .ghost {
+  color: #e5e7eb;
+}
+
+/* Poignée de sommet (divIcon Leaflet) */
+.border-vertex {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--vtx-color, #8a8f98);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  cursor: grab;
+}
+
+.border-vertex:active {
+  cursor: grabbing;
+}
+
+/* Poignées d'un îlot déjà clôturé (anneau non actif) : atténuées */
+.border-vertex.is-dim {
+  opacity: 0.55;
+}
+
+/* Étiquette du nom de royaume au survol d'une frontière */
+.leaflet-tooltip.kingdom-border-tooltip {
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #e5e7eb;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-tooltip.kingdom-border-tooltip::before {
+  display: none;
+}
+
+/* Bouton « Tracer la frontière » dans la fiche Royaume */
+.border-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.border-edit-btn:hover {
+  background: rgba(37, 99, 235, 0.2);
+}

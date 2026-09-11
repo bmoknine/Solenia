@@ -18,7 +18,7 @@ import { useDetailModalEntity } from './detail-modal/useDetailModalEntity';
 import { DetailModalSidebar } from './detail-modal/DetailModalSidebar';
 import type { EntityData } from './detail-modal/detailModalTypes';
 
-export default function DetailModal({ point, onClose, onBack, backLabel, token, onUpdated, onDelete, onNavigate, onCreateDistrict, onOpenLore, loreId, createMode }: DetailModalProps) {
+export default function DetailModal({ point, onClose, onBack, backLabel, token, onUpdated, onDelete, onNavigate, onCreateDistrict, onEditBorder, onOpenFamilyTree, onOpenLore, loreId, createMode }: DetailModalProps) {
   const { push } = useToast();
   const {
     data,
@@ -188,6 +188,7 @@ export default function DetailModal({ point, onClose, onBack, backLabel, token, 
                 onChange={updateField}
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
+                onEditBorder={onEditBorder}
                 onOpenLore={onOpenLore}
               />
             )}
@@ -246,6 +247,7 @@ export default function DetailModal({ point, onClose, onBack, backLabel, token, 
                 valueOrDash={valueOrDash}
                 onNavigate={onNavigate}
                 onOpenLore={onOpenLore}
+                onOpenFamilyTree={onOpenFamilyTree}
               />
             )}
             {currentKind === 'playerCharacter' && (

@@ -1,0 +1,224 @@
+/* Arbre généalogique — palette reprise de l'artefact de référence */
+.ft-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #1b1712;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ft-transform-wrapper,
+.ft-transform-content {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ft-svg {
+  font-family: Georgia, 'Times New Roman', serif;
+  overflow: visible;
+}
+
+.ft-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a89a80;
+  font-style: italic;
+  background: #1b1712;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+}
+
+/* ── Miniature dans la fiche Famille ───────────────────────────── */
+.ft-preview {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 260px;
+  padding: 10px 10px 22px;
+  background: #1b1712;
+  border: 1px solid rgba(232, 221, 200, 0.18);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+.ft-preview:hover { border-color: rgba(230, 201, 136, 0.55); }
+.ft-preview .ft-svg { display: block; width: 100%; height: 100%; }
+/* Les nœuds de la miniature ne réagissent pas au survol individuellement */
+.ft-preview .ft-node { cursor: pointer; }
+.ft-preview .ft-node:hover .ft-box { filter: none; }
+
+.ft-preview-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 5px;
+  text-align: center;
+  font-size: 11px;
+  font-style: italic;
+  color: #a89a80;
+  pointer-events: none;
+}
+
+/* Connecteurs */
+.ft-conn {
+  fill: none;
+  stroke: #6b6152;
+  stroke-width: 1.2;
+}
+
+/* Nœuds */
+.ft-node { cursor: pointer; }
+.ft-box { stroke-width: 1.2; transition: filter 0.15s ease; }
+.ft-node:hover .ft-box { filter: brightness(1.35); }
+.ft-name { font-size: 15px; font-weight: bold; }
+.ft-title { font-size: 11px; }
+
+.ft-spouse { opacity: 0.72; }
+.ft-spouse .ft-box { stroke-dasharray: 3 2; }
+
+.ft-selected .ft-box {
+  stroke-width: 2.5;
+  filter: brightness(1.3);
+}
+
+.ft-link-dot { fill: #e8ddc8; opacity: 0.75; }
+
+/* Rôles */
+.ft-founder .ft-box { fill: #3a2f1a; stroke: #d99a3f; }
+.ft-founder .ft-name { fill: #f0d9a0; }
+.ft-founder .ft-title { fill: #d9b876; }
+
+.ft-male .ft-box { fill: #1f2f47; stroke: #5a9bd8; }
+.ft-male .ft-name { fill: #c3e0ff; }
+.ft-male .ft-title { fill: #8fb8e0; }
+
+.ft-female .ft-box { fill: #472439; stroke: #d87aa8; }
+.ft-female .ft-name { fill: #ffd6ea; }
+.ft-female .ft-title { fill: #e0a0c0; }
+
+.ft-pj .ft-box { fill: #4a2a1a; stroke: #e0724a; }
+.ft-pj .ft-name { fill: #ffdcc8; }
+.ft-pj .ft-title { fill: #f0b090; }
+
+.ft-neutral .ft-box { fill: #2a2822; stroke: #8a8272; }
+.ft-neutral .ft-name { fill: #e8ddc8; }
+.ft-neutral .ft-title { fill: #a89a80; }
+
+/* Organigramme : racine (l'organisation) et sous-organisations */
+.ft-org .ft-box { fill: #2b2416; stroke: #e6c988; stroke-width: 2; }
+.ft-org .ft-name { fill: #f4e3b8; }
+.ft-org .ft-title { fill: #d9b876; }
+
+.ft-suborg .ft-box { fill: #1d2b2a; stroke: #5fbfae; stroke-dasharray: 4 3; }
+.ft-suborg .ft-name { fill: #bdece4; }
+.ft-suborg .ft-title { fill: #7fc9bc; font-style: italic; }
+
+.ft-dot-org { background: #e6c988; }
+.ft-dot-suborg { background: #5fbfae; }
+
+/* Légende */
+.ft-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  font-size: 11px;
+  color: #a89a80;
+  background: rgba(27, 23, 18, 0.85);
+  border: 1px solid rgba(232, 221, 200, 0.15);
+  border-radius: 8px;
+  padding: 6px 12px;
+  pointer-events: none;
+}
+.ft-legend span { display: flex; align-items: center; gap: 6px; }
+.ft-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.ft-dot-founder { background: #d99a3f; }
+.ft-dot-male { background: #5a9bd8; }
+.ft-dot-female { background: #d87aa8; }
+.ft-dot-pj { background: #e0724a; }
+.ft-legend-hint { font-style: italic; opacity: 0.75; }
+
+/* ── Modal ─────────────────────────────────────────────────────── */
+.family-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  /* Au-dessus du modal de fiche (2000/2001) : en fermant l'arbre, on retrouve la fiche dessous. */
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.family-modal {
+  width: min(1500px, 96vw);
+  height: min(900px, 92vh);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 14px;
+}
+
+.family-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.family-modal-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  flex: 1;
+}
+.family-modal-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+}
+
+.family-editor {
+  width: 320px;
+  flex: 0 0 320px;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e5e7eb;
+  font-size: 0.88rem;
+}
+.family-editor h4 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  color: #e5e7eb;
+}
+.family-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.family-field > span { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
+.family-field input[type='text'],
+.family-field input[type='number'],
+.family-field select,
+.family-field textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #e5e7eb;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.family-field-inline { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+.family-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.family-editor-hint { opacity: 0.7; font-style: italic; line-height: 1.4; }
+.family-danger { color: #f87171; }

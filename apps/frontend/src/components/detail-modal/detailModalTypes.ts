@@ -35,6 +35,10 @@ export type DetailModalProps = {
   onDelete?: (point: MapPoint) => void;
   onNavigate?: (point: NavigablePoint) => void;
   onCreateDistrict?: (cityId: string) => void;
+  /** Ouvre l'éditeur de tracé de frontière sur la carte pour ce royaume (ferme le modal). */
+  onEditBorder?: (kingdom: { id: string; name: string; color: string | null; borderPoints: unknown }) => void;
+  /** Ouvre l'arbre généalogique d'une famille (organisation de type FAMILLE). */
+  onOpenFamilyTree?: (family: { id: string; name: string }) => void;
   onOpenLore?: (loreId: string) => void;
   loreId?: string | null;
   createMode?: {

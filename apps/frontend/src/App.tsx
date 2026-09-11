@@ -1,11 +1,12 @@
 import './App.css';
 import 'leaflet/dist/leaflet.css';
 import { MapView } from './components/MapView';
+import type { BorderEditState } from './components/MapView';
 import { useMapPoints } from './hooks/useMapPoints';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
-import { deleteTarget } from './api/map';
-import type { NavigablePoint } from './api/map';
-import { updatePosition } from './api/entities';
+import { deleteTarget, toBorderRings } from './api/map';
+import type { NavigablePoint, KingdomBorder, BorderRings } from './api/map';
+import { updatePosition, listKingdoms, updateKingdom } from './api/entities';
 import { useEntityCatalog } from './hooks/useEntityCatalog';
 import { searchEntityCatalog } from './search/entityCatalog';
 import type { GlobalSearchResult } from './search/types';
@@ -16,8 +17,9 @@ import { LoginPanel } from './components/LoginPanel';
 import DetailModal from './components/DetailModal';
 import { Sidebar } from './components/Sidebar';
 import { LoreModal } from './components/LoreModal';
-import { GraphModal } from './components/GraphModal';
 import { GMPage } from './components/gm/GMPage';
+import { FamilyTreeModal } from './components/family/FamilyTreeModal';
+import { createMapPointFromRef } from './components/detail-modal/createMapPointFromRef';
 import {
   type DetailStackEntry,
   getBackLabel,
@@ -59,9 +61,34 @@ function Content() {
   const [creatingMode, setCreatingMode] = useState(false);
   const [createKind, setCreateKind] = useState<'kingdom' | 'city' | 'place' | 'person' | 'organisation' | 'lore' | 'playerCharacter'>('kingdom');
   const [showLoreModal, setShowLoreModal] = useState(false);
-  const [showGraphModal, setShowGraphModal] = useState(false);
   const [showGMPage, setShowGMPage] = useState(false);
   const [dragLocked, setDragLocked] = useState(true); // par défaut verrouillé pour éviter les déplacements accidentels
+  const [rulerMode, setRulerMode] = useState(false);
+
+  // ── Arbre généalogique d'une famille ────────────────────────────────
+  const [familyTree, setFamilyTree] = useState<{ id: string; name: string } | null>(null);
+
+  // ── Frontières de royaumes ──────────────────────────────────────────
+  const [kingdomBorders, setKingdomBorders] = useState<KingdomBorder[]>([]);
+  const [showBorders, setShowBorders] = useState(true);
+  const [borderEdit, setBorderEdit] = useState<BorderEditState | null>(null);
+
+  const reloadBorders = useCallback(async () => {
+    try {
+      const kingdoms = await listKingdoms();
+      const borders: KingdomBorder[] = kingdoms
+        .filter((k) => canEdit || !k.isForDM)
+        .map((k) => ({ id: k.id, name: k.name, color: k.color ?? null, rings: toBorderRings(k.borderPoints) }))
+        .filter((b) => b.rings.some((ring) => ring.length >= 3));
+      setKingdomBorders(borders);
+    } catch {
+      /* silencieux : les frontières sont décoratives */
+    }
+  }, [canEdit]);
+
+  useEffect(() => {
+    void reloadBorders();
+  }, [reloadBorders]);
 
   const detailStackTop = detailStack[detailStack.length - 1];
   const detailStackPrev = detailStack.length > 1 ? detailStack[detailStack.length - 2] : null;
@@ -80,6 +107,14 @@ function Content() {
 
   const closeDetailModal = useCallback(() => {
     setDetailStack([]);
+  }, []);
+
+  /**
+   * Ouvre l'arbre d'une famille par-dessus la fiche (sans la fermer) : en fermant
+   * l'arbre, on revient exactement là où on était.
+   */
+  const handleOpenFamilyTree = useCallback((family: { id: string; name: string }) => {
+    setFamilyTree(family);
   }, []);
 
   const goBackDetail = useCallback(() => {
@@ -170,6 +205,60 @@ function Content() {
     });
   }, []);
 
+  // Règle, création et édition de frontière sont mutuellement exclusifs (un clic ne déclenche qu'un mode).
+  useEffect(() => {
+    if (rulerMode) {
+      setCreatingMode(false);
+      setBorderEdit(null);
+    }
+  }, [rulerMode]);
+  useEffect(() => {
+    if (creatingMode) {
+      setRulerMode(false);
+      setBorderEdit(null);
+    }
+  }, [creatingMode]);
+
+  // Édition de frontière : ouvre l'éditeur sur la carte pour un royaume, ferme le modal et coupe les autres modes.
+  const handleEditBorder = useCallback(
+    (kingdom: { id: string; name: string; color: string | null; borderPoints: unknown }) => {
+      setCreatingMode(false);
+      setRulerMode(false);
+      cancelPendingCreate();
+      closeDetailModal();
+      setBorderEdit({
+        kingdomId: kingdom.id,
+        name: kingdom.name,
+        color: kingdom.color || '#8a8f98',
+        rings: toBorderRings(kingdom.borderPoints),
+      });
+    },
+    [cancelPendingCreate, closeDetailModal],
+  );
+
+  const handleBorderSave = useCallback(
+    async (nextRings: BorderRings | null) => {
+      if (!borderEdit) return;
+      if (!token) {
+        push('Authentification requise', 'error');
+        return;
+      }
+      try {
+        await updateKingdom(token, borderEdit.kingdomId, { borderPoints: nextRings });
+        setBorderEdit(null);
+        await reloadBorders();
+        push(nextRings ? 'Frontière enregistrée' : 'Frontière supprimée', 'success');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Enregistrement échoué';
+        setActionError(msg);
+        push(msg, 'error');
+      }
+    },
+    [borderEdit, token, push, reloadBorders],
+  );
+
+  const handleBorderCancel = useCallback(() => setBorderEdit(null), []);
+
   // Ouvrir directement la création org/lore (sans clic carte)
   useEffect(() => {
     if (creatingMode && (createKind === 'organisation' || createKind === 'lore')) {
@@ -204,21 +293,43 @@ function Content() {
               </div>
             )}
 
-            {canEdit && (
+            <div className="map-tools">
               <button
                 type="button"
-                className="map-drag-lock glass"
-                onClick={() => setDragLocked((prev) => !prev)}
-                title={dragLocked ? 'Déverrouiller le déplacement des icônes' : 'Verrouiller le déplacement des icônes'}
-                aria-label={dragLocked ? 'Déverrouiller le glisser-déposer' : 'Verrouiller le glisser-déposer'}
+                className={`map-tool glass${rulerMode ? ' is-active' : ''}`}
+                onClick={() => setRulerMode((prev) => !prev)}
+                title={rulerMode ? 'Fermer la règle' : 'Mesurer une distance (règle)'}
+                aria-label="Règle de mesure"
+                aria-pressed={rulerMode}
               >
-                {dragLocked ? (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                )}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3l4 4l-14 14l-4 -4z"/><path d="M16 7l-1.5 -1.5"/><path d="M13 10l-1.5 -1.5"/><path d="M10 13l-1.5 -1.5"/><path d="M7 16l-1.5 -1.5"/></svg>
               </button>
-            )}
+              <button
+                type="button"
+                className={`map-tool glass${showBorders ? ' is-active' : ''}`}
+                onClick={() => setShowBorders((prev) => !prev)}
+                title={showBorders ? 'Masquer les frontières des royaumes' : 'Afficher les frontières des royaumes'}
+                aria-label="Frontières des royaumes"
+                aria-pressed={showBorders}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  className="map-tool glass"
+                  onClick={() => setDragLocked((prev) => !prev)}
+                  title={dragLocked ? 'Déverrouiller le déplacement des icônes' : 'Verrouiller le déplacement des icônes'}
+                  aria-label={dragLocked ? 'Déverrouiller le glisser-déposer' : 'Verrouiller le glisser-déposer'}
+                >
+                  {dragLocked ? (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                  )}
+                </button>
+              )}
+            </div>
 
             <Sidebar
               search={search}
@@ -243,6 +354,12 @@ function Content() {
               points={filteredPoints}
               canEdit={canEdit}
               creatingMode={creatingMode}
+              rulerMode={rulerMode}
+              kingdomBorders={kingdomBorders}
+              showBorders={showBorders}
+              borderEdit={borderEdit}
+              onBorderSave={handleBorderSave}
+              onBorderCancel={handleBorderCancel}
               onMapClick={creatingMode ? handleMapClickForCreation : undefined}
               onMove={canEdit && !dragLocked ? async (point, x, y) => {
                 if (!token) throw new Error('Authentification requise');
@@ -321,25 +438,30 @@ function Content() {
               }
             }}
           />
-          <GraphModal
-            open={showGraphModal}
-            onClose={() => setShowGraphModal(false)}
-            onSelectPerson={(id) => {
-              setShowGraphModal(false);
-              const pt = points.find((p) => p.kind === 'person' && p.targetId === id);
-              if (pt) openEntityDetail(pt as ExtendedMapPoint);
-            }}
-            onSelectOrg={(id) => {
-              setShowGraphModal(false);
-              const pt = points.find((p) => p.kind === 'organisation' && p.targetId === id);
-              if (pt) openEntityDetail(pt as ExtendedMapPoint);
-            }}
-          />
           <GMPage
             open={showGMPage}
             onClose={() => setShowGMPage(false)}
             token={token}
-            onOpenGraphModal={() => setShowGraphModal(true)}
+          />
+          <FamilyTreeModal
+            open={!!familyTree}
+            organisationId={familyTree?.id ?? null}
+            organisationName={familyTree?.name ?? ''}
+            token={token}
+            canEdit={canEdit}
+            onClose={() => setFamilyTree(null)}
+            onOpenEntity={(member) => {
+              const ref = member.person ?? member.playerCharacter;
+              if (!ref) return;
+              const kind = member.person ? 'person' : 'playerCharacter';
+              setFamilyTree(null);
+              // On empile : le bouton retour ramène à la fiche de la famille.
+              pushEntityDetail(createMapPointFromRef(ref, kind) as ExtendedMapPoint);
+            }}
+            onOpenOrganisation={(org) => {
+              setFamilyTree(null);
+              pushEntityDetail(createMapPointFromRef(org, 'organisation') as ExtendedMapPoint);
+            }}
           />
           <LoreModal
             open={showLoreModal}
@@ -387,6 +509,8 @@ function Content() {
               }
               onNavigate={(p) => pushEntityDetail(p as ExtendedMapPoint)}
               onCreateDistrict={canEdit ? handleCreateDistrict : undefined}
+              onEditBorder={canEdit ? handleEditBorder : undefined}
+              onOpenFamilyTree={handleOpenFamilyTree}
               onOpenLore={pushLoreDetail}
             />
           )}

@@ -49,6 +49,46 @@ export async function combatRoutes(app: FastifyInstance) {
     return reply.code(204).send();
   });
 
+  // Ajoute les PJ de la campagne liée (via la péripétie) comme combattants, puis renvoie le combat.
+  app.post('/combats/:id/party', { preHandler: gmOnly(app) }, async (request, reply) => {
+    const id = parseRouteUuid(request);
+    const combat = await app.prisma.combat.findUnique({
+      where: { id },
+      include: {
+        combatants: { select: { playerCharacterId: true } },
+        questStep: { include: { quest: { include: { campaign: { include: { players: true } } } } } },
+      },
+    });
+    if (!combat) return reply.notFound('Combat introuvable.');
+
+    const players = combat.questStep?.quest?.campaign?.players ?? [];
+    const already = new Set(
+      combat.combatants.map((c) => c.playerCharacterId).filter((v): v is string => Boolean(v)),
+    );
+
+    for (const pj of players) {
+      if (already.has(pj.id)) continue;
+      const maxHp = pj.pvMax ?? pj.pv ?? 10;
+      const dexMod = Math.floor((pj.DEX - 10) / 2);
+      await app.prisma.combatant.create({
+        data: {
+          combatId: id,
+          name: pj.name,
+          playerCharacterId: pj.id,
+          initiativeRoll: Math.floor(Math.random() * 20) + 1 + (pj.initiative ?? dexMod),
+          currentHp: pj.pv ?? maxHp,
+          maxHp,
+          ca: pj.ca ?? null,
+        },
+      });
+    }
+
+    return app.prisma.combat.findUnique({
+      where: { id },
+      include: { combatants: { orderBy: [{ initiativeRoll: 'desc' }, { createdAt: 'asc' }] } },
+    });
+  });
+
   app.post('/combats/:id/combatants', { preHandler: gmOnly(app) }, async (request) => {
     const combatId = parseRouteUuid(request);
     const data = combatantInputSchema.parse(request.body);

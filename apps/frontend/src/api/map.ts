@@ -23,6 +23,35 @@ export type NavigablePoint = MapPoint & {
   kind: EntityKind | 'unknown';
 };
 
+/** Un anneau = une bulle fermée (sommets [x, y] en ratio 0..1). */
+export type BorderRing = [number, number][];
+/** Frontière = un ou plusieurs anneaux (archipels / enclaves). */
+export type BorderRings = BorderRing[];
+
+/** Frontière d'un royaume à dessiner sur la carte : plusieurs anneaux possibles. */
+export type KingdomBorder = {
+  id: string;
+  name: string;
+  color: string | null;
+  rings: BorderRings;
+};
+
+/**
+ * Normalise une valeur `borderPoints` brute (venue de la BDD) en tableau d'anneaux.
+ * Accepte le format legacy (anneau simple `[x,y][]`) et le format multi-anneaux (`[x,y][][]`).
+ * Renvoie `[]` si vide/invalide.
+ */
+export function toBorderRings(raw: unknown): BorderRings {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  const first = raw[0];
+  // Anneau simple : premier élément = paire de nombres [x, y].
+  if (Array.isArray(first) && typeof first[0] === 'number') {
+    return [raw as BorderRing];
+  }
+  // Multi-anneaux : premier élément = un anneau (tableau de paires).
+  return raw as BorderRings;
+}
+
 export async function fetchMapPoints() {
   return apiGet<MapPoint[]>('/map/points');
 }

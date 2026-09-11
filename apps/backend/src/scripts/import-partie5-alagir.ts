@@ -460,12 +460,14 @@ async function createPersons(
       "Demi-orc ~40 ans, peau verte, crocs, yeux jaunes, cheveux noirs striés de gris. Garde en entraînement avec Harl Denvar au Palazzo.",
   });
 
+  // « Radius Ignis Mirdobas » de la transcription = Mirdobas Filan (Radius Ignis est son grade).
+  // Ne pas recréer d'entité séparée : elle a été fusionnée (cf. merge-mirdobas.ts).
   await ensurePerson(districtIds, orgIds, {
-    name: 'Radius Ignis Mirdobas',
+    name: 'Mirdobas Filan',
     breed: 'HUMAIN',
     orgs: ["L'Œil Pourpre", 'Le Soleil Pourpre'],
     description:
-      "Officier liaison Œil Pourpre. Rencontre secrète chez Regalio Regani : Crypte Rubis, écailles, canalistes, quais Arrezo (Partie 5).",
+      "Radius Ignis du Soleil Pourpre, officier de liaison avec l'Œil Pourpre. Rencontre secrète chez Regalio Regani : Crypte Rubis, écailles, canalistes, quais Arrezo (Partie 5).",
   });
 
   await ensurePerson(districtIds, orgIds, {
@@ -602,13 +604,13 @@ async function createLores(orgIds: Record<string, string>, placeIds: Record<stri
 
   await ensureLore(
     {
-      title: 'Réunion Radius Ignis Mirdobas – Regalio Regani',
+      title: 'Réunion Radius Ignis Mirdobas Filan – Regalio Regani',
       dateInGame: '887-06-09',
       summary: 'Crypte Rubis, écailles, Braise, quais Arrezo.',
       isForDM: true,
-      content: `Réunion secrète : Radius (OP) et Regalio. Crypte Rubis, cadence des écailles, canalistes d'aplanissement émotionnel, surveillance quais Arrezo, Braise intercepte transports. Première des Dames Falci demande +100 unités/mois.`,
+      content: `Réunion secrète : Mirdobas Filan, Radius Ignis (Œil Pourpre), et Regalio. Crypte Rubis, cadence des écailles, canalistes d'aplanissement émotionnel, surveillance quais Arrezo, Braise intercepte transports. Première des Dames Falci demande +100 unités/mois.`,
       tags: ['Partie 5', 'Œil Pourpre', '887'],
-      personNames: ['Radius Ignis Mirdobas', 'Regalio Regani'],
+      personNames: ['Mirdobas Filan', 'Regalio Regani'],
       placeNames: ['Crypte Rubis', 'Manoir Regalio Regani'],
       orgNames: ["L'Œil Pourpre", 'La Braise'],
     },
