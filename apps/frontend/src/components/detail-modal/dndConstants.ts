@@ -30,6 +30,7 @@ export const DND_SKILLS: { name: string; ability: AbilityKey }[] = [
   { name: 'Escamotage', ability: 'DEX' },
   { name: 'Histoire', ability: 'INT' },
   { name: 'Intimidation', ability: 'CHA' },
+  { name: 'Intuition', ability: 'WIS' },
   { name: 'Investigation', ability: 'INT' },
   { name: 'Médecine', ability: 'WIS' },
   { name: 'Nature', ability: 'INT' },

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { Prisma, PlaceType } from '@prisma/client';
+// placeInputSchema.description accepte désormais null (lieux sans description).
 import { placeInputSchema } from '@solenia/shared';
 import { ignoreUniqueViolation } from '../utils/prisma';
 import { requireRole } from '../utils/rbac';
@@ -233,7 +234,7 @@ export async function placeRoutes(app: FastifyInstance) {
 
   app.delete('/places/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
     const id = parseRouteUuid(request);
-    await app.prisma.position.deleteMany({ where: { placeId: id } });
+    // La position associée part en cascade (contrainte Position_placeId_fkey).
     await app.prisma.place.delete({ where: { id } });
     reply.code(204);
   });

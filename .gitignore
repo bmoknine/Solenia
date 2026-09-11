@@ -35,3 +35,9 @@ pnpm-lock.yaml
 .env
 .env.*
 
+
+# Sauvegardes de base de données — contiennent la table User (hash de mots de passe)
+apps/backend/backups/
+
+# Réglages locaux de Claude Code (propres à la machine)
+.claude/settings.local.json

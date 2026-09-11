@@ -118,6 +118,7 @@ model Kingdom {
   dateInGame  DateTime?
   color       String?   // Couleur appliquée aux icônes des villes du royaume (hex, ex: #1a73e8)
   flag        String?   // URL du drapeau (remplace l’icône sur la carte si défini)
+  borderPoints Json?    // Frontière tracée sur la carte : tableau de sommets [x, y] en ratio 0..1
   isForDM     Boolean   @default(false)
 
   cities           City[]
@@ -235,6 +236,7 @@ model PersonOfInterest {
   organisations OrganisationMember[]
   lores   LorePerson[]
   combatants Combatant[]
+  familyMembers FamilyMember[]
 }
 
 model Comment {
@@ -266,16 +268,20 @@ model Position {
   personOfInterestId String? @unique
   playerCharacterId  String? @unique
 
-  kingdom          Kingdom?          @relation(fields: [kingdomId], references: [id])
-  city             City?             @relation(fields: [cityId], references: [id])
-  place            Place?            @relation(fields: [placeId], references: [id])
-  personOfInterest PersonOfInterest? @relation(fields: [personOfInterestId], references: [id])
-  playerCharacter  PlayerCharacter?  @relation(fields: [playerCharacterId], references: [id])
+  // Cascade et non SetNull : une position n'existe que pour l'entité qu'elle place.
+  // En SetNull, supprimer l'entité laissait une ligne aux cinq clés nulles, que plus
+  // rien ne pouvait référencer (27 résidus nettoyés le 2026-09-10).
+  kingdom          Kingdom?          @relation(fields: [kingdomId], references: [id], onDelete: Cascade)
+  city             City?             @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  place            Place?            @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  personOfInterest PersonOfInterest? @relation(fields: [personOfInterestId], references: [id], onDelete: Cascade)
+  playerCharacter  PlayerCharacter?  @relation(fields: [playerCharacterId], references: [id], onDelete: Cascade)
 }
 
 enum OrganisationType {
   CELLULE
   PRINCIPAL
+  FAMILLE
 }
 
 model Organisation {
@@ -297,6 +303,49 @@ model Organisation {
   places  OrganisationPlace[]
   kingdoms OrganisationKingdom[]
   lores   LoreOrganisation[]
+  /** Nœuds de l'arbre généalogique (organisations de type FAMILLE). */
+  familyMembers FamilyMember[]
+}
+
+/**
+ * Nœud d'arbre généalogique rattaché à une famille (Organisation de type FAMILLE).
+ * Nœud léger : soit un simple nom (ancêtres), soit un lien vers un PNJ ou un PJ.
+ */
+model FamilyMember {
+  id                String   @id @default(uuid())
+  organisationId    String
+  name              String
+  /** Mention courte affichée sous le nom : « Fondateur », « Grand-père », « ★ PJ »… */
+  title             String?
+  personId          String?
+  playerCharacterId String?
+  fatherId          String?
+  motherId          String?
+  spouseId          String?
+  /** Supérieur hiérarchique — utilisé par les organigrammes (organisations non familiales). */
+  superiorId        String?
+  sex               Sex?
+  isFounder         Boolean  @default(false)
+  /** Rang de génération forcé ; sinon calculé depuis les parents. */
+  generation        Int?
+  /** Ordre horizontal au sein de la génération. */
+  order             Int      @default(0)
+  notes             String?
+  isForDM           Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  organisation    Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  person          PersonOfInterest? @relation(fields: [personId], references: [id], onDelete: SetNull)
+  playerCharacter PlayerCharacter?  @relation(fields: [playerCharacterId], references: [id], onDelete: SetNull)
+
+  father   FamilyMember?  @relation("FM_Father", fields: [fatherId], references: [id], onDelete: SetNull)
+  mother   FamilyMember?  @relation("FM_Mother", fields: [motherId], references: [id], onDelete: SetNull)
+  spouse   FamilyMember?  @relation("FM_Spouse", fields: [spouseId], references: [id], onDelete: SetNull)
+  superior FamilyMember?  @relation("FM_Superior", fields: [superiorId], references: [id], onDelete: SetNull)
+  childrenAsFather FamilyMember[] @relation("FM_Father")
+  childrenAsMother FamilyMember[] @relation("FM_Mother")
+  spouseOf         FamilyMember[] @relation("FM_Spouse")
+  subordinates     FamilyMember[] @relation("FM_Superior")
 }
 
 model OrganisationMember {
@@ -454,6 +503,8 @@ model PlayerCharacter {
   equipment    PlayerCharacterEquipmentItem[]
   spells       PlayerCharacterSpell[]
   combatants   Combatant[]
+  campaigns    Campaign[]                     @relation("CampaignPlayers")
+  familyMembers FamilyMember[]
 }
 
 model PlayerCharacterSkill {
@@ -511,16 +562,24 @@ enum QuestStatus {
   ECHOUEE
 }
 
+enum QuestStepStatus {
+  A_FAIRE
+  EN_COURS
+  FAITE
+}
+
 model Combat {
   id              String       @id @default(uuid())
   name            String
   round           Int          @default(1)
   activeTurnIndex Int          @default(0)
   status          CombatStatus @default(ACTIVE)
+  questStepId     String? // rencontre liée à une péripétie du module Campagne
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
   combatants Combatant[]
+  questStep  QuestStep? @relation(fields: [questStepId], references: [id], onDelete: SetNull)
 }
 
 model Combatant {
@@ -541,6 +600,20 @@ model Combatant {
   person          PersonOfInterest? @relation(fields: [personId], references: [id], onDelete: SetNull)
 }
 
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String? // couleur d'accent optionnelle (hex)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quests   Quest[]
+  players  PlayerCharacter[] @relation("CampaignPlayers")
+  sessions GameSession[]
+}
+
 model Quest {
   id          String      @id @default(uuid())
   title       String
@@ -548,15 +621,37 @@ model Quest {
   status      QuestStatus @default(A_FAIRE)
   notes       String?
   order       Int         @default(0)
+  campaignId  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+
+  campaign Campaign?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  steps    QuestStep[]
+}
+
+model QuestStep {
+  id          String          @id @default(uuid())
+  questId     String
+  title       String
+  description String?
+  status      QuestStepStatus @default(A_FAIRE)
+  optional    Boolean         @default(false) // péripétie facultative (interaction, jeu…)
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  quest   Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  combats Combat[]
 }
 
 model GameSession {
-  id        String   @id @default(uuid())
-  date      DateTime
-  title     String?
-  summary   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  date       DateTime
+  title      String?
+  summary    String?
+  campaignId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 }

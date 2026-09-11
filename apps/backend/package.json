@@ -28,6 +28,7 @@
     "db:import-partie5": "tsx src/scripts/import-partie5-alagir.ts",
     "db:import-valbrume": "tsx src/scripts/import-valbrume-varek.ts",
     "db:import-monastere-nuits": "tsx src/scripts/import-monastere-nuits.ts",
+    "db:import-rigart-secretary": "tsx src/scripts/import-rigart-secretary.ts",
     "backup:person-affiliations": "tsx scripts/backup-person-affiliations.ts"
   },
   "keywords": [],

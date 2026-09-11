@@ -214,7 +214,7 @@ export async function playerCharacterRoutes(app: FastifyInstance) {
     { preHandler: requireRole(app, ['admin']) },
     async (request, reply) => {
       const id = parseRouteUuid(request);
-      await app.prisma.position.deleteMany({ where: { playerCharacterId: id } });
+      // La position associée part en cascade (contrainte Position_playerCharacterId_fkey).
       await app.prisma.playerCharacter.delete({ where: { id } });
       reply.code(204);
     },

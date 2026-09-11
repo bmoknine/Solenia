@@ -16,6 +16,7 @@ export function KingdomView({
   onChange,
   valueOrDash,
   onNavigate,
+  onEditBorder,
   onOpenLore,
 }: {
   data: KingdomDetail | null;
@@ -24,8 +25,10 @@ export function KingdomView({
   onChange: (key: string, value: unknown) => void;
   valueOrDash: (v: unknown) => string | number;
   onNavigate?: (point: NavigablePoint) => void;
+  onEditBorder?: (kingdom: { id: string; name: string; color: string | null; borderPoints: unknown }) => void;
   onOpenLore?: (loreId: string) => void;
 }) {
+  const hasBorder = Array.isArray(data?.borderPoints) && data!.borderPoints!.length > 0;
   return (
     <>
       {editMode && (
@@ -135,6 +138,29 @@ export function KingdomView({
           )}
         </div>
       </div>
+      {onEditBorder && data?.id && !editMode && (
+        <div className="detail-item">
+          <span className="detail-label">Frontière (carte)</span>
+          <button
+            type="button"
+            className="border-edit-btn"
+            onClick={() =>
+              onEditBorder({
+                id: data.id,
+                name: data.name,
+                color: data.color ?? null,
+                borderPoints: data.borderPoints ?? null,
+              })
+            }
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2 4 7v10l8 5 8-5V7z" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+            {hasBorder ? 'Modifier la frontière sur la carte' : 'Tracer la frontière sur la carte'}
+          </button>
+        </div>
+      )}
       {data?.organisations && data.organisations.length > 0 && (
         <div className="detail-section">
           <h3 className="section-title">Organisations :</h3>

@@ -6,7 +6,7 @@ export const idSchema = z.string().uuid();
 export const kingdomInputSchema = z.object({
   name: z.string().min(1),
   population: z.number().int().nonnegative().optional(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   dateInGame: soleniaDateInGameSchema,
   isForDM: z.boolean().optional(),
   flag: z.string().optional().nullable().or(z.literal('')),
@@ -17,6 +17,18 @@ export const kingdomInputSchema = z.object({
       z.null(),
     ]).optional(),
   ),
+  /**
+   * Frontière tracée sur la carte : soit un anneau simple `[x,y][]` (legacy),
+   * soit plusieurs anneaux `[x,y][][]` (archipels / multi-parties). Sommets en ratio 0..1.
+   * null = pas de frontière.
+   */
+  borderPoints: z
+    .union([
+      z.array(z.tuple([z.number(), z.number()])),
+      z.array(z.array(z.tuple([z.number(), z.number()]))),
+    ])
+    .nullable()
+    .optional(),
 });
 
 export const cityInputSchema = z.object({
@@ -39,7 +51,7 @@ export const districtInputSchema = z.object({
   cityId: idSchema,
 });
 
-export const organisationTypeSchema = z.enum(['CELLULE', 'PRINCIPAL']);
+export const organisationTypeSchema = z.enum(['CELLULE', 'PRINCIPAL', 'FAMILLE']);
 export type OrganisationType = z.infer<typeof organisationTypeSchema>;
 
 export const placeTypeEnum = z.enum([
@@ -55,7 +67,7 @@ export const PLACE_TYPE_VALUES = placeTypeEnum.options;
 
 export const placeInputSchema = z.object({
   name: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   iconUrl: z.string().nullable().optional(),
   map: z.string().nullable().optional(),
   placeType: placeTypeEnum.optional(),
@@ -165,7 +177,7 @@ export const PERSON_LANGUAGE_VALUES = languageEnum.options;
 export const personInputSchema = z
   .object({
     name: z.string().min(1),
-    description: z.string().optional(),
+    description: z.string().nullable().optional(),
     imageUrl: z.string().nullable().optional(),
     breed: breedEnum.nullish(),
     sex: sexEnum.nullish(),
@@ -333,6 +345,30 @@ export const playerCharacterInputSchema = z
     spells: z.array(playerCharacterSpellSchema).optional(),
   })
   .merge(statsSchema);
+
+/**
+ * Nœud d'arbre généalogique. Tous les liens sont optionnels : un membre peut
+ * n'être qu'un nom (ancêtre), ou pointer vers un PNJ ou un PJ existant.
+ */
+export const familyMemberInputSchema = z.object({
+  name: z.string().min(1),
+  title: z.string().nullable().optional(),
+  personId: idSchema.nullable().optional(),
+  playerCharacterId: idSchema.nullable().optional(),
+  fatherId: idSchema.nullable().optional(),
+  motherId: idSchema.nullable().optional(),
+  spouseId: idSchema.nullable().optional(),
+  /** Supérieur hiérarchique (organigrammes). */
+  superiorId: idSchema.nullable().optional(),
+  sex: sexEnum.nullable().optional(),
+  isFounder: z.boolean().optional(),
+  generation: z.number().int().nullable().optional(),
+  order: z.number().int().optional(),
+  notes: z.string().nullable().optional(),
+  isForDM: z.boolean().optional(),
+});
+
+export type FamilyMemberInput = z.infer<typeof familyMemberInputSchema>;
 
 export type KingdomInput = z.infer<typeof kingdomInputSchema>;
 export type CityInput = z.infer<typeof cityInputSchema>;

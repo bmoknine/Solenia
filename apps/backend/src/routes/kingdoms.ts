@@ -1,4 +1,6 @@
 import type { FastifyInstance } from 'fastify';
+import { Prisma } from '@prisma/client';
+// kingdomInputSchema accepte désormais `borderPoints` (frontière tracée, sommets [x,y] en ratio).
 import { kingdomInputSchema, parseSoleniaDate } from '@solenia/shared';
 import { requireRole } from '../utils/rbac';
 import { parseRouteUuid } from '../utils/routeParams';
@@ -65,10 +67,13 @@ export async function kingdomRoutes(app: FastifyInstance) {
   app.post('/kingdoms', { preHandler: requireRole(app, ['admin', 'editor']) }, async (request) => {
     const data = kingdomInputSchema.parse(request.body);
     const flag = data.flag === '' || data.flag == null ? null : data.flag;
+    const { borderPoints, ...rest } = data;
     return app.prisma.kingdom.create({
       data: {
-        ...data,
+        ...rest,
         flag,
+        // Colonne Json : le tableau d'anneaux est transmis tel quel.
+        ...(borderPoints !== undefined && { borderPoints: borderPoints ?? Prisma.DbNull }),
         dateInGame: parseSoleniaDate(data.dateInGame) ?? undefined,
       },
     });
@@ -99,7 +104,7 @@ export async function kingdomRoutes(app: FastifyInstance) {
     if (!existing) return reply.notFound();
 
     try {
-      await app.prisma.position.deleteMany({ where: { kingdomId: id } });
+      // La position associée part en cascade (contrainte Position_kingdomId_fkey).
       await app.prisma.kingdom.delete({ where: { id } });
       return reply.code(204).send();
     } catch (err) {

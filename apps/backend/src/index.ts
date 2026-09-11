@@ -15,6 +15,7 @@ import { commentRoutes } from './routes/comments';
 import { positionRoutes } from './routes/positions';
 import { mapRoutes } from './routes/map';
 import { organisationRoutes } from './routes/organisations';
+import { familyMemberRoutes } from './routes/familyMembers';
 import { loreRoutes } from './routes/lores';
 import { flagRoutes } from './routes/flags';
 import { uploadRoutes } from './routes/upload';
@@ -22,6 +23,7 @@ import { playerCharacterRoutes } from './routes/playerCharacters';
 import { graphRoutes } from './routes/graph';
 import { statsRoutes } from './routes/stats';
 import { combatRoutes } from './routes/combats';
+import { campaignRoutes } from './routes/campaigns';
 import { questRoutes } from './routes/quests';
 import { gameSessionRoutes } from './routes/gameSessions';
 
@@ -51,6 +53,7 @@ export const buildServer = () => {
   app.register(positionRoutes);
   app.register(mapRoutes);
   app.register(organisationRoutes);
+  app.register(familyMemberRoutes);
   app.register(loreRoutes);
   app.register(flagRoutes);
   app.register(uploadRoutes);
@@ -58,6 +61,7 @@ export const buildServer = () => {
   app.register(graphRoutes);
   app.register(statsRoutes);
   app.register(combatRoutes);
+  app.register(campaignRoutes);
   app.register(questRoutes);
   app.register(gameSessionRoutes);
 

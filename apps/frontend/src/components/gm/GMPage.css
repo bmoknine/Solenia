@@ -579,3 +579,398 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+/* ─── Campagnes (barre + tête) ─────────────────────────────────── */
+
+.campaign-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.campaign-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  transition: opacity 0.1s ease, background 0.1s ease, border-color 0.1s ease;
+}
+
+.campaign-pill:hover { opacity: 0.95; }
+
+.campaign-pill--on {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.campaign-pill--none { font-style: italic; }
+
+.campaign-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.campaign-pill-count {
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.14);
+  opacity: 0.85;
+}
+
+.campaign-create-inline {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.campaign-create-inline .detail-input {
+  width: 170px;
+  font-size: 0.85rem;
+}
+
+.campaign-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.campaign-head-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.campaign-name-input {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.campaign-color {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.campaign-head-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+/* Ligne d'en-tête de quête à 3 champs (titre / statut / campagne) */
+.quest-card-body .quest-body-row--head {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* ─── Péripéties (QuestStep) ───────────────────────────────────── */
+
+.quest-step-badge {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  opacity: 0.85;
+}
+
+.quest-field--steps { gap: 8px; }
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.step-row {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.step-row--en_cours { border-left-color: #60a5fa; }
+.step-row--faite { border-left-color: #34d399; }
+.step-row--faite .step-title { opacity: 0.6; text-decoration: line-through; }
+
+.step-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 6px 10px;
+}
+
+.step-index {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0.8;
+}
+
+.step-status {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.step-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-title:hover { text-decoration: underline; }
+
+.step-del {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  color: #f87171;
+}
+
+.step-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px 10px 35px;
+}
+
+.step-add {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.step-add .detail-input { flex: 1; font-size: 0.88rem; }
+
+@media (max-width: 720px) {
+  .quest-card-body .quest-body-row--head { grid-template-columns: 1fr; }
+  .campaign-create-inline { margin-left: 0; width: 100%; }
+  .campaign-create-inline .detail-input { flex: 1; width: auto; }
+}
+
+/* ─── Combat : couleur PJ vs PNJ/Ad hoc ───────────────────────────── */
+.combat-row--pj { border-left: 3px solid #60a5fa; }
+.combat-row--pnj { border-left: 3px solid #f87171; }
+.combat-row--pj .combat-init { background: rgba(96, 165, 250, 0.22); color: #bfdbfe; }
+.combat-row--pnj .combat-init { background: rgba(248, 113, 113, 0.22); color: #fecaca; }
+
+/* Nom de PNJ cliquable (ouvre la fiche) */
+.combat-name--link {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline dotted rgba(255, 255, 255, 0.4);
+  text-underline-offset: 3px;
+}
+.combat-name--link:hover { text-decoration-style: solid; color: #fff; }
+
+/* ─── Combat : fiche PNJ inspectée ────────────────────────────────── */
+.combat-inspect-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.combat-inspect {
+  position: relative;
+  width: min(560px, 92vw);
+  max-height: 82vh;
+  overflow-y: auto;
+  padding: 1.2rem 1.4rem;
+  border-radius: 14px;
+  color: #e5e7eb;
+}
+.combat-inspect-close { position: absolute; top: 8px; right: 10px; font-size: 1.3rem; }
+.combat-inspect-title { margin: 0 0 0.5rem; font-size: 1.15rem; padding-right: 1.5rem; }
+.combat-inspect-line { display: flex; gap: 0.6rem; font-size: 0.85rem; margin-bottom: 0.85rem; flex-wrap: wrap; }
+.combat-inspect-line span { padding: 2px 9px; border-radius: 8px; background: rgba(255, 255, 255, 0.12); }
+.combat-inspect-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+.combat-ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.combat-ability-label { font-size: 0.66rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.03em; }
+.combat-ability-score { font-weight: 700; font-size: 1rem; }
+.combat-ability-mod { font-size: 0.8rem; opacity: 0.8; }
+.combat-inspect-desc {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.combat-inspect-desc p { margin: 0 0 0.6rem; }
+
+@media (max-width: 560px) {
+  .combat-inspect-abilities { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ─── Campagne : joueurs assignés ─────────────────────────────────── */
+.campaign-players { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.campaign-players-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.campaign-player-chip {
+  padding: 4px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+.campaign-player-chip:hover { opacity: 0.95; }
+.campaign-player-chip--on {
+  opacity: 1;
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.6);
+  color: #bfdbfe;
+}
+
+/* ─── Péripétie : rencontre(s) liée(s) ────────────────────────────── */
+.step-combats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.step-combat-row { display: flex; align-items: center; gap: 0.6rem; }
+.step-combat-launch { padding: 4px 12px; font-size: 0.85rem; flex-shrink: 0; }
+.step-combat-name { font-weight: 600; font-size: 0.9rem; }
+.step-combat-meta { font-size: 0.8rem; opacity: 0.6; margin-left: auto; }
+.step-combat-add { align-self: flex-start; font-size: 0.85rem; }
+
+/* ─── Péripétie : description rendue + noms de PNJ cliquables ──────── */
+.step-desc-view { position: relative; }
+.step-desc-edit {
+  position: absolute;
+  top: 0;
+  right: 0;
+  /* Indispensable : le texte d'aide voisin a une opacity < 1, ce qui crée un
+     contexte d'empilement le plaçant au-dessus du bouton et bloquant le clic. */
+  z-index: 1;
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  opacity: 0.7;
+}
+.step-desc-edit:hover { opacity: 1; }
+.step-desc-rendered {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  padding-right: 5.5rem; /* place pour le bouton Modifier */
+}
+/* Même réserve d'espace quand la description est vide (message d'invite). */
+.step-desc-view .gm-hint {
+  padding-right: 5.5rem;
+}
+.person-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: #93c5fd;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(147, 197, 253, 0.5);
+  text-underline-offset: 2px;
+}
+.person-link:hover { color: #bfdbfe; text-decoration-style: solid; }
+
+/* ─── Péripétie optionnelle (interaction/jeu) ─────────────────────── */
+.step-row--optional {
+  border-left-style: dashed !important;
+  border-left-color: #d6a54a !important;
+  background: rgba(214, 165, 74, 0.05);
+}
+.step-opt-toggle {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+}
+.step-opt-toggle:hover { opacity: 0.85; }
+.step-opt-toggle--on {
+  opacity: 1;
+  background: rgba(214, 165, 74, 0.22);
+  border-color: rgba(214, 165, 74, 0.6);
+  color: #f0cd8a;
+}
+.step-optional-tag {
+  margin-left: 8px;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(214, 165, 74, 0.2);
+  color: #f0cd8a;
+  vertical-align: middle;
+}

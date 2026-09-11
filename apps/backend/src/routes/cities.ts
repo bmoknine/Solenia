@@ -170,8 +170,7 @@ export async function cityRoutes(app: FastifyInstance) {
 
   app.delete('/cities/:id', { preHandler: requireRole(app, ['admin']) }, async (request, reply) => {
     const id = parseRouteUuid(request);
-    // Supprimer la position associée si elle existe
-    await app.prisma.position.deleteMany({ where: { cityId: id } });
+    // La position associée part en cascade (contrainte Position_cityId_fkey).
     await app.prisma.city.delete({ where: { id } });
     reply.code(204);
   });
